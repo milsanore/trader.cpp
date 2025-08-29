@@ -7,20 +7,20 @@
   },
   "configurePresets": [
     {
-      "name": "release",
+      "name": "Release",
       "hidden": false,
       "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/build",
+      "binaryDir": "${sourceDir}/build/Release",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Release/generators/conan_toolchain.cmake",
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "debug",
+      "name": "Debug",
       "hidden": false,
       "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/build",
+      "binaryDir": "${sourceDir}/build/Debug",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Debug/generators/conan_toolchain.cmake",
         "CMAKE_BUILD_TYPE": "Debug"
@@ -29,12 +29,12 @@
   ],
   "buildPresets": [
     {
-      "name": "debug",
-      "configurePreset": "debug"
+      "name": "Debug",
+      "configurePreset": "Debug"
     },
     {
-      "name": "release",
-      "configurePreset": "release"
+      "name": "Release",
+      "configurePreset": "Release"
     }
   ]
 }
