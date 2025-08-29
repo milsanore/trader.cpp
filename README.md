@@ -28,6 +28,7 @@ NB: this app uses `make` as a task runner
 	- UI can come later (perhaps explore curses)
 - ✅ makefile and build chain
 - ✅ package management
+- ✅ debugging
 - create a FIX connection to Binance
 - subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
