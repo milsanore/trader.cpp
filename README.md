@@ -5,6 +5,13 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
     alt="stonks"
     width="250" />
 
+## REQUIREMENTS
+- C++
+- CMake
+
+# RUN 
+- `./build.sh`
+
 # AIM
 - basic cpp app to start with
     - UI can come later (perhaps explore curses)

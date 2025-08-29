@@ -1,0 +1,24 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up build tools
+        run: sudo apt update && sudo apt install -y g++
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Run
+        run: ./build/tradercpp
