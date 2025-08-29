@@ -24,6 +24,7 @@ withenv:
 init:
 	python3 -m venv .venv
 	source .venv/bin/activate && pip install conan
+	conan profile detect --force
 
 ## build-debug: 🔨 compile the app
 .PHONY: build-debug
