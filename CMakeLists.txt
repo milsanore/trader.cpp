@@ -12,5 +12,9 @@ set(CMAKE_CXX_STANDARD 17)
 # Define the source files
 set(SOURCES src/main.cpp)
 
+# Load dependencies
+find_package(quickfix REQUIRED CONFIG)
+# target_link_libraries(tradercpp PRIVATE fmt)
+
 # Create the executable
 add_executable(tradercpp ${SOURCES})

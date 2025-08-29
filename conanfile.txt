@@ -1,7 +1,9 @@
 [requires]
-# No dependencies in this minimal example, but here's how you'd add one:
-# fmt/10.2.1
+quickfix/1.15.1
 
 [generators]
 CMakeToolchain
 CMakeDeps
+
+[layout]
+cmake_layout

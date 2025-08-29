@@ -19,16 +19,36 @@ withenv:
 	test -e .env || cp .env.example .env
 	bash -c 'set -o allexport; source .env; set +o allexport; make "$$RECIPE"'
 
-## build: 🔨 compile the app
-.PHONY: build
-build:
+## init: 🏎️ initialize the project
+.PHONY: init
+init:
+	python3 -m venv .venv
+	source .venv/bin/activate && pip install conan
+
+## build-debug: 🔨 compile the app
+.PHONY: build-debug
+build-debug:
 	rm -rf build && mkdir -p build
 	source .venv/bin/activate && \
-		conan install . --output-folder=build --build=missing --conf tools.cmake.cmaketoolchain:generator=False && \
-		cmake --preset default && \
-		cmake --build --preset default
+		conan install . --build=missing -s build_type=Debug && \
+		cmake --preset debug && \
+		cmake --build --preset debug
 
-## run: 💨 run the app
-.PHONY: run
-run:
-	build/tradercpp
+## build-release: 🔨 compile the app
+.PHONY: build-release
+build-release:
+	rm -rf build && mkdir -p build
+	source .venv/bin/activate && \
+		conan install . --build=missing -s build_type=Release && \
+		cmake --preset release && \
+		cmake --build --preset release
+
+## run-debug: 💨 run the app
+.PHONY: run-debug
+run-debug:
+	build/Debug/tradercpp
+
+## run-release: 💨 run the app
+.PHONY: run-release
+run-release:
+	build/Release/tradercpp
