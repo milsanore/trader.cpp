@@ -22,9 +22,11 @@ withenv:
 ## build: 🔨 compile the app
 .PHONY: build
 build:
-	[ -d "build" ] && rm -r "build"
-	mkdir -p build
-	cd build && cmake .. && cmake --build .
+	rm -rf build && mkdir -p build
+	source .venv/bin/activate && \
+		conan install . --output-folder=build --build=missing --conf tools.cmake.cmaketoolchain:generator=False && \
+		cmake --preset default && \
+		cmake --build --preset default
 
 ## run: 💨 run the app
 .PHONY: run

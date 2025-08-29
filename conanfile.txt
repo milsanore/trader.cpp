@@ -1,0 +1,7 @@
+[requires]
+# No dependencies in this minimal example, but here's how you'd add one:
+# fmt/10.2.1
+
+[generators]
+CMakeToolchain
+CMakeDeps

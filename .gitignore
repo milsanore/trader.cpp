@@ -1,2 +1,7 @@
 build/
+.venv/
+.idea/
 .env
+
+# TODO: Understand the auto-generation of this file
+CMakeUserPresets.json

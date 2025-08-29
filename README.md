@@ -9,6 +9,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - C++
 - Make
 - CMake
+- Conan
 
 ## BUILD
 NB: this app uses `make` as a task runner
