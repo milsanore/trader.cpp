@@ -27,6 +27,7 @@ NB: this app uses `make` as a task runner
 - ✅ basic cpp app to start with
 	- UI can come later (perhaps explore curses)
 - ✅ makefile and build chain
+- ✅ package management
 - create a FIX connection to Binance
 - subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
