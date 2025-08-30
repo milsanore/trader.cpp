@@ -27,5 +27,5 @@ jobs:
           cmake --preset Release && \
           cmake --build --preset Release
 
-      - name: Run
-        run: ./build/Release/tradercpp
+      # - name: Run
+      #   run: ./build/Release/tradercpp
