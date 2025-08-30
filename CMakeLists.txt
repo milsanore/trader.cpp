@@ -7,7 +7,8 @@ if(_found_toolchain)
     message(STATUS "Conan toolchain included")
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
 # Define the source files
 set(SOURCES src/main.cpp)
