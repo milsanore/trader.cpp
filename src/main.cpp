@@ -1,14 +1,29 @@
 #include <iostream>
 #include <format>
 #include <quickfix/Application.h>
+#include <quickfix/FileLog.h>
+#include <quickfix/FileStore.h>
+#include <quickfix/Session.h>
 #include <quickfix/SessionSettings.h>
+#include <quickfix/SocketAcceptor.h>
+#include "MyApplication.h"
 
 int main() {
-	std::cout << "Hello, world!" << std::endl;
-
-	const char* fixCfgPath = std::getenv("FIX_CONFIG_PATH");
-	std::cout << std::format("FIX_CONFIG_PATH, [{}]", fixCfgPath) <<  std::endl;
-	FIX::SessionSettings settings(fixCfgPath);
-
-	return 0;
+	try {
+		std::cout << "Hello, world!" << std::endl;
+		const char* fixCfgPath = std::getenv("FIX_CONFIG_PATH");
+		std::cout << std::format("FIX_CONFIG_PATH, [{}]", fixCfgPath) <<  std::endl;
+		MyApplication app;
+		FIX::SessionSettings settings(fixCfgPath);
+		FIX::FileStoreFactory storeFactory(settings);
+		FIX::FileLogFactory logFactory(settings);
+		FIX::SocketAcceptor acceptor(app, storeFactory, settings, logFactory);
+		acceptor.start();
+		// while (true) { do something; }
+		acceptor.stop();
+		return 0;
+	} catch (FIX::ConfigError& e) {
+		std::cout << e.what();
+		return 1;
+	}
 }

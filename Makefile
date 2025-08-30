@@ -30,8 +30,7 @@ init:
 .PHONY: build-debug
 build-debug:
 	rm -rf build && mkdir -p build
-	source .venv/bin/activate && \
-		conan install . --build=missing -s build_type=Debug && \
+	source .venv/bin/activate && conan install . --build=missing -s build_type=Debug && \
 		cmake --preset Debug && \
 		cmake --build --preset Debug
 
@@ -39,8 +38,7 @@ build-debug:
 .PHONY: build-release
 build-release:
 	rm -rf build && mkdir -p build
-	source .venv/bin/activate && \
-		conan install . --build=missing -s build_type=Release && \
+	source .venv/bin/activate && conan install . --build=missing -s build_type=Release && \
 		cmake --preset Release && \
 		cmake --build --preset Release
 

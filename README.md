@@ -30,6 +30,7 @@ NB: this app uses `make` as a task runner:
     - fast
     - structured
     - basic schema (severity, correlationId)
+- dependency injection
 - create a FIX connection to Binance
 - subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
