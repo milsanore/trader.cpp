@@ -2,7 +2,8 @@ name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - "*"
   pull_request:
     branches: [ master ]
 
@@ -18,6 +19,7 @@ jobs:
         run: |
           sudo apt update && sudo apt install -y g++
           pip install conan
+          conan profile detect --force
 
       - name: Build
         run: |
@@ -25,5 +27,5 @@ jobs:
           cmake --preset Release && \
           cmake --build --preset Release
 
-      - name: Run
-        run: ./build/Release/tradercpp
+      # - name: Run
+      #   run: ./build/Release/tradercpp

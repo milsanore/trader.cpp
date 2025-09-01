@@ -11,13 +11,10 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - CMake
 - Conan
 
-## BUILD
-NB: this app uses `make` as a task runner
-
-`make build`
-
-## RUN
-`make run`
+## BUILD AND RUN
+NB: this app uses `make` as a task runner:
+1. `make build-debug`
+2. `make withenv RECIPE=run-debug`
 
 ## HELP
 `make`
@@ -28,6 +25,12 @@ NB: this app uses `make` as a task runner
 	- UI can come later (perhaps explore curses)
 - ✅ makefile and build chain
 - ✅ package management
+- ✅ debugging
+- logging
+    - fast
+    - structured
+    - basic schema (severity, correlationId)
+- dependency injection
 - create a FIX connection to Binance
 - subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
@@ -51,3 +54,6 @@ NB: this app uses `make` as a task runner
     - grafana+tempo via docker-compose
 - conventional commits
 - automated semantic versioning
+
+# CREDITS
+- https://github.com/binance/binance-fix-connector-python

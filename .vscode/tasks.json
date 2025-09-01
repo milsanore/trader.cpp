@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "rm -rf build && mkdir -p build && source .venv/bin/activate && conan install . --build=missing -s build_type=Debug && cmake --preset Debug && cmake --build --preset Debug"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Builds the project using Conan and CMake Debug preset"
+    }
+  ]
+}

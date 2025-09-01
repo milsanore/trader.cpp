@@ -1,6 +1,8 @@
 build/
 .venv/
 .idea/
+qf_files/
+qf_logs/
 .env
 
 # TODO: Understand the auto-generation of this file
