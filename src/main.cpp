@@ -11,17 +11,24 @@
 int main() {
 	try {
 		std::cout << "Hello, world!" << std::endl;
+		
+		const char* apiKey 	= std::getenv("API_KEY");
 		const char* fixCfgPath = std::getenv("FIX_CONFIG_PATH");
-		std::cout << std::format("FIX_CONFIG_PATH, [{}]", fixCfgPath) <<  std::endl;
-		MyApplication app;
+		const char* privKeyPath = std::getenv("PRIVATE_KEY_PATH");
+
+		std::cout << std::format("API_KEY, [{}]", apiKey) << std::endl;
+		std::cout << std::format("FIX_CONFIG_PATH, [{}]", fixCfgPath) << std::endl;
+		std::cout << std::format("PRIVATE_KEY_PATH, [{}]", privKeyPath) << std::endl;
+
+		MyApplication app(apiKey, privKeyPath);
 		FIX::SessionSettings settings(fixCfgPath);
 		FIX::FileStoreFactory storeFactory(settings);
 		FIX::FileLogFactory logFactory(settings);
 		FIX::SocketInitiator initiator(app, storeFactory, settings, logFactory);
 		initiator.start();
-		// while (true) { do something; }
+	    std::cout << "Press Enter to quit..." << std::endl;
+		std::cin.get();
 		initiator.stop();
-		return 0;
 	} catch (FIX::ConfigError& e) {
 		std::cout << e.what();
 		return 1;

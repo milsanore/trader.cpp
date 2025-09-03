@@ -14,8 +14,8 @@ FileStorePath=qf_files
 FileLogPath=qf_logs
 UseDataDictionary=Y
 DataDictionary=binance/spot-fix-md.xml
-SocketConnectHost=fix-md.testnet.binance.vision
-SocketConnectPort=9000
+SocketConnectHost=127.0.0.1
+SocketConnectPort=5001
 
 [SESSION]
 BeginString=FIX.4.4

@@ -6,15 +6,16 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 	width="250" />
 
 ## REQUIREMENTS
-- C++
-- Make
-- CMake
+- C++20
 - Conan
+- CMake
+- a local proxy (e.g. stunnel) for TLS encryption
 
 ## BUILD AND RUN
-NB: this app uses `make` as a task runner:
-1. `make build-debug`
-2. `make withenv RECIPE=run-debug`
+(NB: this app uses `make` as a task runner, but it's not essential)
+1. `make init`
+2. `make build-debug`
+3. `make withenv RECIPE=run-debug`
 
 ## HELP
 `make`
@@ -31,7 +32,7 @@ NB: this app uses `make` as a task runner:
     - structured
     - basic schema (severity, correlationId)
 - dependency injection
-- create a FIX connection to Binance
+- ✅ create a FIX connection to Binance
 - subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
 - fire an order
@@ -40,7 +41,7 @@ NB: this app uses `make` as a task runner:
 
 # STANDARDS
 - high unit-test coverage + badge
-- code formatting
+- code formatting / auto-formatter
 - static code analysis
 - configure debugging 
 - git use

@@ -1,9 +1,14 @@
-build/
-.venv/
 .idea/
+.venv/
+.trash/
+
+build/
+binance/keys/
 qf_files/
 qf_logs/
+
 .env
 
 # TODO: Understand the auto-generation of this file
 CMakeUserPresets.json
+

@@ -1,5 +1,7 @@
 [requires]
 quickfix/1.15.1
+libsodium/1.0.20
+openssl/3.5.2
 
 [generators]
 CMakeToolchain

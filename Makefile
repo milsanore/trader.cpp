@@ -19,35 +19,35 @@ withenv:
 	test -e .env || cp .env.example .env
 	bash -c 'set -o allexport; source .env; set +o allexport; make "$$RECIPE"'
 
-## init: 🏎️ initialize the project
+## init: 🏌️ initialize the project, fetch dependencies
 .PHONY: init
 init:
+	rm -rf build && mkdir build
 	python3 -m venv .venv
-	source .venv/bin/activate && pip install conan
-	conan profile detect --force
+	source .venv/bin/activate && \
+		pip install conan && \
+		conan install . --build=missing -s build_type=Debug
+	cmake --preset=conan-debug
 
-## build-debug: 🔨 compile the app
+## build-debug: 🔨 compile (debug)
 .PHONY: build-debug
 build-debug:
-	rm -rf build && mkdir -p build
-	source .venv/bin/activate && conan install . --build=missing -s build_type=Debug && \
-		cmake --preset Debug && \
-		cmake --build --preset Debug
+	cmake --build --preset=conan-debug
 
-## build-release: 🔨 compile the app
+## build-release: 🔨🔨 compile (prod)
 .PHONY: build-release
 build-release:
-	rm -rf build && mkdir -p build
-	source .venv/bin/activate && conan install . --build=missing -s build_type=Release && \
-		cmake --preset Release && \
-		cmake --build --preset Release
+	source .venv/bin/activate && \
+		conan install . --build=missing -s build_type=Release
+	cmake --preset=conan-release
+	cmake --build --preset=conan-release
 
-## run-debug: 💨 run the app
+## run-debug: 🏃‍♂️ run the app (debug) (don't forget withenv)
 .PHONY: run-debug
 run-debug:
 	build/Debug/tradercpp
 
-## run-release: 💨 run the app
+## run-release: 🏎️ run the app (prod)
 .PHONY: run-release
 run-release:
 	build/Release/tradercpp
