@@ -15,6 +15,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache Conan
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}
+          restore-keys: |
+            ${{ runner.os }}-conan-
+      
       - name: Set up build tools
         run: |
           sudo apt update && sudo apt install -y g++
@@ -23,9 +31,6 @@ jobs:
 
       - name: Build
         run: |
-          conan install . --build=missing -s build_type=Release && \
-          cmake --preset Release && \
-          cmake --build --preset Release
-
-      # - name: Run
-      #   run: ./build/Release/tradercpp
+          conan install . --build=missing -s build_type=Release
+          cmake --preset=conan-release
+          cmake --build --preset=conan-release
