@@ -14,13 +14,13 @@ int main() {
 		
 		const char* apiKey 	= std::getenv("API_KEY");
 		const char* fixCfgPath = std::getenv("FIX_CONFIG_PATH");
-		const char* privKeyPath = std::getenv("PRIVATE_KEY_PATH");
+		const char* privatePemPath = std::getenv("PRIVATE_KEY_PATH");
 
 		std::cout << std::format("API_KEY, [{}]", apiKey) << std::endl;
 		std::cout << std::format("FIX_CONFIG_PATH, [{}]", fixCfgPath) << std::endl;
-		std::cout << std::format("PRIVATE_KEY_PATH, [{}]", privKeyPath) << std::endl;
+		std::cout << std::format("PRIVATE_PEM_PATH, [{}]", privatePemPath) << std::endl;
 
-		MyApplication app(apiKey, privKeyPath);
+		MyApplication app(apiKey, privatePemPath);
 		FIX::SessionSettings settings(fixCfgPath);
 		FIX::FileStoreFactory storeFactory(settings);
 		FIX::FileLogFactory logFactory(settings);

@@ -4,11 +4,10 @@
 #include <quickfix/Application.h>
 #include <quickfix/SessionID.h>
 #include <quickfix/MessageCracker.h>
-#include <openssl/evp.h>
 
-class MyApplication : public FIX::Application, public FIX::MessageCracker {
+class MyApplication final : public FIX::Application, public FIX::MessageCracker {
 public:
-	MyApplication(const std::string& apiKey, const std::string& privKeyPath);
+	MyApplication(std::string apiKey, std::string privatePemPath);
 	~MyApplication() override = default;
 	void onCreate(const FIX::SessionID&) override;
 	void onLogon(const FIX::SessionID&) override;
@@ -19,14 +18,21 @@ public:
 	void fromApp(const FIX::Message&, const FIX::SessionID&) noexcept(false) override;
 
 private:
-	// Load private key
-	// Load an Ed25519 private key from a PEM file (using OpenSSL) and extract raw 32-byte seed
-	std::vector<unsigned char> loadPrivateKey(const std::string& pemPath);
-	// Sign a message using private key
-	// Expand key to a 64-byte secret key (using libsodium), sign a payload, output base64 signature
-	std::string signPayload(const std::string& payload, const std::vector<unsigned char>& key);
+	/// Fetch a 32-byte Ed25519 seed from a private key PEM file (using OpenSSL)
+	///
+	/// @param pemPath path to a private-key PEM file
+	/// @return 32-byte Ed25519 seed
+	static std::vector<unsigned char> getSeedFromPem(const std::string& pemPath);
 
-	std::string apiKey_, privKeyPath_;
+	/// Generate a payload signature using a private key.
+	/// Expand the key to a 64-byte secret key (using libsodium), sign a payload, output base64 signature.
+	///
+	/// @param payload payload to be signed
+	/// @param seed a 32-byte Ed25519 seed
+	/// @return base64 payload signature
+	static std::string signPayload(const std::string& payload, const std::vector<unsigned char>& seed);
+
+	std::string apiKey_, privatePemPath_;
 };
 
 #endif  // MYAPPLICATION_H
