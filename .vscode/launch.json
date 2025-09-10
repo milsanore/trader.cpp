@@ -11,7 +11,7 @@
 			"program": "${workspaceFolder}/build/Debug/tradercpp",
 			"args": [],
 			"stopAtEntry": false,
-			"cwd": "${fileDirname}",
+			"cwd": "${workspaceFolder}",
 			"environment": [],
 			"envFile": "${workspaceFolder}/.env",
 			"externalConsole": false,
@@ -28,7 +28,7 @@
 					"ignoreFailures": true
 				}
 			],
-			// "preLaunchTask": "build",
+			"preLaunchTask": "build",
       		"miDebuggerPath": "/usr/bin/gdb"
 		}
 	]
