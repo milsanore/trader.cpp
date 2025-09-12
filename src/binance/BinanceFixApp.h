@@ -1,15 +1,16 @@
-#ifndef MYAPPLICATION_H
-#define MYAPPLICATION_H
+#ifndef BINANCEFIXAPP_H
+#define BINANCEFIXAPP_H
 
 #include <quickfix/Application.h>
 #include <quickfix/SessionID.h>
 #include <quickfix/MessageCracker.h>
 #include <map>
 
-class MyApplication final : public FIX::Application, public FIX::MessageCracker {
+/// @brief Manages FIX connectivity to Binance
+class BinanceFixApp final : public FIX::Application, public FIX::MessageCracker {
 public:
-	MyApplication(std::string apiKey, std::string privatePemPath);
-	~MyApplication() override = default;
+	BinanceFixApp(std::string apiKey, std::string privatePemPath);
+	~BinanceFixApp() override = default;
 	void subscribeToDepth(const FIX::SessionID& sessionId);
 	/// @brief print top ten order book levels
 	void printBook();
@@ -26,9 +27,10 @@ private:
 	void toApp(FIX::Message&, const FIX::SessionID&) noexcept(false) override;
 	void fromAdmin(const FIX::Message&, const FIX::SessionID&) noexcept(false) override;
 	void fromApp(const FIX::Message&, const FIX::SessionID&) noexcept(false) override;
+	
 	// Callbacks for specific message types / MessageCracker overloads
 	void onMessage(const FIX44::MarketDataSnapshotFullRefresh &, const FIX::SessionID &) override;
 	void onMessage(const FIX44::MarketDataIncrementalRefresh &, const FIX::SessionID &) override;
 };
 
-#endif  // MYAPPLICATION_H
+#endif  // BINANCEFIXAPP_H

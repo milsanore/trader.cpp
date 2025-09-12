@@ -7,16 +7,13 @@
 #include <map>
 #include <ranges>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
+#include "BinanceAuth.h"
+#include "BinanceFixApp.h"
 #include <sodium.h>
-#include <sodium/core.h>
-#include <sodium/crypto_sign.h>
-#include <sodium/utils.h>
-#include <openssl/pem.h>
-#include <openssl/evp.h>
-#include "MyApplication.h"
 #include <quickfix/FixValues.h>
 #include <quickfix/fix44/MarketDataRequest.h>
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
@@ -41,68 +38,17 @@ std::string toString(const MessageHandlingMode m) {
 	}
 }
 
-/// Fetch a 32-byte Ed25519 seed from a private key PEM file (using OpenSSL)
-///
-/// @param pemPath path to a private-key PEM file
-/// @return 32-byte Ed25519 seed
-static std::vector<unsigned char> getSeedFromPem(const std::string& pemPath) {
-	FILE* fp = fopen(pemPath.c_str(), "r");
-	if (!fp) throw std::runtime_error("Failed to open PEM file");
-	EVP_PKEY* pkey = PEM_read_PrivateKey(fp, nullptr, nullptr, nullptr);
-	fclose(fp);
-	if (!pkey) throw std::runtime_error("Failed to read private key from PEM");
-
-	size_t len = 32; // Ed25519 private key seed size
-	std::vector<unsigned char> seed(len);
-	if (EVP_PKEY_get_raw_private_key(pkey, seed.data(), &len) != 1)
-		throw std::runtime_error("Failed to get raw private key");
-	if (len != 32)
-		throw std::runtime_error("Unexpected private key length");
-
-	EVP_PKEY_free(pkey);
-	return seed;
-}
-
-/// Generate a payload signature using a private key.
-/// Expand the key to a 64-byte secret key (using libsodium), sign a payload, output base64 signature.
-///
-/// @param payload payload to be signed
-/// @param seed a 32-byte Ed25519 seed
-/// @return base64 payload signature
-static std::string signPayload(const std::string& payload, const std::vector<unsigned char>& seed) {
-	unsigned char pk[crypto_sign_PUBLICKEYBYTES];
-	unsigned char sk[crypto_sign_SECRETKEYBYTES]; // 64 bytes
-
-	// Generate keypair from seed
-	if (crypto_sign_seed_keypair(pk, sk, seed.data()) != 0)
-		throw std::runtime_error("Failed to generate keypair from seed");
-
-	unsigned char sig[crypto_sign_BYTES];
-	if (crypto_sign_detached(sig,
-													nullptr,
-													reinterpret_cast<const unsigned char*>(payload.data()),
-													payload.size(),
-													sk) != 0)
-		throw std::runtime_error("Failed to sign payload");
-
-	// Base64 encode signature
-	char b64[crypto_sign_BYTES * 2];
-	sodium_bin2base64(b64, sizeof(b64), sig, sizeof(sig), sodium_base64_VARIANT_ORIGINAL_NO_PADDING);
-
-	return b64;
-}
-
-void MyApplication::onCreate(const FIX::SessionID& sessionId) {
+void BinanceFixApp::onCreate(const FIX::SessionID& sessionId) {
 	std::cout << std::format("Session created, id [{}]", sessionId.toString()) << std::endl;
 };
-void MyApplication::onLogon(const FIX::SessionID& sessionId) {
+void BinanceFixApp::onLogon(const FIX::SessionID& sessionId) {
 	std::cout << std::format("Session logon, id [{}]", sessionId.toString()) << std::endl;
 	subscribeToDepth(sessionId);
 };
-void MyApplication::onLogout(const FIX::SessionID& sessionId) {
+void BinanceFixApp::onLogout(const FIX::SessionID& sessionId) {
 	std::cout << std::format("Session logout, id [{}]", sessionId.toString()) << std::endl;
 };
-void MyApplication::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
+void BinanceFixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
 	const FIX::Header& header = msg.getHeader();
 	FIX::MsgType msgType;
 	header.getField(msgType);
@@ -118,12 +64,12 @@ void MyApplication::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) 
 
 		// construct payload for signing
 		const std::string payload = std::string("A")
-																+ '\x01' + sender
-																+ '\x01' + target
-																+ '\x01' + seqNum
-																+ '\x01' + FIX::UtcTimeStampConvertor::convert(sendingTime);
-		const std::vector<unsigned char> seed = getSeedFromPem(privatePemPath_);
-		const std::string signature = signPayload(payload, seed);
+									+ '\x01' + sender
+									+ '\x01' + target
+									+ '\x01' + seqNum
+									+ '\x01' + FIX::UtcTimeStampConvertor::convert(sendingTime);
+		const std::vector<unsigned char> seed = BinanceAuth::getSeedFromPem(privatePemPath_);
+		const std::string signature = BinanceAuth::signPayload(payload, seed);
 		assert(signature.size() <= INT_MAX);
 
 		// assemble message
@@ -134,25 +80,25 @@ void MyApplication::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) 
 		msg.setField(FIX::StringField(25035, toString(MessageHandlingMode::Sequential)));
 	}
 };
-void MyApplication::toApp(FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
+void BinanceFixApp::toApp(FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
 	const FIX::Header& header = msg.getHeader();
 	FIX::MsgType msgType;
 	header.getField(msgType);
 	std::cout << std::format("toApp, session Id [{}], type [{}], message [{}]", sessionId.toString(), msgType.getString(), msg.toString()) << std::endl;
 };
-void MyApplication::fromAdmin(const FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
+void BinanceFixApp::fromAdmin(const FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
 	const FIX::Header& header = msg.getHeader();
 	FIX::MsgType msgType;
 	header.getField(msgType);
 	std::cout << std::format("fromAdmin, session Id [{}], type [{}], message [{}]", sessionId.toString(), msgType.getString(), msg.toString()) << std::endl;
 };
-void MyApplication::fromApp(const FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
+void BinanceFixApp::fromApp(const FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
 	FIX::MessageCracker::crack(msg, sessionId);
 	// std::cout << std::format("fromApp, session Id [{}], message [{}]", sessionId.toString(), msg.toString()) << std::endl;
 }
 
 
-void MyApplication::printBook() {
+void BinanceFixApp::printBook() {
 	// Column headers
 	std::cout << std::left
 			<< std::setw(10) << "BID_SZ"
@@ -197,7 +143,7 @@ void MyApplication::printBook() {
 
 	std::cout << std::flush;
 }
-void MyApplication::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m, const FIX::SessionID& sessionID) {
+void BinanceFixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m, const FIX::SessionID& sessionID) {
 	FIX::Symbol symbol;
 	m.get(symbol);
 	std::cout << std::format("MD snapshot message, symbol [{}]", symbol.getString()) << std::endl;
@@ -232,7 +178,7 @@ void MyApplication::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m, con
 
 	printBook();
 }
-void MyApplication::onMessage(const FIX44::MarketDataIncrementalRefresh& message, const FIX::SessionID& sessionID) {
+void BinanceFixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& message, const FIX::SessionID& sessionID) {
 	FIX::NoMDEntries noMDEntries;
 	message.get(noMDEntries);
 	int numEntries = noMDEntries.getValue();
@@ -289,7 +235,7 @@ void MyApplication::onMessage(const FIX44::MarketDataIncrementalRefresh& message
 
 // PUBLIC
 
-MyApplication::MyApplication(std::string apiKey, std::string privatePemPath) : bidMap_{}, offerMap_{} {
+BinanceFixApp::BinanceFixApp(std::string apiKey, std::string privatePemPath) : bidMap_{}, offerMap_{} {
 	this->apiKey_ = std::move(apiKey);
 	this->privatePemPath_ = std::move(privatePemPath);
 
@@ -297,7 +243,7 @@ MyApplication::MyApplication(std::string apiKey, std::string privatePemPath) : b
 		throw std::runtime_error("libsodium failed to initialize");
 }
 
-void MyApplication::subscribeToDepth(const FIX::SessionID& sessionId) {
+void BinanceFixApp::subscribeToDepth(const FIX::SessionID& sessionId) {
 	std::cout << std::format("Subscribe to depth") << std::endl;
 
 	FIX44::MarketDataRequest marketDataRequest;
