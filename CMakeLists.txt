@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
 # Define the source files
-file(GLOB SOURCES src/*.cpp)
+file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 # Create the executable
 add_executable(tradercpp ${SOURCES})
@@ -19,14 +19,18 @@ if(_found_toolchain)
 endif()
 
 # Find packages from Conan
-find_package(libsodium REQUIRED)
+find_package(concurrentqueue REQUIRED)
+find_package(ftxui REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(quickfix REQUIRED CONFIG)
+find_package(libsodium REQUIRED)
 
 # Link them to the executable
 target_link_libraries(tradercpp PRIVATE
-    libsodium::libsodium
+    concurrentqueue::concurrentqueue
+    ftxui::ftxui
     OpenSSL::SSL
     OpenSSL::Crypto
     quickfix::quickfix
+    libsodium::libsodium
 )

@@ -22,26 +22,40 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 
 
 # AIM
+
+## FUNCTIONAL
+- ✅ create a FIX connection to Binance
+- ✅ subscribe to price updates
+- create a basic trading signal (e.g. standard deviations)
+- fire an order
+- test in the Binance test enviroment
+
+
+## NON-FUNCTIONAL
 - ✅ basic cpp app to start with
-	- UI can come later (perhaps explore curses)
 - ✅ makefile and build chain
 - ✅ package management
 - ✅ debugging
+- UI can come later (perhaps explore curses)
 - logging
     - fast
     - structured
     - basic schema (severity, correlationId)
 - dependency injection
-- ✅ create a FIX connection to Binance
-- subscribe to price updates
-- create a basic trading signal (e.g. standard deviations)
-- fire an order
-- test in the Binance test enviroment
 - single-threaded to start with, then re-architect (and mermaid diagram)
+- demo video (https://asciinema.org)
+- nix virtual environment
+- decimal type
+- sparse arrays
+- release binaries on github
+- ccache.dev
+- zeromq + protobufs?
+- interrupt/ctrl+c signal
 
 # STANDARDS
 - high unit-test coverage + badge
 - code formatting / auto-formatter
+  - clang?
 - static code analysis
 - configure debugging 
 - git use
