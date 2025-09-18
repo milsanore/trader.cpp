@@ -24,6 +24,7 @@ find_package(ftxui REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(quickfix REQUIRED CONFIG)
 find_package(libsodium REQUIRED)
+find_package(spdlog REQUIRED)
 
 # Link them to the executable
 target_link_libraries(tradercpp PRIVATE
@@ -33,4 +34,5 @@ target_link_libraries(tradercpp PRIVATE
     OpenSSL::Crypto
     quickfix::quickfix
     libsodium::libsodium
+    spdlog::spdlog
 )

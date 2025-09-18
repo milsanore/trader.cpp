@@ -18,13 +18,15 @@ public:
         std::unique_ptr<FIX::SessionSettings> settings,
         std::unique_ptr<FIX::FileLogFactory> fileLogFactory);
 	~Init();
+    /// @brief generate concrete Binance instance from config
+    /// @param conf binance configuration parameters
+    /// @return 
     static Init fromConf(Config& conf);
     void start();
     void stop();
     std::unique_ptr<FixApp> app;
 
 private:
-    // TODO: rename
     std::unique_ptr<FIX::FileStoreFactory> store_;
     std::unique_ptr<FIX::SessionSettings> settings_;
     std::unique_ptr<FIX::FileLogFactory> log_;

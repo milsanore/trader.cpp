@@ -7,16 +7,23 @@
 #include "binance/Config.h"
 #include "binance/Init.h"
 #include "ui/TableApp.h"
+#include "spdlog/cfg/env.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"
 
 int main() {
-    std::cout << std::format("hello") << std::endl;
+    spdlog::cfg::load_env_levels("LOG_LEVEL");
+    auto logger = spdlog::basic_logger_mt("basic_logger", "logs/log");
+    spdlog::set_default_logger(logger);
+
+    spdlog::info("hello");
 
     // BINANCE MARKET DATA GENERATOR
     auto bConf = Binance::Config::fromEnv();
 	auto binance = Binance::Init::fromConf(bConf);
     binance.start();
 
-    // UI APP
+    // UI APP (READS FROM QUEUE)
     UI::TableApp app = UI::TableApp(binance.app->queue);
     app.start();
 
@@ -24,5 +31,5 @@ int main() {
         std::rethrow_exception(app.thread_exception);
     }
     binance.stop();
-    std::cout << std::format("goodbye") << std::endl;
+    spdlog::info("goodbye");
 }

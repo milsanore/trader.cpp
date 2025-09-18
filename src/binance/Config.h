@@ -2,6 +2,7 @@
 #define BINANCECONFIG_H
 
 #include <string>
+#include <vector>
 
 namespace Binance {
 
@@ -9,6 +10,8 @@ namespace Binance {
 struct Config{
 public:
     const std::string apiKey, privateKeyPath, fixConfigPath;
+    const std::vector<std::string> symbols;
+    //
     static Config fromEnv();
 };
 

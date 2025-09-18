@@ -15,6 +15,7 @@
 #include <quickfix/fix44/MarketDataRequest.h>
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
+#include "spdlog/spdlog.h"
 
 namespace Binance {
 
@@ -45,24 +46,26 @@ std::string replaceSoh(const std::string& input) {
 }
 
 void FixApp::onCreate(const FIX::SessionID& sessionId) {
-	std::cout << std::format("Session created, id [{}]", sessionId.toString()) << std::endl;
+    spdlog::info(std::format("Session created, id [{}]", sessionId.toString()));
 };
 void FixApp::onLogon(const FIX::SessionID& sessionId) {
-	std::cout << std::format("Session logon, id [{}]", sessionId.toString()) << std::endl;
+    spdlog::info(std::format("Session logon, id [{}]", sessionId.toString()));
+
 	subscribeToDepth(sessionId);
 };
 void FixApp::onLogout(const FIX::SessionID& sessionId) {
-	std::cout << std::format("Session logout, id [{}]", sessionId.toString()) << std::endl;
+    spdlog::info(std::format("Session logout, id [{}]", sessionId.toString()));
+
 };
 void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
 	const FIX::Header& header = msg.getHeader();
 	FIX::MsgType msgType;
 	header.getField(msgType);
-	std::cout << std::format("toAdmin, session Id [{}], type [{}], message [{}]",
-		sessionId.toString(), msgType.getString(), replaceSoh(msg.toString())) << std::endl;
+    spdlog::info(std::format("toAdmin, session Id [{}], type [{}], message [{}]",
+		sessionId.toString(), msgType.getString(), replaceSoh(msg.toString())));
 	
 	if (msgType == FIX::MsgType_Logon) {
-		std::cout << std::format("authenticating") << std::endl;
+    	spdlog::info(std::format("authenticating"));
 		
 		// collect required fields
 		const std::string sender = header.getField(FIX::FIELD::SenderCompID);
@@ -92,20 +95,20 @@ void FixApp::toApp(FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(
 	const FIX::Header& header = msg.getHeader();
 	FIX::MsgType msgType;
 	header.getField(msgType);
-	// std::cout << std::format("toApp, session Id [{}], type [{}], message [{}]",
-	// 	sessionId.toString(), msgType.getString(), replaceSoh(msg.toString())) << std::endl;
+    spdlog::debug(std::format("toApp, session Id [{}], type [{}], message [{}]",
+		sessionId.toString(), msgType.getString(), replaceSoh(msg.toString())));
 };
 void FixApp::fromAdmin(const FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
 	const FIX::Header& header = msg.getHeader();
 	FIX::MsgType msgType;
 	header.getField(msgType);
-	// std::cout << std::format("fromAdmin, session Id [{}], type [{}], message [{}]",
-	// 	sessionId.toString(), msgType.getString(), replaceSoh(msg.toString())) << std::endl;
+    spdlog::debug(std::format("fromAdmin, session Id [{}], type [{}], message [{}]",
+		sessionId.toString(), msgType.getString(), replaceSoh(msg.toString())));
 };
 void FixApp::fromApp(const FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
 	FIX::MessageCracker::crack(msg, sessionId);
-	// std::cout << std::format("fromApp, session Id [{}], message [{}]",
-	// 	sessionId.toString(), replaceSoh(msg.toString())) << std::endl;
+    spdlog::trace(std::format("fromApp, session Id [{}], message [{}]",
+		sessionId.toString(), replaceSoh(msg.toString())));
 }
 
 void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m, const FIX::SessionID& sessionID) {
@@ -120,17 +123,16 @@ void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m, const FIX::
 
 // PUBLIC
 
-FixApp::FixApp(std::string apiKey, std::string privatePemPath) {
-	apiKey_ = std::move(apiKey);
-	privatePemPath_ = std::move(privatePemPath);
-
+FixApp::FixApp(const std::string& apiKey, const std::string& privatePemPath, const std::vector<std::string>& instruments) :
+	// TODO: should I use references here?
+	apiKey_(apiKey), privatePemPath_(privatePemPath), symbols_(instruments)
+{
 	if (sodium_init() < 0)
 		throw std::runtime_error("libsodium failed to initialize");
 }
 
 void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) {
-	std::cout << std::format("Subscribe to depth") << std::endl;
-
+    spdlog::debug(std::format("Subscribe to depth"));
 	FIX44::MarketDataRequest marketDataRequest;
 
 	// Generate a unique request ID for this session's request
@@ -142,7 +144,8 @@ void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) {
 		FIX::SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES));
 
 	// Set market depth
-	marketDataRequest.set(FIX::MarketDepth(15)); // 1 = Top of book
+	constexpr int BINANCE_MAX_DEPTH = 5000;
+	marketDataRequest.set(FIX::MarketDepth(BINANCE_MAX_DEPTH));
 
 	// Create NoMDEntryTypes group for requesting BID and OFFER
 	FIX44::MarketDataRequest::NoMDEntryTypes entryTypeGroup;
@@ -153,10 +156,12 @@ void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) {
 	entryTypeGroup.set(FIX::MDEntryType(FIX::MDEntryType_OFFER));
 	marketDataRequest.addGroup(entryTypeGroup);
 
-	// Add symbol
-	FIX44::MarketDataRequest::NoRelatedSym symbolGroup;
-	symbolGroup.set(FIX::Symbol("BTCUSDT"));
-	marketDataRequest.addGroup(symbolGroup);
+	// Add symbols
+	for (const auto& instrument : symbols_) {
+		FIX44::MarketDataRequest::NoRelatedSym symbolGroup;
+		symbolGroup.set(FIX::Symbol(instrument));
+		marketDataRequest.addGroup(symbolGroup);
+	}
 
 	// Send the request to the corresponding market data session
 	FIX::Session::sendToTarget(marketDataRequest, sessionId);

@@ -8,6 +8,7 @@
 #include "Init.h"
 #include "FixApp.h"
 #include "Config.h"
+#include "spdlog/spdlog.h"
 
 namespace Binance {
 
@@ -23,7 +24,7 @@ Init::Init(std::unique_ptr<FixApp> fixApp,
 
 // static member function
 Init Init::fromConf(Config& conf) {
-    auto app            = std::make_unique<FixApp>(conf.apiKey, conf.privateKeyPath);
+    auto app            = std::make_unique<FixApp>(conf.apiKey, conf.privateKeyPath, conf.symbols);
     auto settings       = std::make_unique<FIX::SessionSettings>(conf.fixConfigPath);
     auto storeFactory   = std::make_unique<FIX::FileStoreFactory>(*settings);
     auto logFactory     = std::make_unique<FIX::FileLogFactory>(*settings);
@@ -39,20 +40,20 @@ Init Init::fromConf(Config& conf) {
 
 void Init::start() {
     initiator_.start();
-    std::cout << "started FIX session" << std::endl;
+    spdlog::info("started FIX session");
 }
 
 void Init::stop() {
     try {
         initiator_.stop(); // TODO: does this need a try/catch?
-        std::cout << "stopped FIX session" << std::endl;
+        spdlog::info("stopped FIX session");
     } catch (...) {
-        std::cout << "error closing binance FIX session" << std::endl;
+        // TODO: log error
+        spdlog::error("error closing binance FIX session");
     }
 }
 
-Init::~Init()
-{
+Init::~Init() {
     initiator_.stop();
 }
 

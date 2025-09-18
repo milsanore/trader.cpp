@@ -6,6 +6,7 @@ build/
 binance/keys/
 qf_files/
 qf_logs/
+logs/
 
 .env
 .env.*

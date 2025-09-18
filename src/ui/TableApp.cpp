@@ -16,6 +16,7 @@
 #include <ftxui/dom/elements.hpp>
 #include "TableApp.h"
 #include "BidAsk.h"
+#include "spdlog/spdlog.h"
 
 namespace UI {
 
@@ -149,15 +150,14 @@ void TableApp::startUpdater(std::stop_token stoken) {
                 screen_.PostEvent(ftxui::Event::Custom); // Trigger re-render
 			}
 			else {
-				std::cout << "Unknown message type" << std::endl;
+				spdlog::error("unknown message type");
 			}
 
 			// Reset backoff state
 			spinCount = 0;
 			sleepTimeUs = 10;
 		}
-		// TODO: replace with a synchronized logging library
-		std::cout << "Closing worker thread..." << std::endl;
+		spdlog::info("closing worker thread...");
 	}
 	catch (...) {
 		thread_exception = std::current_exception();
@@ -167,10 +167,11 @@ void TableApp::startUpdater(std::stop_token stoken) {
 void TableApp::OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) {
 	FIX::Symbol symbol;
 	msg.get(symbol);
-	// std::cout << std::format("MD snapshot message, symbol [{}]", symbol.getString()) << std::endl;
+	spdlog::debug(std::format("MD snapshot message, symbol [{}]", symbol.getString()));
+
 	std::string symbolValue = symbol.getValue();
 	if (symbolValue != "BTCUSDT") {
-		std::cout << std::format("wrong symbol, skipping snapshot. value [{}]", symbolValue) << std::endl;
+		spdlog::debug(std::format("wrong symbol, skipping snapshot. value [{}]", symbolValue));
 		return;
 	}
 	bidMap_.clear();
@@ -192,7 +193,7 @@ void TableApp::OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) {
 		} else if (entryType == FIX::MDEntryType_OFFER) {
 			askMap_[px.getValue()] = sz.getValue();
 		} else {
-			std::cout << std::format("unknown bid/offer type [{}]", entryType.getString()) << std::endl;
+			spdlog::error(std::format("unknown bid/offer type [{}]", entryType.getString()));
 		}
 	}
 }
@@ -210,7 +211,7 @@ void TableApp::OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg) {
 		}
 		std::string symbolValue = symbol.getValue();
 		if (symbolValue != "BTCUSDT") {
-			// std::cout << std::format("wrong symbol, skipping increment. value [{}]", symbolValue) << std::endl;
+			spdlog::info(std::format("wrong symbol, skipping increment. value [{}]", symbolValue));
 			continue;
 		}
 
@@ -222,12 +223,12 @@ void TableApp::OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg) {
 		group.get(px);
 		
 		if (entryType != FIX::MDEntryType_BID && entryType != FIX::MDEntryType_OFFER) {
-			std::cout << std::format("unknown entry type, skipping. value [{}]", entryType.getString()) << std::endl;
+			spdlog::error(std::format("unknown entry type, skipping. value [{}]", entryType.getString()));
 			continue;
 		}
 
 		if (action.getValue() == FIX::MDUpdateAction_NEW || action.getValue() == FIX::MDUpdateAction_CHANGE) {
-			// std::cout << std::format("price upsert") << std::endl;
+			spdlog::debug(std::format("price upsert"));
 
 			if (group.isSetField(FIX::FIELD::MDEntrySize)) {
 				FIX::MDEntrySize sz;
@@ -239,14 +240,15 @@ void TableApp::OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg) {
 				}
 			}
 		} else if (action.getValue() == FIX::MDUpdateAction_DELETE) {
-			// std::cout << std::format("price delete") << std::endl;
+			spdlog::debug(std::format("price delete"));
+
 			if (entryType == FIX::MDEntryType_BID) {
 				bidMap_.erase(px.getValue());
 			} else if (entryType == FIX::MDEntryType_OFFER) {
 				askMap_.erase(px.getValue());
 			}
 		} else {
-			std::cout << std::format("unknown price action. value [{}]", action.getValue()) << std::endl;
+			spdlog::error(std::format("unknown price action. value [{}]", action.getValue()));
 		}
 	}
 }

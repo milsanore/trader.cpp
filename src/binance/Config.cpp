@@ -1,29 +1,45 @@
 #include <format>
 #include <iostream>
+#include <ranges>
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include "Config.h"
+#include "spdlog/spdlog.h"
 
 namespace Binance {
 
-// static member function
+/// @brief load a variable from the environment, if it's not available, panic
+/// @param key the name of the environment variable
+/// @return env var string
+std::string getEnvOrThrow(const char* key) {
+    if (const char* val = std::getenv(key)) {
+        spdlog::info(std::format("fetched environment variable, key [{}], value [{}]", key, val));
+        return std::string(val);
+    }
+    throw std::runtime_error(std::format("envvar not defined, key [{}]", key));
+};
+
+/// @brief load Binance configuration from env
+/// (static member function)
+/// @return Config object 
 Config Config::fromEnv() {
-    auto getEnvOrThrow = [](const char* key) -> std::string {
-        if (const char* val = std::getenv(key)) {
-            std::cout << std::format("fetched environment variable, key [{}], value [{}]", key, val) << std::endl;
-            return std::string(val);
-        }
-        throw std::runtime_error(std::format("envvar not defined, key [{}]", key));
-    };
+    const std::string apiKey      = getEnvOrThrow("API_KEY");
+    const std::string privateKey  = getEnvOrThrow("PRIVATE_KEY_PATH");
+    const std::string fixConfig   = getEnvOrThrow("FIX_CONFIG_PATH");
+    const std::string instStr     = getEnvOrThrow("SYMBOLS");
+    std::vector<std::string> symbols;
+    for (auto inst : std::views::split(instStr, ',')) {
+        if (inst.size() > 0)
+            symbols.emplace_back(inst.begin(), inst.end());
+    }
 
-    std::string apiKey      = getEnvOrThrow("API_KEY");
-    std::string privateKey  = getEnvOrThrow("PRIVATE_KEY_PATH");
-    std::string fixConfig   = getEnvOrThrow("FIX_CONFIG_PATH");
-
+    // copy
     return Config{
         apiKey,
         privateKey,
-        fixConfig
+        fixConfig,
+        symbols
     };
 };
 
