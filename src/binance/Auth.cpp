@@ -17,6 +17,7 @@
 
 namespace Binance {
 
+// static member function
 std::vector<unsigned char> Auth::getSeedFromPem(const std::string& pemPath) {
 	FILE* fp = fopen(pemPath.c_str(), "r");
 	if (!fp) throw std::runtime_error("Failed to open PEM file");
@@ -35,6 +36,7 @@ std::vector<unsigned char> Auth::getSeedFromPem(const std::string& pemPath) {
 	return seed;
 }
 
+// static member function
 std::string Auth::signPayload(const std::string& payload, const std::vector<unsigned char>& seed) {
 	unsigned char pk[crypto_sign_PUBLICKEYBYTES];
 	unsigned char sk[crypto_sign_SECRETKEYBYTES]; // 64 bytes

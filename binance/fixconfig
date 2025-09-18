@@ -10,12 +10,15 @@ ResetSeqNumFlag=Y
 EncryptMethod=0
 CheckLatency=N
 ORDER_TIMEOUT=30000
-FileStorePath=qf_files
-FileLogPath=qf_logs
 UseDataDictionary=Y
 DataDictionary=binance/spot-fix-md.xml
 SocketConnectHost=127.0.0.1
 SocketConnectPort=5001
+FileStorePath=qf_files
+FileLogPath=qf_logs
+FileLogHeartbeats=Y
+FileLogMessages=Y
+FileLogEvent=Y
 
 [SESSION]
 BeginString=FIX.4.4

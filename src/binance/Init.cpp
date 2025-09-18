@@ -15,18 +15,22 @@ Init::Init(std::unique_ptr<FixApp> fixApp,
             std::unique_ptr<FIX::FileStoreFactory> fileStoreFactory,
             std::unique_ptr<FIX::SessionSettings> settings,
             std::unique_ptr<FIX::FileLogFactory> fileLogFactory)
-    : app_(std::move(fixApp)),
+    : app(std::move(fixApp)),
         store_(std::move(fileStoreFactory)),
         settings_(std::move(settings)),
         log_(std::move(fileLogFactory)),
-        initiator_(*app_, *store_, *settings_, *log_) {}
+        initiator_(*app, *store_, *settings_, *log_) {}
 
+// static member function
 Init Init::fromConf(Config& conf) {
     auto app            = std::make_unique<FixApp>(conf.apiKey, conf.privateKeyPath);
     auto settings       = std::make_unique<FIX::SessionSettings>(conf.fixConfigPath);
     auto storeFactory   = std::make_unique<FIX::FileStoreFactory>(*settings);
     auto logFactory     = std::make_unique<FIX::FileLogFactory>(*settings);
 
+    // hand over object ownership to the instance being created (by the static function)
+
+    // TODO: is this being moved twice, because of the std::move() calls in the initializer list?
     return {std::move(app),
             std::move(storeFactory),
             std::move(settings),

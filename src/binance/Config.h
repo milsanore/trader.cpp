@@ -8,10 +8,7 @@ namespace Binance {
 /// @brief Binance config parameters, fetched from env
 struct Config{
 public:
-    const std::string apiKey;
-    const std::string privateKeyPath;
-    const std::string fixConfigPath;
-
+    const std::string apiKey, privateKeyPath, fixConfigPath;
     static Config fromEnv();
 };
 

@@ -3,8 +3,9 @@
 
 #include <quickfix/Application.h>
 #include <quickfix/SessionID.h>
+#include <quickfix/fix44/Message.h>
 #include <quickfix/MessageCracker.h>
-#include <map>
+#include "concurrentqueue.h"
 
 namespace Binance {
 
@@ -14,14 +15,15 @@ public:
 	FixApp(std::string apiKey, std::string privatePemPath);
 	~FixApp() override = default;
 	void subscribeToDepth(const FIX::SessionID& sessionId);
-	/// @brief print top ten order book levels
-	void printBook();
+
+	// TODO: performance implication of a polymorphic queue
+	// TODO: perhaps better to run two queues, or something else
+	// TODO: we will have one of these per instrument
+	moodycamel::ConcurrentQueue<std::shared_ptr<FIX44::Message>> queue;
 
 private:
 	// TODO: no need to persist access tokens for lifetime of app
 	std::string apiKey_, privatePemPath_;
-	std::map<double, double> bidMap_;
-	std::map<double, double> offerMap_;
 
 	void onCreate(const FIX::SessionID&) override;
 	void onLogon(const FIX::SessionID&) override;

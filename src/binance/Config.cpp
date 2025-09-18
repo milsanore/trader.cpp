@@ -6,6 +6,7 @@
 
 namespace Binance {
 
+// static member function
 Config Config::fromEnv() {
     auto getEnvOrThrow = [](const char* key) -> std::string {
         if (const char* val = std::getenv(key)) {
