@@ -11,7 +11,6 @@ int main() {
     spdlog::cfg::load_env_levels("LOG_LEVEL");
     const auto logger = spdlog::basic_logger_mt("basic_logger", "logs/log");
     spdlog::set_default_logger(logger);
-
     spdlog::info("hello");
 
     // BINANCE MARKET DATA GENERATOR

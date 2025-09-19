@@ -1,6 +1,7 @@
 #ifndef BINANCEWORKER_H
 #define BINANCEWORKER_H
 
+#include <thread>
 #include <quickfix/FileLog.h>
 #include <quickfix/FileStore.h>
 #include <quickfix/SessionSettings.h>
@@ -22,11 +23,16 @@ public:
     /// @param conf binance configuration parameters
     /// @return 
     static Worker fromConf(Config& conf);
+    /// @brief start worker thread, connect to Binance, subscribe to updates, push updates onto queue
+    /// under the hood, the {FixApp} is actioned
     void start();
     void stop();
     std::unique_ptr<FixApp> app;
 
 private:
+    // worker thread
+    std::jthread worker_;
+    // FIX
     std::unique_ptr<FIX::FileStoreFactory> store_;
     std::unique_ptr<FIX::SessionSettings> settings_;
     std::unique_ptr<FIX::FileLogFactory> log_;

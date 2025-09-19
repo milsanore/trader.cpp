@@ -30,7 +30,6 @@ Worker Worker::fromConf(Config& conf) {
     auto logFactory     = std::make_unique<FIX::FileLogFactory>(*settings);
 
     // hand over object ownership to the instance being created (by the static function)
-
     // TODO: is this being moved twice, because of the std::move() calls in the initializer list?
     return {std::move(app),
             std::move(storeFactory),
@@ -39,22 +38,40 @@ Worker Worker::fromConf(Config& conf) {
 }
 
 void Worker::start() {
-    initiator_.start();
-    spdlog::info("started FIX session");
+    // start worker thread
+    try {
+        std::jthread updater_([this](std::stop_token stoken) {
+            initiator_.start();
+            spdlog::info("started FIX session");
+        });
+    } catch (const std::exception& e) {
+        spdlog::error("error starting binance FIX session, error [{}]", e.what());
+    } catch (...) {
+        spdlog::error("error starting binance FIX session, unknown error");
+    }
 }
 
 void Worker::stop() {
     try {
         initiator_.stop(); // TODO: does this need a try/catch?
         spdlog::info("stopped FIX session");
+    } catch (const std::exception& e) {
+        spdlog::error("error stopping binance FIX session, error [{}]", e.what());
     } catch (...) {
-        // TODO: log error
-        spdlog::error("error closing binance FIX session");
+        spdlog::error("error stopping binance FIX session, unknown error");
+    }
+    try {
+        if (worker_.joinable())
+            worker_.join();
+    } catch (const std::exception& e) {
+        spdlog::error("error joining binance worker thread, error [{}]", e.what());
+    } catch (...) {
+        spdlog::error("error joining binance worker thread, unknown error");
     }
 }
 
 Worker::~Worker() {
-    initiator_.stop();
+    stop();
 }
 
 }

@@ -14,7 +14,7 @@ namespace Binance {
 /// @brief Binance FIX App - Manages FIX connectivity to Binance
 class FixApp final : public FIX::Application, public FIX::MessageCracker {
 public:
-	FixApp(const std::string& apiKey, const std::string& privatePemPath, const std::vector<std::string>& symbols);
+	FixApp(std::string& apiKey, std::string& privatePemPath, const std::vector<std::string>& symbols);
 	~FixApp() override = default;
 	void subscribeToDepth(const FIX::SessionID& sessionId);
 	/// @brief queue of market messages from Binance
@@ -24,9 +24,8 @@ public:
 	// TODO: we will have one of these per instrument
 
 private:
-	// TODO: no need to persist access tokens for lifetime of app
-	const std::string& apiKey_;
-	const std::string& privatePemPath_;
+	std::string& apiKey_;
+	std::string& privatePemPath_;
 	const std::vector<std::string>& symbols_;
 
 	void onCreate(const FIX::SessionID&) override;

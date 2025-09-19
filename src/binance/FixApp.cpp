@@ -47,6 +47,9 @@ void FixApp::onCreate(const FIX::SessionID& sessionId) {
 };
 void FixApp::onLogon(const FIX::SessionID& sessionId) {
     spdlog::info(std::format("Session logon, id [{}]", sessionId.toString()));
+	// logon successful, nullify access keys
+	apiKey_.clear();
+	privatePemPath_.clear();
 
 	subscribeToDepth(sessionId);
 };
@@ -76,8 +79,8 @@ void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
 									+ '\x01' + target
 									+ '\x01' + seqNum
 									+ '\x01' + FIX::UtcTimeStampConvertor::convert(sendingTime);
-		const std::vector<unsigned char> seed = Binance::Auth::getSeedFromPem(privatePemPath_);
-		const std::string signature = Binance::Auth::signPayload(payload, seed);
+		const std::vector<unsigned char> seed = Auth::getSeedFromPem(privatePemPath_);
+		const std::string signature = Auth::signPayload(payload, seed);
 		assert(signature.size() <= INT_MAX);
 
 		// assemble message
@@ -118,9 +121,9 @@ void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m, const FIX::
 
 // PUBLIC
 
-FixApp::FixApp(const std::string& apiKey, const std::string& privatePemPath, const std::vector<std::string>& instruments) :
+FixApp::FixApp(std::string& apiKey, std::string& privatePemPath, const std::vector<std::string>& symbols) :
 	// TODO: should I use references here?
-	apiKey_(apiKey), privatePemPath_(privatePemPath), symbols_(instruments)
+	apiKey_(apiKey), privatePemPath_(privatePemPath), symbols_(symbols)
 {
 	if (sodium_init() < 0)
 		throw std::runtime_error("libsodium failed to initialize");

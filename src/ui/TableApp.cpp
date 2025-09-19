@@ -168,8 +168,11 @@ void TableApp::pollQueue(std::stop_token stoken) {
 		spdlog::info("closing worker thread...");
 	}
 	// TODO: log error
-	catch (...) {
-		spdlog::error(std::format("error in ui worker thread"));
+	catch (const std::exception& e) {
+		spdlog::error("error in ui worker thread, error [{}]", e.what());
+		thread_exception = std::current_exception();
+	} catch (...) {
+		spdlog::error(std::format("error in ui worker thread, unknown error"));
 		thread_exception = std::current_exception();
 	}
 }
