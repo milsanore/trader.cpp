@@ -1,6 +1,7 @@
 #ifndef BINANCEFIXAPP_H
 #define BINANCEFIXAPP_H
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <quickfix/Application.h>

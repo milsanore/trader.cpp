@@ -19,7 +19,7 @@ int main() {
     bWorker.start();
 
     // UI APP (READS FROM QUEUE)
-    auto app = UI::TableApp(bWorker.app->queue);
+    auto app = UI::TableApp(bWorker.getQueue());
     app.start();
 
     if (app.thread_exception) {

@@ -15,35 +15,47 @@ namespace Binance {
 Worker::Worker(std::unique_ptr<FixApp> fixApp,
             std::unique_ptr<FIX::FileStoreFactory> fileStoreFactory,
             std::unique_ptr<FIX::SessionSettings> settings,
-            std::unique_ptr<FIX::FileLogFactory> fileLogFactory)
-    : app(std::move(fixApp)),
-        store_(std::move(fileStoreFactory)),
-        settings_(std::move(settings)),
-        log_(std::move(fileLogFactory)),
-        initiator_(*app, *store_, *settings_, *log_) {}
+            std::unique_ptr<FIX::FileLogFactory> fileLogFactory,
+            std::unique_ptr<FIX::SocketInitiator> initiator,
+            std::function<void(std::stop_token)> task)
+    : app_(std::move(fixApp)),
+    store_(std::move(fileStoreFactory)),
+    settings_(std::move(settings)),
+    log_(std::move(fileLogFactory)),
+    initiator_(std::move(initiator)),
+    workerTask_(task) {
+
+    // default behaviour
+    if (! task) {
+        workerTask_ = ([this](std::stop_token stoken) {
+            // NB: SocketInitiator::start() is a blocking call, so the stop_token cannot cancel the thread.
+            // NB: The `stop()` function has to forcibly stop it with `initiator_->stop()`.
+            initiator_->start();
+            spdlog::info("started FIX session");
+        });
+    }
+}
 
 // static member function
 Worker Worker::fromConf(Config& conf) {
-    auto app            = std::make_unique<FixApp>(conf.apiKey, conf.privateKeyPath, conf.symbols);
-    auto settings       = std::make_unique<FIX::SessionSettings>(conf.fixConfigPath);
-    auto storeFactory   = std::make_unique<FIX::FileStoreFactory>(*settings);
-    auto logFactory     = std::make_unique<FIX::FileLogFactory>(*settings);
+    auto app        = std::make_unique<FixApp>(conf.apiKey, conf.privateKeyPath, conf.symbols);
+    auto settings   = std::make_unique<FIX::SessionSettings>(conf.fixConfigPath);
+    auto store      = std::make_unique<FIX::FileStoreFactory>(*settings);
+    auto log        = std::make_unique<FIX::FileLogFactory>(*settings);
+    auto initiator  = std::make_unique<FIX::SocketInitiator>(*app, *store, *settings, *log);
 
     // hand over object ownership to the instance being created (by the static function)
-    // TODO: is this being moved twice, because of the std::move() calls in the initializer list?
     return {std::move(app),
-            std::move(storeFactory),
-            std::move(settings),
-            std::move(logFactory) };
+        std::move(store),
+        std::move(settings),
+        std::move(log),
+        std::move(initiator)
+    };
 }
 
 void Worker::start() {
-    // start worker thread
     try {
-        std::jthread updater_([this](std::stop_token stoken) {
-            initiator_.start();
-            spdlog::info("started FIX session");
-        });
+        worker_ = std::jthread(workerTask_);
     } catch (const std::exception& e) {
         spdlog::error("error starting binance FIX session, error [{}]", e.what());
     } catch (...) {
@@ -53,25 +65,19 @@ void Worker::start() {
 
 void Worker::stop() {
     try {
-        initiator_.stop(); // TODO: does this need a try/catch?
+        if (initiator_)
+            initiator_->stop(); // TODO: does this need a try/catch?
         spdlog::info("stopped FIX session");
     } catch (const std::exception& e) {
         spdlog::error("error stopping binance FIX session, error [{}]", e.what());
     } catch (...) {
         spdlog::error("error stopping binance FIX session, unknown error");
     }
-    try {
-        if (worker_.joinable())
-            worker_.join();
-    } catch (const std::exception& e) {
-        spdlog::error("error joining binance worker thread, error [{}]", e.what());
-    } catch (...) {
-        spdlog::error("error joining binance worker thread, unknown error");
-    }
+    worker_ = std::jthread();
 }
 
-Worker::~Worker() {
-    stop();
+moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& Worker::getQueue() const {
+    return app_->queue;
 }
 
 }
