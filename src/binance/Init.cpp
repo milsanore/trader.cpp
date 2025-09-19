@@ -5,10 +5,10 @@
 #include <quickfix/Session.h>
 #include <quickfix/SessionSettings.h>
 #include <quickfix/SocketInitiator.h>
-#include "Init.h"
-#include "FixApp.h"
-#include "Config.h"
 #include "spdlog/spdlog.h"
+#include "Config.h"
+#include "FixApp.h"
+#include "Init.h"
 
 namespace Binance {
 

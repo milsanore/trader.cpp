@@ -1,8 +1,8 @@
 #ifndef BINANCEAUTH_H
 #define BINANCEAUTH_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace Binance {
 

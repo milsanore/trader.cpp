@@ -1,9 +1,5 @@
 #include <chrono>
-#include <format>
-#include <iostream>
 #include <string>
-#include <thread>
-#include "concurrentqueue.h"
 #include "binance/Config.h"
 #include "binance/Init.h"
 #include "ui/TableApp.h"
@@ -13,7 +9,7 @@
 
 int main() {
     spdlog::cfg::load_env_levels("LOG_LEVEL");
-    auto logger = spdlog::basic_logger_mt("basic_logger", "logs/log");
+    const auto logger = spdlog::basic_logger_mt("basic_logger", "logs/log");
     spdlog::set_default_logger(logger);
 
     spdlog::info("hello");
@@ -24,7 +20,7 @@ int main() {
     binance.start();
 
     // UI APP (READS FROM QUEUE)
-    UI::TableApp app = UI::TableApp(binance.app->queue);
+    auto app = UI::TableApp(binance.app->queue);
     app.start();
 
     if (app.thread_exception) {

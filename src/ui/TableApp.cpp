@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <iostream>
 #include <map>
 #include <ranges>
 #include <string>
@@ -13,15 +12,14 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/dom/elements.hpp>
+#include "spdlog/spdlog.h"
 #include "TableApp.h"
 #include "BidAsk.h"
-#include "spdlog/spdlog.h"
 
 namespace UI {
 
-const std::vector<BidAsk> bookToVec(std::map<double, double>& bidMap_, std::map<double, double>& askMap_){
-    int rowCount = std::max(bidMap_.size(), askMap_.size());
+std::vector<BidAsk> bookToVec(std::map<double, double>& bidMap_, std::map<double, double>& askMap_){
+    const int rowCount = std::max(bidMap_.size(), askMap_.size());
     std::vector<BidAsk> v(rowCount);
     // bids
 	int i = 0;
@@ -40,21 +38,24 @@ const std::vector<BidAsk> bookToVec(std::map<double, double>& bidMap_, std::map<
     return v;  
 };
 // Helper to pad or truncate a string to a fixed width
-const std::string Pad(const std::string& input, size_t width) {
+std::string Pad(const std::string& input, const size_t width) {
     if (input.size() >= width)
         return input.substr(0, width);
-    return input + std::string(width - input.size(), ' ');
+
+	std::string result = input;
+	result.resize(width, ' ');
+	return result;
 }
-const std::string Pad(const double input, size_t width) {
-    const std::string s = (std::isnan(input) ? "" : std::to_string(input));
-    if (s.size() >= width)
-        return s.substr(0, width);
-    return s + std::string(width - s.size(), ' ');
+std::string Pad(const double input, const size_t width) {
+	return Pad(
+		std::isnan(input) ? "" : std::to_string(input),
+		width
+	);
 }
 
 ///////////////////////////////////////
 
-TableApp::TableApp(moodycamel::ConcurrentQueue<std::shared_ptr<FIX44::Message>> &queue) 
+TableApp::TableApp(moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue)
     : queue_(queue) {};
 
 void TableApp::start() {
@@ -64,7 +65,7 @@ void TableApp::start() {
     });
 
     // Start the main UI loop
-    auto renderer = ftxui::Renderer([&]() {
+    const auto renderer = ftxui::Renderer([&]() {
         return buildTable();
     });
     screen_.Loop(renderer);
@@ -92,7 +93,7 @@ ftxui::Element TableApp::buildTable() {
     }));
 
     // ─────────── Data Rows ───────────
-	std::vector<BidAsk> x = bookToVec(bidMap_, askMap_);
+	const std::vector<BidAsk> x = bookToVec(bidMap_, askMap_);
     constexpr size_t max_rows = 15;
 	const int rowCount = std::min(x.size(), max_rows);
 	for (int i = 0; i < rowCount; ++i) {
@@ -134,18 +135,18 @@ void TableApp::startUpdater(std::stop_token stoken) {
 		};
 
 		while (!stoken.stop_requested()) {
-			std::shared_ptr<FIX44::Message> msg;
+			std::shared_ptr<const FIX44::Message> msg;
 			while (!queue_.try_dequeue(msg)) {
 				if (stoken.stop_requested())
 					return;
 				adaptiveBackoff();
 			}
 
-            if (auto snap = std::dynamic_pointer_cast<FIX44::MarketDataSnapshotFullRefresh>(msg)) {
+            if (auto snap = std::dynamic_pointer_cast<const FIX44::MarketDataSnapshotFullRefresh>(msg)) {
                 OnSnapshot(*snap);
                 screen_.PostEvent(ftxui::Event::Custom); // Trigger re-render
             }
-			else if (auto inc = std::dynamic_pointer_cast<FIX44::MarketDataIncrementalRefresh>(msg)) {
+			else if (auto inc = std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(msg)) {
                 OnIncrement(*inc);
                 screen_.PostEvent(ftxui::Event::Custom); // Trigger re-render
 			}
@@ -159,7 +160,9 @@ void TableApp::startUpdater(std::stop_token stoken) {
 		}
 		spdlog::info("closing worker thread...");
 	}
+	// TODO: log error
 	catch (...) {
+		spdlog::error(std::format("error in ui worker thread"));
 		thread_exception = std::current_exception();
 	}
 }
@@ -169,16 +172,16 @@ void TableApp::OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) {
 	msg.get(symbol);
 	spdlog::debug(std::format("MD snapshot message, symbol [{}]", symbol.getString()));
 
-	std::string symbolValue = symbol.getValue();
-	if (symbolValue != "BTCUSDT") {
-		spdlog::debug(std::format("wrong symbol, skipping snapshot. value [{}]", symbolValue));
+	if (std::string s = symbol.getValue(); s != "BTCUSDT") {
+		spdlog::debug(std::format("wrong symbol, skipping snapshot. value [{}]", s));
 		return;
 	}
+
 	bidMap_.clear();
 	askMap_.clear();
 	FIX::NoMDEntries noMDEntries;
 	msg.get(noMDEntries);
-	int numEntries = noMDEntries.getValue();
+	const int numEntries = noMDEntries.getValue();
 	for (int i = 1; i <= numEntries; i++) {
 		FIX44::MarketDataSnapshotFullRefresh::NoMDEntries group;
 		msg.getGroup(i, group);
@@ -200,18 +203,25 @@ void TableApp::OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) {
 void TableApp::OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg) {
 	FIX::NoMDEntries noMDEntries;
 	msg.get(noMDEntries);
-	int numEntries = noMDEntries.getValue();
+	const int numEntries = noMDEntries.getValue();
+	std::string symbol;
 	for (int i = 1; i <= numEntries; i++) {
 		FIX44::MarketDataIncrementalRefresh::NoMDEntries group;
 		msg.getGroup(i, group);
 
-		FIX::Symbol symbol;
+		// if symbol unchanged, field won't be set
 		if (group.isSetField(FIX::FIELD::Symbol)) {
-			group.get(symbol);
+			FIX::Symbol smbl;
+			group.get(smbl);
+			if (std::string s = smbl.getValue(); ! s.empty()) {
+				symbol = s;
+			}
 		}
-		std::string symbolValue = symbol.getValue();
-		if (symbolValue != "BTCUSDT") {
-			spdlog::info(std::format("wrong symbol, skipping increment. value [{}]", symbolValue));
+
+		if (symbol.empty()) {
+			continue;
+		}
+		if (symbol != "BTCUSDT") {
 			continue;
 		}
 

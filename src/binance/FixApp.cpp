@@ -1,21 +1,18 @@
 #include <algorithm>
 #include <cassert>
-#include <fstream>
 #include <format>
-#include <iostream>
 #include <iomanip>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
-#include "Auth.h"
-#include "FixApp.h"
 #include <sodium.h>
 #include <quickfix/FixValues.h>
 #include <quickfix/fix44/MarketDataRequest.h>
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include "spdlog/spdlog.h"
+#include "Auth.h"
+#include "FixApp.h"
 
 namespace Binance {
 
@@ -41,7 +38,7 @@ std::string toString(const MessageHandlingMode m) {
 // TODO: make debug only
 std::string replaceSoh(const std::string& input) {
 	std::string output = input;
-	std::replace(output.begin(), output.end(), '\x01', '|');
+	std::ranges::replace(output.begin(), output.end(), '\x01', '|');
 	return output;
 }
 
@@ -112,12 +109,10 @@ void FixApp::fromApp(const FIX::Message& msg, const FIX::SessionID& sessionId) n
 }
 
 void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m, const FIX::SessionID& sessionID) {
-	auto msgPtr = std::make_shared<FIX44::MarketDataSnapshotFullRefresh>(m);
-	queue.enqueue(msgPtr);
+	queue.enqueue(std::make_shared<const FIX44::MarketDataSnapshotFullRefresh>(m));
 }
 void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m, const FIX::SessionID& sessionID) {
-	auto msgPtr = std::make_shared<FIX44::MarketDataIncrementalRefresh>(m);
-	queue.enqueue(msgPtr);
+	queue.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
 }
 
 
@@ -136,7 +131,7 @@ void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) {
 	FIX44::MarketDataRequest marketDataRequest;
 
 	// Generate a unique request ID for this session's request
-	std::string reqId = "MDReq-" + std::to_string(std::time(nullptr));
+	const std::string reqId = "MDReq-" + std::to_string(std::time(nullptr));
 	marketDataRequest.set(FIX::MDReqID(reqId));
 
 	// Set subscription type (1 = Subscribe)

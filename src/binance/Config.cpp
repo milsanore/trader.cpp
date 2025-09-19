@@ -4,8 +4,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include "Config.h"
 #include "spdlog/spdlog.h"
+#include "Config.h"
 
 namespace Binance {
 
