@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <map>
+#include <mutex>
 #include <thread>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -23,6 +24,10 @@ public:
 	std::exception_ptr thread_exception;
 
 private:
+    // mutex for reading/writing to bid/ask maps
+    // UI-bound, so performance is acceptable
+    mutable std::mutex mutex_;
+
     // main thread
     ftxui::ScreenInteractive screen_ = ftxui::ScreenInteractive::TerminalOutput();
 
@@ -35,10 +40,8 @@ private:
     void pollQueue(std::stop_token stoken);
     void OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg);
     void OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg);
-
     /// @brief sorted list of bids (descending), key=price, value=size
     std::map<double, double, std::greater<double>> bidMap_;
-
     /// @brief sorted list of offers (ascending), key=price, value=size
     std::map<double, double> askMap_;
 };

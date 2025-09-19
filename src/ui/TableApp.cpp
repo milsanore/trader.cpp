@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cmath>
 #include <map>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -105,15 +106,16 @@ TableApp::TableApp(moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Mess
 
 // main thread
 void TableApp::start() {
-	// TODO: flip order for better readability
+	// TODO: why does the order of these two items affect the rendered result?
 
 	// start worker thread
-    std::jthread updater_([this](std::stop_token stoken) {
-        pollQueue(stoken);
-    });
+	std::jthread updater_([this](std::stop_token stoken) {
+		pollQueue(stoken);
+	});
 
-    // Start the main UI loop
+	// Start the main UI loop
     const auto renderer = ftxui::Renderer([&]() {
+		std::lock_guard lock(mutex_);
         return orderbookToTable(bidMap_, askMap_);
     });
     screen_.Loop(renderer);
@@ -172,6 +174,7 @@ void TableApp::pollQueue(std::stop_token stoken) {
 	}
 }
 void TableApp::OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) {
+	std::lock_guard lock(mutex_);
 	FIX::Symbol symbol;
 	msg.get(symbol);
 	spdlog::debug(std::format("MD snapshot message, symbol [{}]", symbol.getString()));
@@ -205,6 +208,7 @@ void TableApp::OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) {
 	}
 }
 void TableApp::OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg) {
+	std::lock_guard lock(mutex_);
 	FIX::NoMDEntries noMDEntries;
 	msg.get(noMDEntries);
 	const int numEntries = noMDEntries.getValue();
@@ -221,11 +225,8 @@ void TableApp::OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg) {
 				symbol = s;
 			}
 		}
-
-		if (symbol.empty()) {
-			continue;
-		}
-		if (symbol != "BTCUSDT") {
+		if (symbol.empty() && symbol != "BTCUSDT") {
+			spdlog::debug(std::format("wrong symbol, skipping increment. value [{}]", symbol));
 			continue;
 		}
 
