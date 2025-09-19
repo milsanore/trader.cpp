@@ -1,5 +1,5 @@
-#ifndef BINANCEINIT_H
-#define BINANCEINIT_H
+#ifndef BINANCEWORKER_H
+#define BINANCEWORKER_H
 
 #include <quickfix/FileLog.h>
 #include <quickfix/FileStore.h>
@@ -11,17 +11,17 @@
 namespace Binance {
 
 /// @brief Binance DI container
-class Init final {
+class Worker final {
 public:
-    Init(std::unique_ptr<FixApp> fixApp,
+    Worker(std::unique_ptr<FixApp> fixApp,
         std::unique_ptr<FIX::FileStoreFactory> fileStoreFactory,
         std::unique_ptr<FIX::SessionSettings> settings,
         std::unique_ptr<FIX::FileLogFactory> fileLogFactory);
-	~Init();
+	~Worker();
     /// @brief generate concrete Binance instance from config
     /// @param conf binance configuration parameters
     /// @return 
-    static Init fromConf(Config& conf);
+    static Worker fromConf(Config& conf);
     void start();
     void stop();
     std::unique_ptr<FixApp> app;
@@ -35,4 +35,4 @@ private:
 
 }
 
-#endif  // BINANCEINIT_H
+#endif  // BINANCEWORKER_H

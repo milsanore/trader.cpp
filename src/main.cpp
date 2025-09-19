@@ -1,7 +1,7 @@
 #include <chrono>
 #include <string>
 #include "binance/Config.h"
-#include "binance/Init.h"
+#include "binance/Worker.h"
 #include "ui/TableApp.h"
 #include "spdlog/cfg/env.h"
 #include "spdlog/spdlog.h"
@@ -16,16 +16,16 @@ int main() {
 
     // BINANCE MARKET DATA GENERATOR
     auto bConf = Binance::Config::fromEnv();
-	auto binance = Binance::Init::fromConf(bConf);
-    binance.start();
+	auto bWorker = Binance::Worker::fromConf(bConf);
+    bWorker.start();
 
     // UI APP (READS FROM QUEUE)
-    auto app = UI::TableApp(binance.app->queue);
+    auto app = UI::TableApp(bWorker.app->queue);
     app.start();
 
     if (app.thread_exception) {
         std::rethrow_exception(app.thread_exception);
     }
-    binance.stop();
+    bWorker.stop();
     spdlog::info("goodbye");
 }

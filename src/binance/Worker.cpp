@@ -8,11 +8,11 @@
 #include "spdlog/spdlog.h"
 #include "Config.h"
 #include "FixApp.h"
-#include "Init.h"
+#include "Worker.h"
 
 namespace Binance {
 
-Init::Init(std::unique_ptr<FixApp> fixApp,
+Worker::Worker(std::unique_ptr<FixApp> fixApp,
             std::unique_ptr<FIX::FileStoreFactory> fileStoreFactory,
             std::unique_ptr<FIX::SessionSettings> settings,
             std::unique_ptr<FIX::FileLogFactory> fileLogFactory)
@@ -23,7 +23,7 @@ Init::Init(std::unique_ptr<FixApp> fixApp,
         initiator_(*app, *store_, *settings_, *log_) {}
 
 // static member function
-Init Init::fromConf(Config& conf) {
+Worker Worker::fromConf(Config& conf) {
     auto app            = std::make_unique<FixApp>(conf.apiKey, conf.privateKeyPath, conf.symbols);
     auto settings       = std::make_unique<FIX::SessionSettings>(conf.fixConfigPath);
     auto storeFactory   = std::make_unique<FIX::FileStoreFactory>(*settings);
@@ -38,12 +38,12 @@ Init Init::fromConf(Config& conf) {
             std::move(logFactory) };
 }
 
-void Init::start() {
+void Worker::start() {
     initiator_.start();
     spdlog::info("started FIX session");
 }
 
-void Init::stop() {
+void Worker::stop() {
     try {
         initiator_.stop(); // TODO: does this need a try/catch?
         spdlog::info("stopped FIX session");
@@ -53,7 +53,7 @@ void Init::stop() {
     }
 }
 
-Init::~Init() {
+Worker::~Worker() {
     initiator_.stop();
 }
 

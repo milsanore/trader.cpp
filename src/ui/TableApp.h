@@ -1,6 +1,7 @@
 #ifndef UITABLEAPP_H
 #define UITABLEAPP_H
 
+#include <functional>
 #include <map>
 #include <thread>
 #include <ftxui/component/screen_interactive.hpp>
@@ -16,24 +17,30 @@ namespace UI {
 class TableApp {
 public:
     explicit TableApp(moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue);
+    /// @brief start main UI loop, start FIX worker thread
     void start();
     /// if any exceptions occurred
 	std::exception_ptr thread_exception;
 
 private:
-    // runs on main thread
+    // main thread
     ftxui::ScreenInteractive screen_ = ftxui::ScreenInteractive::TerminalOutput();
-    // consumes from FIX thread
-	moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue_;
+
     // worker thread
-    std::jthread binanceUpdater_;
-    std::map<double, double> bidMap_;
-    std::map<double, double> askMap_;
-    //
-    void startUpdater(std::stop_token stoken);
-    ftxui::Element buildTable();
+    std::jthread worker_;
+    // queue of messages from FIX thread
+    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue_;
+    /// @brief poll queue for any new FIX messages, update bid/ask maps
+    /// @param stoken
+    void pollQueue(std::stop_token stoken);
     void OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg);
     void OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg);
+
+    /// @brief sorted list of bids (descending), key=price, value=size
+    std::map<double, double, std::greater<double>> bidMap_;
+
+    /// @brief sorted list of offers (ascending), key=price, value=size
+    std::map<double, double> askMap_;
 };
 
 }
