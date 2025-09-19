@@ -17,7 +17,7 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
 public:
 	FixApp(std::string& apiKey, std::string& privatePemPath, const std::vector<std::string>& symbols);
 	~FixApp() override = default;
-	void subscribeToDepth(const FIX::SessionID& sessionId);
+	void subscribeToDepth(const FIX::SessionID& sessionId) const;
 	/// @brief queue of market messages from Binance
 	moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> queue;
 	// TODO: performance implication of a polymorphic queue

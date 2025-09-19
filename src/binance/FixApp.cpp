@@ -35,7 +35,7 @@ std::string toString(const MessageHandlingMode m) {
 	}
 }
 
-// TODO: make debug only
+// better FIX message logging
 std::string replaceSoh(const std::string& input) {
 	std::string output = input;
 	std::ranges::replace(output.begin(), output.end(), '\x01', '|');
@@ -129,7 +129,7 @@ FixApp::FixApp(std::string& apiKey, std::string& privatePemPath, const std::vect
 		throw std::runtime_error("libsodium failed to initialize");
 }
 
-void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) {
+void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) const {
     spdlog::debug(std::format("Subscribe to depth"));
 	FIX44::MarketDataRequest marketDataRequest;
 
@@ -142,7 +142,7 @@ void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) {
 		FIX::SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES));
 
 	// Set market depth
-	constexpr int BINANCE_MAX_DEPTH = 5000;
+	constexpr int BINANCE_MAX_DEPTH = 100;
 	marketDataRequest.set(FIX::MarketDepth(BINANCE_MAX_DEPTH));
 
 	// Create NoMDEntryTypes group for requesting BID and OFFER

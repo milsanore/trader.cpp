@@ -9,6 +9,7 @@
 #include "Config.h"
 #include "FixApp.h"
 #include "Worker.h"
+#include "./../utils/Threading.h"
 
 namespace Binance {
 
@@ -28,6 +29,7 @@ Worker::Worker(std::unique_ptr<FixApp> fixApp,
     // default behaviour
     if (! task) {
         workerTask_ = ([this](std::stop_token stoken) {
+			Utils::Threading::set_thread_name("tradercppFIX");
             // NB: SocketInitiator::start() is a blocking call, so the stop_token cannot cancel the thread.
             // NB: The `stop()` function has to forcibly stop it with `initiator_->stop()`.
             initiator_->start();

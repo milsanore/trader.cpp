@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <map>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -15,6 +14,8 @@
 #include "spdlog/spdlog.h"
 #include "TableApp.h"
 #include "BidAsk.h"
+#include "./../utils/Threading.h"
+#include "IScreen.h"
 
 namespace UI {
 
@@ -33,29 +34,9 @@ std::string Pad(const double input, const size_t width) {
 		width
 	);
 }
-/// @brief
-std::vector<BidAsk> bookToVec(std::map<double, double, std::greater<double>>& bidMap, std::map<double, double>& askMap){
-	const int rowCount = std::max(bidMap.size(), askMap.size());
-	std::vector<BidAsk> v(rowCount);
-	// bids
-	int i = 0;
-	for (const auto& [px, sz] : bidMap) {
-		v[i].bid_sz = sz;
-		v[i].bid_px = px;
-		i++;
-	}
-	// asks
-	i = 0;
-	for (const auto& [px, sz] : askMap) {
-		v[i].ask_sz = sz;
-		v[i].ask_px = px;
-		i++;
-	}
-	return v;
-};
 /// @brief generate an FTXUI table containing the order book, from the bid/ask maps
 /// @return the FTXUI element that the UI will render
-ftxui::Element orderbookToTable(std::map<double, double, std::greater<double>>& bidMap, std::map<double, double>& askMap) {
+ftxui::Element orderbookToTable(OrderBook& ob) {
 	ftxui::Elements table_elements;
 	constexpr int num_columns = 4;
 	constexpr int column_width = 15;
@@ -77,7 +58,7 @@ ftxui::Element orderbookToTable(std::map<double, double, std::greater<double>>& 
 	}));
 
 	// ─────────── Data Rows ───────────
-	const std::vector<BidAsk> x = bookToVec(bidMap, askMap);
+	const std::vector<BidAsk> x = ob.toVector();
 	constexpr size_t max_rows = 15;
 	const int rowCount = std::min(x.size(), max_rows);
 	for (int i = 0; i < rowCount; ++i) {
@@ -102,25 +83,36 @@ ftxui::Element orderbookToTable(std::map<double, double, std::greater<double>>& 
 
 ///////////////////////////////////////
 
-TableApp::TableApp(moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue) : queue_(queue) {};
+TableApp::TableApp(
+	moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
+	std::unique_ptr<OrderBook> ob,
+	std::function<void(std::stop_token)> task,
+	std::unique_ptr<IScreen> screen)
+: queue_(queue), book_(std::move(ob)), screen_(std::move(screen)) {
+
+	// default behaviour
+	if (! task) {
+		workerTask_ = ([this](std::stop_token stoken) {
+			Utils::Threading::set_thread_name("tradercppUI");
+			pollQueue(stoken);
+			spdlog::info("started polling queue on background thread");
+		});
+	}
+};
 
 // main thread
 void TableApp::start() {
 	// TODO: why does the order of these two items affect the rendered result?
 
 	// start worker thread
-	std::jthread updater_([this](std::stop_token stoken) {
-		pollQueue(stoken);
-	});
+	worker_ = std::jthread(workerTask_);
 
 	// Start the main UI loop
     const auto renderer = ftxui::Renderer([&]() {
-		std::lock_guard lock(mutex_);
-        return orderbookToTable(bidMap_, askMap_);
+        return orderbookToTable(*book_);
     });
-    screen_.Loop(renderer);
+    screen_->Loop(renderer);
 }
-
 
 // worker thread
 void TableApp::pollQueue(std::stop_token stoken) {
@@ -141,6 +133,8 @@ void TableApp::pollQueue(std::stop_token stoken) {
 			}
 		};
 
+		OrderBook& book = *book_;
+		IScreen& screen = *screen_;
 		while (!stoken.stop_requested()) {
 			std::shared_ptr<const FIX44::Message> msg;
 			while (!queue_.try_dequeue(msg)) {
@@ -150,14 +144,12 @@ void TableApp::pollQueue(std::stop_token stoken) {
 			}
 
             if (auto snap = std::dynamic_pointer_cast<const FIX44::MarketDataSnapshotFullRefresh>(msg)) {
-                OnSnapshot(*snap);
-                screen_.PostEvent(ftxui::Event::Custom); // Trigger re-render
-            }
-			else if (auto inc = std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(msg)) {
-                OnIncrement(*inc);
-                screen_.PostEvent(ftxui::Event::Custom); // Trigger re-render
-			}
-			else {
+            	book.applySnapshot(*snap);
+                screen.PostEvent(ftxui::Event::Custom); // Trigger re-render
+            } else if (auto inc = std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(msg)) {
+            	book.applyIncrement(*inc);
+                screen.PostEvent(ftxui::Event::Custom); // Trigger re-render
+			} else {
 				spdlog::error("unknown message type");
 			}
 
@@ -174,100 +166,6 @@ void TableApp::pollQueue(std::stop_token stoken) {
 	} catch (...) {
 		spdlog::error(std::format("error in ui worker thread, unknown error"));
 		thread_exception = std::current_exception();
-	}
-}
-void TableApp::OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) {
-	std::lock_guard lock(mutex_);
-	FIX::Symbol symbol;
-	msg.get(symbol);
-	spdlog::debug(std::format("MD snapshot message, symbol [{}]", symbol.getString()));
-
-	if (std::string s = symbol.getValue(); s != "BTCUSDT") {
-		spdlog::debug(std::format("wrong symbol, skipping snapshot. value [{}]", s));
-		return;
-	}
-
-	bidMap_.clear();
-	askMap_.clear();
-	FIX::NoMDEntries noMDEntries;
-	msg.get(noMDEntries);
-	const int numEntries = noMDEntries.getValue();
-	for (int i = 1; i <= numEntries; i++) {
-		FIX44::MarketDataSnapshotFullRefresh::NoMDEntries group;
-		msg.getGroup(i, group);
-		FIX::MDEntryType entryType;
-		FIX::MDEntryPx px;
-		FIX::MDEntrySize sz;
-		group.get(entryType);
-		group.get(px);
-		group.get(sz);
-		if (entryType == FIX::MDEntryType_BID) {
-			bidMap_[px.getValue()] = sz.getValue();
-		} else if (entryType == FIX::MDEntryType_OFFER) {
-			askMap_[px.getValue()] = sz.getValue();
-		} else {
-			spdlog::error(std::format("unknown bid/offer type [{}]", entryType.getString()));
-		}
-	}
-}
-void TableApp::OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg) {
-	std::lock_guard lock(mutex_);
-	FIX::NoMDEntries noMDEntries;
-	msg.get(noMDEntries);
-	const int numEntries = noMDEntries.getValue();
-	std::string symbol;
-	for (int i = 1; i <= numEntries; i++) {
-		FIX44::MarketDataIncrementalRefresh::NoMDEntries group;
-		msg.getGroup(i, group);
-
-		// if symbol unchanged, field won't be set
-		if (group.isSetField(FIX::FIELD::Symbol)) {
-			FIX::Symbol smbl;
-			group.get(smbl);
-			if (std::string s = smbl.getValue(); ! s.empty()) {
-				symbol = s;
-			}
-		}
-		if (symbol.empty() && symbol != "BTCUSDT") {
-			spdlog::debug(std::format("wrong symbol, skipping increment. value [{}]", symbol));
-			continue;
-		}
-
-		FIX::MDUpdateAction action;
-		FIX::MDEntryType entryType;
-		FIX::MDEntryPx px;
-		group.get(action);
-		group.get(entryType);
-		group.get(px);
-		
-		if (entryType != FIX::MDEntryType_BID && entryType != FIX::MDEntryType_OFFER) {
-			spdlog::error(std::format("unknown entry type, skipping. value [{}]", entryType.getString()));
-			continue;
-		}
-
-		if (action.getValue() == FIX::MDUpdateAction_NEW || action.getValue() == FIX::MDUpdateAction_CHANGE) {
-			spdlog::debug(std::format("price upsert"));
-
-			if (group.isSetField(FIX::FIELD::MDEntrySize)) {
-				FIX::MDEntrySize sz;
-				group.get(sz);
-				if (entryType == FIX::MDEntryType_BID) {
-					bidMap_[px.getValue()] = sz.getValue();
-				} else if (entryType == FIX::MDEntryType_OFFER) {
-					askMap_[px.getValue()] = sz.getValue();
-				}
-			}
-		} else if (action.getValue() == FIX::MDUpdateAction_DELETE) {
-			spdlog::debug(std::format("price delete"));
-
-			if (entryType == FIX::MDEntryType_BID) {
-				bidMap_.erase(px.getValue());
-			} else if (entryType == FIX::MDEntryType_OFFER) {
-				askMap_.erase(px.getValue());
-			}
-		} else {
-			spdlog::error(std::format("unknown price action. value [{}]", action.getValue()));
-		}
 	}
 }
 
