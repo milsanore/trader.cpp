@@ -10,7 +10,7 @@
 
 namespace UI {
 
-/// An order book class backed by two bid/ask maps
+/// An order book class backed by two (synchronised) bid/ask maps
 class OrderBook {
 public:
     explicit OrderBook(
@@ -27,7 +27,7 @@ public:
 
     void applySnapshot(const FIX44::MarketDataSnapshotFullRefresh&);
     void applyIncrement(const FIX44::MarketDataIncrementalRefresh&);
-    /// return the contents of the order book as a simple vector.
+    /// @brief return the contents of the order book as a simple vector.
     /// useful for generating the UI
     std::vector<BidAsk> toVector();
 

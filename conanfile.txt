@@ -5,6 +5,7 @@ openssl/3.5.2
 ftxui/6.0.2
 concurrentqueue/1.0.4
 spdlog/1.15.3
+gtest/1.17.0
 
 [generators]
 CMakeToolchain
