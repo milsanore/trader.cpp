@@ -1,41 +1,44 @@
 #ifndef UITABLEAPP_H
 #define UITABLEAPP_H
 
-#include <map>
-#include <mutex>
-#include <string>
 #include <thread>
-#include <vector>
-#include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/component/component.hpp>
-#include <ftxui/dom/elements.hpp>
-#include "concurrentqueue.h"
 #include <quickfix/fix44/Message.h>
-#include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
-#include <quickfix/fix44/MarketDataIncrementalRefresh.h>
-#include "BidAsk.h"
+#include "concurrentqueue.h"
+#include "OrderBook.h"
+#include "IScreen.h"
+#include "FtxuiScreen.h"
 
 namespace UI {
 
 /// worker thread, consuming market updates, for the ui
 class TableApp {
 public:
-    TableApp(moodycamel::ConcurrentQueue<std::shared_ptr<FIX44::Message>>& queue);
+    explicit TableApp(
+        moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
+        std::unique_ptr<OrderBook> ob = std::make_unique<OrderBook>(),
+        std::unique_ptr<IScreen> screen = std::make_unique<FtxuiScreen>(),
+        std::function<void(std::stop_token)> task = {}
+    );
+    /// @brief start main UI loop, start FIX worker thread
     void start();
     /// if any exceptions occurred
 	std::exception_ptr thread_exception;
 
 private:
-    ftxui::ScreenInteractive screen_ = ftxui::ScreenInteractive::TerminalOutput();
-    std::map<double, double> bidMap_;
-    std::map<double, double> askMap_;
-	moodycamel::ConcurrentQueue<std::shared_ptr<FIX44::Message>>& queue_;
-    std::jthread binanceUpdater_;
-    //
-    void startUpdater(std::stop_token stoken);
-    ftxui::Element buildTable();
-    void OnSnapshot(const FIX44::MarketDataSnapshotFullRefresh& msg);
-    void OnIncrement(const FIX44::MarketDataIncrementalRefresh& msg);
+    std::unique_ptr<OrderBook> book_;
+
+    // main thread
+    // ftxui::ScreenInteractive screen_ = ftxui::ScreenInteractive::TerminalOutput();
+    std::unique_ptr<IScreen> screen_;
+
+    // worker thread
+    std::jthread worker_;
+    std::function<void(std::stop_token)> workerTask_;
+    // queue of messages from FIX thread
+    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue_;
+    /// @brief poll queue for any new FIX messages, update order book
+    /// @param stoken
+    void pollQueue(std::stop_token stoken);
 };
 
 }

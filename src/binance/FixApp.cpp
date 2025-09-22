@@ -1,21 +1,16 @@
 #include <algorithm>
 #include <cassert>
-#include <fstream>
 #include <format>
-#include <iostream>
 #include <iomanip>
-#include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
-#include "Auth.h"
-#include "FixApp.h"
 #include <sodium.h>
 #include <quickfix/FixValues.h>
 #include <quickfix/fix44/MarketDataRequest.h>
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include "spdlog/spdlog.h"
+#include "FixApp.h"
 
 namespace Binance {
 
@@ -38,10 +33,10 @@ std::string toString(const MessageHandlingMode m) {
 	}
 }
 
-// TODO: make debug only
+// better FIX message logging
 std::string replaceSoh(const std::string& input) {
 	std::string output = input;
-	std::replace(output.begin(), output.end(), '\x01', '|');
+	std::ranges::replace(output.begin(), output.end(), '\x01', '|');
 	return output;
 }
 
@@ -50,7 +45,8 @@ void FixApp::onCreate(const FIX::SessionID& sessionId) {
 };
 void FixApp::onLogon(const FIX::SessionID& sessionId) {
     spdlog::info(std::format("Session logon, id [{}]", sessionId.toString()));
-
+	// logon successful, nullify access keys
+	auth_->clearKeys();
 	subscribeToDepth(sessionId);
 };
 void FixApp::onLogout(const FIX::SessionID& sessionId) {
@@ -79,13 +75,12 @@ void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
 									+ '\x01' + target
 									+ '\x01' + seqNum
 									+ '\x01' + FIX::UtcTimeStampConvertor::convert(sendingTime);
-		const std::vector<unsigned char> seed = Binance::Auth::getSeedFromPem(privatePemPath_);
-		const std::string signature = Binance::Auth::signPayload(payload, seed);
+		const std::string signature = auth_->signPayload(payload);
 		assert(signature.size() <= INT_MAX);
 
 		// assemble message
 		msg.getHeader().setField(FIX::SendingTime(sendingTime));
-		msg.setField(FIX::Username(apiKey_));
+		msg.setField(FIX::Username(auth_->getApiKey()));
 		msg.setField(FIX::RawData(signature));
 		msg.setField(FIX::RawDataLength(static_cast<FIX::LENGTH>(signature.size())));
 		msg.setField(FIX::StringField(25035, toString(MessageHandlingMode::Sequential)));
@@ -112,31 +107,24 @@ void FixApp::fromApp(const FIX::Message& msg, const FIX::SessionID& sessionId) n
 }
 
 void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m, const FIX::SessionID& sessionID) {
-	auto msgPtr = std::make_shared<FIX44::MarketDataSnapshotFullRefresh>(m);
-	queue.enqueue(msgPtr);
+	queue.enqueue(std::make_shared<const FIX44::MarketDataSnapshotFullRefresh>(m));
 }
 void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m, const FIX::SessionID& sessionID) {
-	auto msgPtr = std::make_shared<FIX44::MarketDataIncrementalRefresh>(m);
-	queue.enqueue(msgPtr);
+	queue.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
 }
 
 
 // PUBLIC
 
-FixApp::FixApp(const std::string& apiKey, const std::string& privatePemPath, const std::vector<std::string>& instruments) :
-	// TODO: should I use references here?
-	apiKey_(apiKey), privatePemPath_(privatePemPath), symbols_(instruments)
-{
-	if (sodium_init() < 0)
-		throw std::runtime_error("libsodium failed to initialize");
-}
+FixApp::FixApp(const std::vector<std::string>& symbols, std::unique_ptr<IAuth> auth) :
+	symbols_(symbols), auth_(std::move(auth)) {}
 
-void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) {
+void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) const {
     spdlog::debug(std::format("Subscribe to depth"));
 	FIX44::MarketDataRequest marketDataRequest;
 
 	// Generate a unique request ID for this session's request
-	std::string reqId = "MDReq-" + std::to_string(std::time(nullptr));
+	const std::string reqId = "MDReq-" + std::to_string(std::time(nullptr));
 	marketDataRequest.set(FIX::MDReqID(reqId));
 
 	// Set subscription type (1 = Subscribe)
@@ -144,7 +132,7 @@ void FixApp::subscribeToDepth(const FIX::SessionID& sessionId) {
 		FIX::SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES));
 
 	// Set market depth
-	constexpr int BINANCE_MAX_DEPTH = 5000;
+	constexpr int BINANCE_MAX_DEPTH = 100;
 	marketDataRequest.set(FIX::MarketDepth(BINANCE_MAX_DEPTH));
 
 	// Create NoMDEntryTypes group for requesting BID and OFFER

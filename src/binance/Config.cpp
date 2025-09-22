@@ -4,8 +4,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include "Config.h"
 #include "spdlog/spdlog.h"
+#include "Config.h"
 
 namespace Binance {
 
@@ -19,6 +19,8 @@ std::string getEnvOrThrow(const char* key) {
     }
     throw std::runtime_error(std::format("envvar not defined, key [{}]", key));
 };
+
+// TODO: for keys, use `std::vector<unsigned char>` instead of string
 
 /// @brief load Binance configuration from env
 /// (static member function)

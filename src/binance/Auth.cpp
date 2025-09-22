@@ -17,9 +17,23 @@
 
 namespace Binance {
 
-// static member function
-std::vector<unsigned char> Auth::getSeedFromPem(const std::string& pemPath) {
-	FILE* fp = fopen(pemPath.c_str(), "r");
+Auth::Auth(std::string& apiKey, std::string& privatePemPath) : apiKey_(apiKey), privatePemPath_(privatePemPath) {
+	if (sodium_init() < 0)
+		throw std::runtime_error("libsodium failed to initialize");
+}
+
+const std::string& Auth::getApiKey() const {
+	return apiKey_;
+}
+
+std::string Auth::signPayload(const std::string& payload) {
+	const std::vector<unsigned char> seed = getSeedFromPem();
+	const std::string signature = signPayload(payload, seed);
+	return signature;
+}
+
+std::vector<unsigned char> Auth::getSeedFromPem() const {
+	FILE* fp = fopen(privatePemPath_.c_str(), "r");
 	if (!fp) throw std::runtime_error("Failed to open PEM file");
 	EVP_PKEY* pkey = PEM_read_PrivateKey(fp, nullptr, nullptr, nullptr);
 	fclose(fp);
@@ -36,7 +50,7 @@ std::vector<unsigned char> Auth::getSeedFromPem(const std::string& pemPath) {
 	return seed;
 }
 
-// static member function
+// static
 std::string Auth::signPayload(const std::string& payload, const std::vector<unsigned char>& seed) {
 	unsigned char pk[crypto_sign_PUBLICKEYBYTES];
 	unsigned char sk[crypto_sign_SECRETKEYBYTES]; // 64 bytes
@@ -59,6 +73,15 @@ std::string Auth::signPayload(const std::string& payload, const std::vector<unsi
 	sodium_bin2base64(b64, sizeof(b64), sig, sizeof(sig), sodium_base64_VARIANT_ORIGINAL_NO_PADDING);
 
 	return b64;
+}
+
+void Auth::clearKeys()
+{
+	// logon successful, nullify access keys
+	std::ranges::fill(apiKey_, 0);
+	apiKey_.clear();
+	std::ranges::fill(privatePemPath_, 0);
+	privatePemPath_.clear();
 }
 
 }

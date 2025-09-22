@@ -7,15 +7,22 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 
 ## REQUIREMENTS
 - C++20
-- Conan
-- CMake
-- a local proxy (e.g. stunnel) for TLS encryption
+- `Conan` (and a conan profile)
+- `CMake`
+- a local proxy for TLS encryption (e.g. `stunnel`)
+- a Binance account, with an Ed25519 token that has FIX read permissions enabled 
+- `lcov`
 
 ## BUILD AND RUN
 (NB: this app uses `make` as a task runner, but it's not essential)
-1. `make init`
-2. `make build-debug`
-3. `make withenv RECIPE=run-debug`
+1. copy `.env.example` to `.env`, and set your public/private keys
+2. run an SSL tunnel (`stunnel binance/stunnel_prod.conf`)
+3. `make init`
+4. `make build-debug`
+5. `make withenv RECIPE=run-debug`
+
+## TEST
+`make test`
 
 ## HELP
 `make`
@@ -28,7 +35,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - ✅ subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
 - fire an order
-- test in the Binance test enviroment
+- test in the Binance test environment
 
 
 ## NON-FUNCTIONAL
@@ -36,21 +43,24 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - ✅ makefile and build chain
 - ✅ package management
 - ✅ debugging
-- UI can come later (perhaps explore curses)
-- logging
-    - fast
+- ✅ UI
+  - ✅ publish messages to thread-safe queue
+  - ✅ consume messages from thread-safe queue on a worker thread
+  - interrupt/ctrl+c signal
+  - 60fps limit
+- ✅ logging
+    - ✅ fast
     - structured
     - basic schema (severity, correlationId)
-- dependency injection
-- single-threaded to start with, then re-architect (and mermaid diagram)
-- demo video (https://asciinema.org)
+- ✅ dependency injection
+- ✅ single-threaded to start with, then re-architect (and mermaid diagram)
 - nix virtual environment
 - decimal type
 - sparse arrays
 - release binaries on github
 - ccache.dev
 - zeromq + protobufs?
-- interrupt/ctrl+c signal
+- valgrind/cachegrind
 
 # STANDARDS
 - high unit-test coverage + badge
@@ -69,6 +79,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
     - grafana+tempo via docker-compose
 - conventional commits
 - automated semantic versioning
+- memory-mapped files
 
 # CREDITS
 - https://github.com/binance/binance-fix-connector-python

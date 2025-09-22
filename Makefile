@@ -13,7 +13,7 @@ help: Makefile
 	@echo " Choose a command to run:"
 	@sed -n 's/^##//p' $< | column -t -s ':' | sed -e 's/^/ /'
 
-## withenv: 😭 `make` executes every line as a new shell. this is a workaround. `make withenv RECIPE=init`
+## withenv: 😭 `make` executes every line as a new shell. this is a workaround => `make withenv RECIPE=init`
 .PHONY: withenv
 withenv:
 	test -e .env || cp .env.example .env
@@ -33,6 +33,13 @@ init:
 .PHONY: build-debug
 build-debug:
 	cmake --build --preset=conan-debug
+
+## test: 🧪 run google-test
+.PHONY: test
+test:
+	cmake --build --preset=conan-debug
+	ctest --test-dir build/Debug --output-on-failure
+	lcov --gcov-tool gcov --capture --directory . --output-file lcov.info
 
 ## build-release: 🔨🔨 compile (prod)
 .PHONY: build-release

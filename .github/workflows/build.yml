@@ -31,6 +31,10 @@ jobs:
 
       - name: Build
         run: |
-          conan install . --build=missing -s build_type=Release
-          cmake --preset=conan-release
-          cmake --build --preset=conan-release
+          conan install . --build=missing -s build_type=Debug
+          cmake --preset=conan-debug
+          cmake --build --preset=conan-debug
+
+      - name: Test
+        run: |
+          ctest --test-dir build/Debug --output-on-failure
