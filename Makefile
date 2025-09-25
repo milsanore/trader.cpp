@@ -22,6 +22,7 @@ withenv:
 ## init: 🏌️ initialize the project, fetch dependencies
 .PHONY: init
 init:
+	test -e .git/hooks/pre-commit || ln -s ../../.githooks/pre-commit .git/hooks/pre-commit
 	rm -rf build && mkdir build
 	python3 -m venv .venv
 	source .venv/bin/activate && \
@@ -49,7 +50,7 @@ build-release:
 	cmake --preset=conan-release
 	cmake --build --preset=conan-release
 
-## run-debug: 🏃‍♂️ run the app (debug) (don't forget withenv)
+## run-debug: 🏃‍♂️ run the app (debug) (don't forget `withenv`)
 .PHONY: run-debug
 run-debug:
 	build/Debug/tradercpp

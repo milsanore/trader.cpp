@@ -1,4 +1,5 @@
 {
 	"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-	"C_Cpp.default.compileCommands": "${workspaceFolder}/build/Debug/compile_commands.json"
+	"C_Cpp.default.compileCommands": "${workspaceFolder}/build/Debug/compile_commands.json",
+	"editor.formatOnSave": true
 }

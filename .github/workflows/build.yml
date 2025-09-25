@@ -8,33 +8,50 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  format:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache Conan
+      - name: Set up clang-format
+        run: sudo apt update && sudo apt install -y clang-format
+
+      - name: Check code formatting
+        run: |
+          set -e
+          CHANGED_FILES=$(find src tests -name '*.cpp' -o -name '*.h')
+          FORMAT_ERRORS=0
+          for file in $CHANGED_FILES; do
+            clang-format --dry-run --Werror "$file" || FORMAT_ERRORS=1
+          done
+          if [ "$FORMAT_ERRORS" -ne 0 ]; then
+            echo "Code is not properly formatted. Please run clang-format."
+            exit 1
+          fi
+
+  build_and_test:
+    needs: format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore Conan cache
         uses: actions/cache@v4
         with:
           path: ~/.conan2
           key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}
           restore-keys: |
             ${{ runner.os }}-conan-
-      
-      - name: Set up build tools
+
+      - name: Install dependencies and build
         run: |
+          set -e
           sudo apt update && sudo apt install -y g++
           pip install conan
           conan profile detect --force
-
-      - name: Build
-        run: |
           conan install . --build=missing -s build_type=Debug
           cmake --preset=conan-debug
           cmake --build --preset=conan-debug
-
-      - name: Test
-        run: |
           ctest --test-dir build/Debug --output-on-failure

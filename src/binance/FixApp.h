@@ -1,48 +1,52 @@
 #ifndef BINANCE_FIX_APP_H
 #define BINANCE_FIX_APP_H
 
+#include <quickfix/Application.h>
+#include <quickfix/MessageCracker.h>
+#include <quickfix/SessionID.h>
+#include <quickfix/fix44/Message.h>
+
 #include <memory>
 #include <string>
 #include <vector>
-#include <quickfix/Application.h>
-#include <quickfix/SessionID.h>
-#include <quickfix/fix44/Message.h>
-#include <quickfix/MessageCracker.h>
-#include "concurrentqueue.h"
+
 #include "IAuth.h"
+#include "concurrentqueue.h"
 
 namespace Binance {
 
 /// @brief Binance FIX App - Manages FIX connectivity to Binance
 class FixApp final : public FIX::Application, public FIX::MessageCracker {
-public:
-	FixApp(const std::vector<std::string>& symbols, std::unique_ptr<IAuth> auth);
-	~FixApp() override = default;
-	/// @brief
-	void subscribeToDepth(const FIX::SessionID& sessionId) const;
-	/// @brief queue of market messages from Binance
-	moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> queue;
-	// TODO: performance implication of a polymorphic queue
-	// TODO: perhaps better to run two queues, or something else
-	// TODO: we will have one of these per instrument
+ public:
+  FixApp(const std::vector<std::string> &symbols, std::unique_ptr<IAuth> auth);
+  ~FixApp() override = default;
+  /// @brief
+  void subscribeToDepth(const FIX::SessionID &sessionId) const;
+  /// @brief queue of market messages from Binance
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> queue;
+  // TODO: performance implication of a polymorphic queue
+  // TODO: perhaps better to run two queues, or something else
+  // TODO: we will have one of these per instrument
 
-private:
-	const std::vector<std::string>& symbols_;
-	const std::unique_ptr<IAuth> auth_;
+ private:
+  const std::vector<std::string> &symbols_;
+  const std::unique_ptr<IAuth> auth_;
 
-	void onCreate(const FIX::SessionID&) override;
-	void onLogon(const FIX::SessionID&) override;
-	void onLogout(const FIX::SessionID&) override;
-	void toAdmin(FIX::Message&, const FIX::SessionID&) override;
-	void toApp(FIX::Message&, const FIX::SessionID&) noexcept(false) override;
-	void fromAdmin(const FIX::Message&, const FIX::SessionID&) noexcept(false) override;
-	void fromApp(const FIX::Message&, const FIX::SessionID&) noexcept(false) override;
-	
-	// Callbacks for specific message types / MessageCracker overloads
-	void onMessage(const FIX44::MarketDataSnapshotFullRefresh &, const FIX::SessionID &) override;
-	void onMessage(const FIX44::MarketDataIncrementalRefresh &, const FIX::SessionID &) override;
+  void onCreate(const FIX::SessionID &) override;
+  void onLogon(const FIX::SessionID &) override;
+  void onLogout(const FIX::SessionID &) override;
+  void toAdmin(FIX::Message &, const FIX::SessionID &) override;
+  void toApp(FIX::Message &, const FIX::SessionID &) noexcept(false) override;
+  void fromAdmin(const FIX::Message &, const FIX::SessionID &) noexcept(false) override;
+  void fromApp(const FIX::Message &, const FIX::SessionID &) noexcept(false) override;
+
+  // Callbacks for specific message types / MessageCracker overloads
+  void onMessage(const FIX44::MarketDataSnapshotFullRefresh &,
+                 const FIX::SessionID &) override;
+  void onMessage(const FIX44::MarketDataIncrementalRefresh &,
+                 const FIX::SessionID &) override;
 };
 
-}
+}  // namespace Binance
 
 #endif

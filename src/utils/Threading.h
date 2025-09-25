@@ -5,11 +5,11 @@
 
 namespace Utils {
 
-class Threading{
-public:
-    static void set_thread_name(const std::string& name);
+class Threading {
+ public:
+  static void set_thread_name(const std::string &name);
 };
 
-}
+}  // namespace Utils
 
-#endif //THREADINGUTILS_H
+#endif  // THREADINGUTILS_H
