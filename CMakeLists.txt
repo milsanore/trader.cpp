@@ -32,10 +32,12 @@ set(SOURCES ${ALL_SOURCES})
 # Create core logic library
 add_library(traderlib STATIC ${SOURCES})
 
-# TODO: MAKE CONDITIONAL
 # Add coverage flags to the traderlib target
-target_compile_options(traderlib PRIVATE -O0 -g --coverage)
-target_link_libraries(traderlib PRIVATE --coverage)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Enabling coverage flags")
+    target_compile_options(traderlib PRIVATE -O0 -g --coverage)
+    target_link_libraries(traderlib PRIVATE --coverage)
+endif()
 
 # Link dependencies to the library (so both exe and tests get them)
 target_link_libraries(traderlib PUBLIC

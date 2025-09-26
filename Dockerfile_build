@@ -1,0 +1,109 @@
+#############################################
+# milss/tradercppbuild:v1.5
+# Build container for tradercpp
+# Published to dockerhub in order to accelerate github actions
+# Uses:
+#  - Ubuntu 24.04
+#  - CMake 4
+#  - Conan 2 (incl. Python3)
+#  - GCC 13
+#  - LLVM 18 (clang-format and clang-tidy)
+#  - make
+#  - ninja-build
+#  - perl (compilation dependency for conan packages)
+#############################################
+
+
+FROM ubuntu:24.04 AS build_container
+
+# Set noninteractive mode to avoid prompts during install
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update
+
+
+# Install CMake 
+
+RUN apt install -y --no-install-recommends \
+    gnupg \
+    lsb-release \
+    software-properties-common \
+    wget
+
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \
+    gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null && \
+    echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | \
+    tee /etc/apt/sources.list.d/kitware.list >/dev/null
+
+RUN apt install -y --no-install-recommends cmake
+
+
+# Install Conan
+
+RUN apt install -y --no-install-recommends python3 python3-pip python3-venv
+
+RUN python3 -m venv /opt/conan-venv && \
+    /opt/conan-venv/bin/pip install --upgrade pip && \
+    /opt/conan-venv/bin/pip install "conan>=2.0"
+
+ENV PATH="/opt/conan-venv/bin:$PATH"
+
+RUN mkdir -p /root/.conan2/profiles && printf \
+    "[settings]\n\
+    arch=x86_64\n\
+    build_type=Release\n\
+    compiler=gcc\n\
+    compiler.cppstd=gnu17\n\
+    compiler.libcxx=libstdc++11\n\
+    compiler.version=13\n\
+    os=Linux\n" \
+    > /root/.conan2/profiles/default
+
+
+# Install GCC 13
+
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    cmake \
+    g++-13 \
+    gcc-13
+
+
+# Install LLVM (clang-format and clang-tidy)
+
+RUN apt-get install -y \
+    gnupg \
+    lsb-release \
+    software-properties-common \
+    wget
+
+RUN wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+
+RUN echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" > /etc/apt/sources.list.d/llvm18.list
+
+RUN apt-get update && \
+    apt-get install -y clang-format-18 clang-tidy-18
+
+RUN update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 100 && \
+    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100
+
+
+# Install build tools
+
+RUN apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    lcov \
+    make \
+    ninja-build \
+    perl \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# END: CLEAR CACHE
+RUN rm -rf /var/lib/apt/lists/*

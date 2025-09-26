@@ -28,18 +28,23 @@ init:
 	source .venv/bin/activate && \
 		pip install conan && \
 		conan install . --build=missing -s build_type=Debug
-	cmake --preset=conan-debug
+	cmake --preset=debug
+
+## init-build-container: 🚢 create the docker container for building the app (hosted on dockerhub)
+.PHONY: init-build-container
+init-build-container:
+	docker build -f Dockerfile_build -t milss/tradercppbuild:latest .
 
 ## build-debug: 🔨 compile (debug)
 .PHONY: build-debug
 build-debug:
-	cmake --build --preset=conan-debug
+	cmake --build --preset=debug
 
 ## test: 🧪 run google-test
 .PHONY: test
 test:
-	cmake --build --preset=conan-debug
-	ctest --test-dir build/Debug --output-on-failure
+	cmake --build --preset=debug
+	ctest --preset=debug
 	lcov --gcov-tool gcov --capture --directory . --output-file lcov.info
 
 ## build-release: 🔨🔨 compile (prod)
@@ -47,8 +52,8 @@ test:
 build-release:
 	source .venv/bin/activate && \
 		conan install . --build=missing -s build_type=Release
-	cmake --preset=conan-release
-	cmake --build --preset=conan-release
+	cmake --preset=release
+	cmake --build --preset=release
 
 ## run-debug: 🏃‍♂️ run the app (debug) (don't forget `withenv`)
 .PHONY: run-debug

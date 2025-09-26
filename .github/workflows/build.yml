@@ -10,12 +10,14 @@ on:
 jobs:
   format:
     runs-on: ubuntu-latest
+    container:
+      image: milss/tradercppbuild:v1.5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up clang-format
-        run: sudo apt update && sudo apt install -y clang-format
+      # - name: Set up clang-format
+      #   run: sudo apt update && sudo apt install -y clang-format
 
       - name: Check code formatting
         run: |
@@ -33,6 +35,8 @@ jobs:
   build_and_test:
     needs: format
     runs-on: ubuntu-latest
+    container:
+      image: milss/tradercppbuild:v1.5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -45,13 +49,49 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-conan-
 
-      - name: Install dependencies and build
+      # - name: Install system dependencies
+      #   run: |
+      #     set -e
+      #     sudo apt update && sudo apt install -y g++ lcov
+      #     pip install conan
+
+      - name: Install conan dependencies
         run: |
           set -e
-          sudo apt update && sudo apt install -y g++
-          pip install conan
+          rm -rf build
           conan profile detect --force
           conan install . --build=missing -s build_type=Debug
-          cmake --preset=conan-debug
-          cmake --build --preset=conan-debug
-          ctest --test-dir build/Debug --output-on-failure
+
+      - name: Build and Test
+        run: |
+          set -e
+          cmake --preset=debug
+          cmake --build --preset=debug
+          ctest --preset=debug
+          lcov --gcov-tool gcov \
+            --capture \
+            --directory . \
+            --output-file lcov.info \
+            --rc geninfo_unexecuted_blocks=1 \
+            --ignore-errors mismatch
+        # lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
+        # TODO: need to solve mismatch before proceeding, custom docker image
+
+      # TODO: should coverage be published in the case that SonarQube fails?
+      # - name: Upload coverage to Coveralls
+      #   uses: coverallsapp/github-action@v2
+      #   with:
+      #     path-to-lcov: lcov.info
+      #   continue-on-error: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true

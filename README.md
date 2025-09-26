@@ -1,16 +1,23 @@
-# trader.cpp
-a proof-of-concept, showcasing some c++ coding combined with some fintech concepts
+
+[![codecov](https://codecov.io/gh/your-username/your-repo/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/your-username/your-repo)
+[![Build](https://github.com/milsanore/trader.cpp/actions/workflows/build.yml/badge.svg)](https://github.com/milsanore/trader.cpp/actions/workflows/build.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=milsanore_trader.cpp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=milsanore_trader.cpp)
 
 <img src="https://static.wikia.nocookie.net/surrealmemes/images/8/80/2f0.png"
 	alt="stonks"
 	width="250" />
 
-## REQUIREMENTS
+# trader.cpp
+a proof-of-concept, showcasing some c++ coding combined with some fintech concepts
+
+## RUN REQUIREMENTS
 - a Binance account, with an Ed25519 token that has FIX read permissions enabled 
+- `stunnel` or a local proxy, for TLS encryption
+
+## BUILD REQUIREMENTS
 - C++20
 - `Conan` (and a conan profile)
 - `CMake`
-- `stunnel` or a local proxy, for TLS encryption
 
 ## DEV REQUIREMENTS
 - `clang-tidy`
@@ -58,23 +65,27 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
     - basic schema (severity, correlationId)
 - ✅ dependency injection
 - ✅ single-threaded to start with, then re-architect (and mermaid diagram)
-- nix virtual environment
+- ✅ code formatting / clang-format
+  - ✅ git hooks
+  - ✅ integrated into build pipeline
+  - ✅ coverage badge
+- ✅ custom docker build image with all dependencies (for faster pipelines)
+- ✅ static code analysis
+  - ✅ sonarcloud integrated into build pipeline
+- clang-tidy
 - decimal type
 - sparse arrays
 - release binaries on github
 - ccache.dev
 - zeromq + protobufs?
 - valgrind/cachegrind
-- code formatting / auto-formatter
-  - ✅ clang-format
-  - ✅ git hooks
-  - ✅integrated into build pipeline
-- clang-tidy
 - github releases
-- custom docker build image with all dependencies
+- local github action runner
+- sonarqube integration
+- nix virtual environment
 
 # STANDARDS
-- high unit-test coverage + badge
+- high unit-test coverage
 - static code analysis
 - configure debugging 
 - git use
