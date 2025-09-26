@@ -1,7 +1,6 @@
-
-[![codecov](https://codecov.io/gh/your-username/your-repo/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/your-username/your-repo)
 [![Build](https://github.com/milsanore/trader.cpp/actions/workflows/build.yml/badge.svg)](https://github.com/milsanore/trader.cpp/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=milsanore_trader.cpp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=milsanore_trader.cpp)
+[![codecov](https://codecov.io/github/milsanore/trader.cpp/graph/badge.svg?token=C787ZTXBQC)](https://codecov.io/github/milsanore/trader.cpp)
 
 <img src="https://static.wikia.nocookie.net/surrealmemes/images/8/80/2f0.png"
 	alt="stonks"
@@ -101,6 +100,8 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - conventional commits
   - automated semantic versioning
   - github-changelog-generator
+  - master branch merge check for conventional commit message
+  - maybe a git gook check for merges
 - memory-mapped files
 
 # CREDITS
