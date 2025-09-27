@@ -52,16 +52,18 @@ jobs:
             --rc geninfo_unexecuted_blocks=1 \
             --ignore-errors mismatch
           lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
-      # - name: clang-tidy (delta)
-      #   run: |
-      #     set -e
-      #     git fetch --no-tags origin master
-      #     diff=$(git diff -U0 origin/master)
-      #     if [[ -z "$diff" ]]; then
-      #       echo "No changes to lint."
-      #       exit 0
-      #     fi
-      #     echo "$diff" | clang-tidy-diff-18.py -p1 -path build/Debug
+      - name: Configure git safe directory
+        run: git config --global --add safe.directory $(pwd)
+      - name: clang-tidy (delta)
+        run: |
+          set -e
+          git fetch --no-tags origin master
+          diff=$(git diff -U0 origin/master)
+          if [[ -z "$diff" ]]; then
+            echo "No changes to lint."
+            exit 0
+          fi
+          echo "$diff" | clang-tidy-diff-18.py -p1 -path build/Debug
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -72,4 +74,7 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.javascript.lcov.reportPaths=lcov_filtered.info
         continue-on-error: true

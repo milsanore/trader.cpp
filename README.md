@@ -96,7 +96,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - ✅ custom docker build image with all dependencies (hosted on GHCR for faster pipelines)
   - cron
     - comprehensive clang-tidy & clang-format checks
-    - sonarqube
+    - sonarcloud
   - nix
   - ccache (faster pipelines)
   - github releases

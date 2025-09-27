@@ -65,4 +65,7 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.javascript.lcov.reportPaths=lcov_filtered.info
         continue-on-error: true
