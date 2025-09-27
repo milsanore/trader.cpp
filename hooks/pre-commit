@@ -1,0 +1,22 @@
+#!/bin/bash
+
+################################################################
+# pre-commit.sh
+# Fails the commit on any linting/formatting errors.
+# NB: file paths are relative to the script location,
+# so the script can be executed from any path
+################################################################
+
+set -euo pipefail
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Run subscripts
+
+echo "Running strict pre-commit checks..."
+
+# git diff -U0 master...HEAD | clang-tidy-diff-18.py -p1 -path "$DIR/../build/Debug"
+
+bash "$DIR/check_clang_format.sh"
+
+echo "✅ Pre-commit checks passed on full codebase."

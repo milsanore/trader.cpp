@@ -10,9 +10,11 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "./../utils/Threading.h"
@@ -25,7 +27,9 @@ namespace UI {
 
 // Helper to pad or truncate a string to a fixed width
 std::string Pad(const std::string &input, const size_t width) {
-  if (input.size() >= width) return input.substr(0, width);
+  if (input.size() >= width) {
+    return input.substr(0, width);
+  }
 
   std::string result = input;
   result.resize(width, ' ');
@@ -58,8 +62,8 @@ ftxui::Element orderbookToTable(OrderBook &ob) {
   // ─────────── Data Rows ───────────
   const std::vector<BidAsk> x = ob.toVector();
   constexpr size_t max_rows = 15;
-  const int rowCount = std::min(x.size(), max_rows);
-  for (int i = 0; i < rowCount; ++i) {
+  const size_t rowCount = std::min(x.size(), max_rows);
+  for (size_t i = 0; i < rowCount; ++i) {
     ftxui::Elements cells;
     cells.push_back(ftxui::text(Pad(x[i].bid_sz, column_width)));
     cells.push_back(ftxui::text(Pad(x[i].bid_px, column_width)));
@@ -91,7 +95,7 @@ TableApp::TableApp(
       workerTask_(std::move(task)) {
   // default behaviour
   if (!workerTask_) {
-    workerTask_ = ([this](std::stop_token stoken) {
+    workerTask_ = ([this](const std::stop_token &stoken) {
       Utils::Threading::set_thread_name("tradercppUI");
       pollQueue(stoken);
       spdlog::info("started polling queue on background thread");
@@ -101,7 +105,7 @@ TableApp::TableApp(
 
 // main thread
 void TableApp::start() {
-  // TODO: why does the order of these two items affect the rendered result?
+  // TODO(mils): why does the order of these two items affect the rendered result?
 
   // start worker thread
   worker_ = std::jthread(workerTask_);
@@ -112,21 +116,24 @@ void TableApp::start() {
 }
 
 // worker thread
-void TableApp::pollQueue(std::stop_token stoken) {
+void TableApp::pollQueue(const std::stop_token &stoken) {
   try {
     /// Adaptive backoff strategy for spin+sleep polling
     /// Performs an adaptive backoff by spinning then sleeping, increasing sleep
     /// time exponentially. Yield 10x times, followed by a 2x sleep capped at
     /// 1ms
+    constexpr int INITIAL_SLEEP_US = 10;
     int spinCount = 0;
-    int sleepTimeUs = 10;
+    int sleepTimeUs = INITIAL_SLEEP_US;
     auto adaptiveBackoff = [&spinCount, &sleepTimeUs]() {
-      if (spinCount < 10) {
+      constexpr int MIN_SPINS = 10;
+      constexpr int MAX_SLEEP_US = 1000;
+      if (spinCount < MIN_SPINS) {
         ++spinCount;
         std::this_thread::yield();
       } else {
         std::this_thread::sleep_for(std::chrono::microseconds(sleepTimeUs));
-        sleepTimeUs = std::min(sleepTimeUs * 2, 1000);
+        sleepTimeUs = std::min(sleepTimeUs * 2, MAX_SLEEP_US);
       }
     };
 
@@ -135,7 +142,9 @@ void TableApp::pollQueue(std::stop_token stoken) {
     while (!stoken.stop_requested()) {
       std::shared_ptr<const FIX44::Message> msg;
       while (!queue_.try_dequeue(msg)) {
-        if (stoken.stop_requested()) return;
+        if (stoken.stop_requested()) {
+          return;
+        }
         adaptiveBackoff();
       }
 
@@ -155,11 +164,11 @@ void TableApp::pollQueue(std::stop_token stoken) {
 
       // Reset backoff state
       spinCount = 0;
-      sleepTimeUs = 10;
+      sleepTimeUs = INITIAL_SLEEP_US;
     }
     spdlog::info("closing worker thread...");
   }
-  // TODO: log error
+  // TODO(mils): log error
   catch (const std::exception &e) {
     spdlog::error("error in ui worker thread, error [{}]", e.what());
     thread_exception = std::current_exception();

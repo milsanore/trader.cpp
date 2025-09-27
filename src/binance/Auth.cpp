@@ -11,7 +11,9 @@
 #include <cassert>
 #include <format>
 #include <fstream>
+#include <gsl/gsl>
 #include <iomanip>
+#include <memory>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -21,7 +23,9 @@ namespace Binance {
 
 Auth::Auth(std::string &apiKey, std::string &privatePemPath)
     : apiKey_(apiKey), privatePemPath_(privatePemPath) {
-  if (sodium_init() < 0) throw std::runtime_error("libsodium failed to initialize");
+  if (sodium_init() < 0) {
+    throw std::runtime_error("libsodium failed to initialize");
+  }
 }
 
 const std::string &Auth::getApiKey() const { return apiKey_; }
@@ -33,45 +37,66 @@ std::string Auth::signPayload(const std::string &payload) {
 }
 
 std::vector<unsigned char> Auth::getSeedFromPem() const {
-  FILE *fp = fopen(privatePemPath_.c_str(), "r");
-  if (!fp) throw std::runtime_error("Failed to open PEM file");
-  EVP_PKEY *pkey = PEM_read_PrivateKey(fp, nullptr, nullptr, nullptr);
-  fclose(fp);
-  if (!pkey) throw std::runtime_error("Failed to read private key from PEM");
+  // fopen is unsafe, wrap in RAII
+  const auto fileCloser = [](gsl::owner<FILE *> fp) {
+    if (fp) fclose(fp);
+  };
+  std::unique_ptr<FILE, decltype(fileCloser)> fp(fopen(privatePemPath_.c_str(), "r"),
+                                                 fileCloser);
+  if (!fp) {
+    throw std::runtime_error("Failed to open PEM file");
+  }
 
-  size_t len = 32;  // Ed25519 private key seed size
-  std::vector<unsigned char> seed(len);
-  if (EVP_PKEY_get_raw_private_key(pkey, seed.data(), &len) != 1)
+  // PEM_read_PrivateKey is unsafe, wrap in RAII
+  const auto keyCloser = [](EVP_PKEY *pkey) {
+    if (pkey) EVP_PKEY_free(pkey);
+  };
+  std::unique_ptr<EVP_PKEY, decltype(keyCloser)> pkey(
+      PEM_read_PrivateKey(fp.get(), nullptr, nullptr, nullptr), keyCloser);
+  if (!pkey) {
+    throw std::runtime_error("Failed to read private key from PEM");
+  }
+
+  constexpr size_t ED25519_SEED_SIZE = 32;
+  size_t len = ED25519_SEED_SIZE;
+  std::vector<unsigned char> seed(ED25519_SEED_SIZE);
+  if (EVP_PKEY_get_raw_private_key(pkey.get(), seed.data(), &len) != 1) {
     throw std::runtime_error("Failed to get raw private key");
-  if (len != 32) throw std::runtime_error("Unexpected private key length");
+  }
+  if (len != ED25519_SEED_SIZE) {
+    throw std::runtime_error(
+        std::format("Unexpected private key length, length [{}]", len));
+  }
 
-  EVP_PKEY_free(pkey);
   return seed;
 }
 
 // static
 std::string Auth::signPayload(const std::string &payload,
                               const std::vector<unsigned char> &seed) {
-  unsigned char pk[crypto_sign_PUBLICKEYBYTES];
-  unsigned char sk[crypto_sign_SECRETKEYBYTES];  // 64 bytes
+  std::array<unsigned char, crypto_sign_PUBLICKEYBYTES> pk{};
+  std::array<unsigned char, crypto_sign_SECRETKEYBYTES> sk{};  // 64 bytes
 
   // Generate keypair from seed
-  if (crypto_sign_seed_keypair(pk, sk, seed.data()) != 0)
+  if (crypto_sign_seed_keypair(pk.data(), sk.data(), seed.data()) != 0) {
     throw std::runtime_error("Failed to generate keypair from seed");
+  }
 
-  unsigned char sig[crypto_sign_BYTES];
-  if (crypto_sign_detached(sig, nullptr,
-                           reinterpret_cast<const unsigned char *>(payload.data()),
-                           payload.size(), sk) != 0) {
+  std::array<unsigned char, crypto_sign_BYTES> sig{};
+  if (crypto_sign_detached(
+          sig.data(), nullptr,
+          static_cast<const unsigned char *>(static_cast<const void *>(payload.data())),
+          payload.size(), sk.data()) != 0) {
     throw std::runtime_error("Failed to sign payload");
   }
 
   // Base64 encode signature
-  char b64[crypto_sign_BYTES * 2];
-  sodium_bin2base64(b64, sizeof(b64), sig, sizeof(sig),
+
+  std::array<char, crypto_sign_BYTES * 2> b64{};
+  sodium_bin2base64(b64.data(), sizeof(b64), sig.data(), sizeof(sig),
                     sodium_base64_VARIANT_ORIGINAL_NO_PADDING);
 
-  return b64;
+  return {b64.data()};
 }
 
 void Auth::clearKeys() {

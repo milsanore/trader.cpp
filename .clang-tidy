@@ -1,0 +1,10 @@
+---
+Checks: >
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  google-*,
+  -google-runtime-int,
+  -google-readability-braces-around-statements,
+  -modernize-use-trailing-return-type

@@ -10,11 +10,11 @@ OrderBook::OrderBook(std::map<double, double, std::greater<>> bidMap,
     : bidMap_(std::move(bidMap)), askMap_(std::move(askMap)) {}
 
 // move constructor
-OrderBook::OrderBook(OrderBook &&other) noexcept {
+OrderBook::OrderBook(OrderBook &&other) noexcept
+    : bidMap_(std::move(other.bidMap_)), askMap_(std::move(other.askMap_)) {
   // lock other.mutex_ to ensure safe access to its internal maps while moving
   std::lock_guard lock(other.mutex_);
-  bidMap_ = std::move(other.bidMap_);
-  askMap_ = std::move(other.askMap_);
+
   // mutex_ does not move; each instance has its own mutex
 }
 
@@ -31,7 +31,7 @@ OrderBook &OrderBook::operator=(OrderBook &&other) noexcept {
 std::vector<BidAsk> OrderBook::toVector() {
   std::lock_guard lock(mutex_);
   const size_t rowCount = std::max(bidMap_.size(), askMap_.size());
-  // TODO: could this be a pre-allocated/reusable vector with exactly 5000
+  // TODO(mils): could this be a pre-allocated/reusable vector with exactly 5000
   // entries?
   std::vector<BidAsk> v(rowCount);
   // bids

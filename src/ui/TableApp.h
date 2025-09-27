@@ -3,6 +3,7 @@
 
 #include <quickfix/fix44/Message.h>
 
+#include <memory>
 #include <thread>
 
 #include "FtxuiScreen.h"
@@ -40,7 +41,7 @@ class TableApp {
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &queue_;
   /// @brief poll queue for any new FIX messages, update order book
   /// @param stoken
-  void pollQueue(std::stop_token stoken);
+  void pollQueue(const std::stop_token &stoken);
 };
 
 }  // namespace UI

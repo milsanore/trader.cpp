@@ -24,7 +24,7 @@ class Worker final {
          std::unique_ptr<FIX::SessionSettings> settings,
          std::unique_ptr<FIX::FileLogFactory> fileLogFactory,
          std::unique_ptr<FIX::SocketInitiator> initiator,
-         std::function<void(std::stop_token)> task = {});
+         const std::function<void(std::stop_token)> &task = {});
   /// @brief factory for concrete Binance instances, using config
   /// @param conf binance configuration parameters
   /// @return

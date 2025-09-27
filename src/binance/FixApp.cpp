@@ -10,37 +10,17 @@
 #include <cassert>
 #include <format>
 #include <iomanip>
+#include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
+#include "MessageHandlingMode.h"
 #include "spdlog/spdlog.h"
 
 namespace Binance {
 
 // PRIVATE
-
-/// Binance Message Handling Mode
-/// Controls how the matching engine processes your messages
-/// [More
-/// info](https://developers.binance.com/docs/binance-spot-api-docs/fix-api#on-message-processing-order)
-enum class MessageHandlingMode : uint8_t {
-  /// UNORDERED(1) - Messages from the client are allowed to be sent to the
-  /// matching engine in any order
-  Unordered = 1,
-  /// SEQUENTIAL(2) - Messages from the client are always sent to the matching
-  /// engine in MsgSeqNum (34) order
-  Sequential = 2
-};
-std::string toString(const MessageHandlingMode m) {
-  switch (m) {
-    case MessageHandlingMode::Unordered:
-      return "1";
-    case MessageHandlingMode::Sequential:
-      return "2";
-    default:
-      return "Unknown";
-  }
-}
 
 // better FIX message logging
 std::string replaceSoh(const std::string &input) {
@@ -69,7 +49,7 @@ void FixApp::toAdmin(FIX::Message &msg, const FIX::SessionID &sessionId) {
                            sessionId.toString(), msgType.getString(),
                            replaceSoh(msg.toString())));
 
-  if (msgType == FIX::MsgType_Logon) {
+  if (msgType.getString() == static_cast<const char *>(FIX::MsgType_Logon)) {
     spdlog::info(std::format("authenticating"));
 
     // collect required fields
@@ -90,7 +70,8 @@ void FixApp::toAdmin(FIX::Message &msg, const FIX::SessionID &sessionId) {
     msg.setField(FIX::Username(auth_->getApiKey()));
     msg.setField(FIX::RawData(signature));
     msg.setField(FIX::RawDataLength(static_cast<FIX::LENGTH>(signature.size())));
-    msg.setField(FIX::StringField(25035, toString(MessageHandlingMode::Sequential)));
+    msg.setField(FIX::StringField(toInt(MessageHandlingMode::FIELD_ID),
+                                  toString(MessageHandlingMode::Sequential)));
   }
 };
 void FixApp::toApp(FIX::Message &msg, const FIX::SessionID &sessionId) noexcept(false) {

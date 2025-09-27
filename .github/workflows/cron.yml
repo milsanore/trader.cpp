@@ -1,46 +1,32 @@
-name: Build
+name: Run every day
 
 on:
-  push:
-    branches:
-      - "*"
-  pull_request:
-    branches: [ master ]
+  schedule:
+    - cron: '0 0 * * *'  # Runs every day at midnight UTC
+
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   format:
     runs-on: ubuntu-latest
     container:
-      image: milss/tradercppbuild:v1.5
+      image: ghcr.io/milsanore/tradercppbuild:v1.5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # - name: Set up clang-format
-      #   run: sudo apt update && sudo apt install -y clang-format
-
-      - name: Check code formatting
-        run: |
-          set -e
-          CHANGED_FILES=$(find src tests -name '*.cpp' -o -name '*.h')
-          FORMAT_ERRORS=0
-          for file in $CHANGED_FILES; do
-            clang-format --dry-run --Werror "$file" || FORMAT_ERRORS=1
-          done
-          if [ "$FORMAT_ERRORS" -ne 0 ]; then
-            echo "Code is not properly formatted. Please run clang-format."
-            exit 1
-          fi
+        with:
+          ref: master
+      - name: clang-format
+        run: hooks/check_clang_format.sh
 
   build_and_test:
     needs: format
     runs-on: ubuntu-latest
     container:
-      image: milss/tradercppbuild:v1.5
+      image: ghcr.io/milsanore/tradercppbuild:v1.5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Restore Conan cache
         uses: actions/cache@v4
         with:
@@ -48,20 +34,12 @@ jobs:
           key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}
           restore-keys: |
             ${{ runner.os }}-conan-
-
-      # - name: Install system dependencies
-      #   run: |
-      #     set -e
-      #     sudo apt update && sudo apt install -y g++ lcov
-      #     pip install conan
-
       - name: Install conan dependencies
         run: |
           set -e
           rm -rf build
           conan profile detect --force
           conan install . --build=missing -s build_type=Debug
-
       - name: Build and Test
         run: |
           set -e
@@ -74,22 +52,15 @@ jobs:
             --output-file lcov.info \
             --rc geninfo_unexecuted_blocks=1 \
             --ignore-errors mismatch
-        # lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
-        # TODO: need to solve mismatch before proceeding, custom docker image
-
-      # TODO: should coverage be published in the case that SonarQube fails?
-      # - name: Upload coverage to Coveralls
-      #   uses: coverallsapp/github-action@v2
-      #   with:
-      #     path-to-lcov: lcov.info
-      #   continue-on-error: true
-
+          lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
+      - name: clang-tidy (delta)
+        run: hooks/check_clang_tidy.sh
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.info
-
+          files: lcov_filtered.info
+        continue-on-error: true
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:

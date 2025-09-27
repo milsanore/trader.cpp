@@ -1,0 +1,75 @@
+name: Build commits and merges to master
+
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/milsanore/tradercppbuild:v1.5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: clang-format
+        run: hooks/check_clang_format.sh
+
+  build_and_test:
+    needs: format
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/milsanore/tradercppbuild:v1.5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Restore Conan cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}
+          restore-keys: |
+            ${{ runner.os }}-conan-
+      - name: Install conan dependencies
+        run: |
+          set -e
+          rm -rf build
+          conan profile detect --force
+          conan install . --build=missing -s build_type=Debug
+      - name: Build and Test
+        run: |
+          set -e
+          cmake --preset=debug
+          cmake --build --preset=debug
+          ctest --preset=debug
+          lcov --gcov-tool gcov \
+            --capture \
+            --directory . \
+            --output-file lcov.info \
+            --rc geninfo_unexecuted_blocks=1 \
+            --ignore-errors mismatch
+          lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
+      # - name: clang-tidy (delta)
+      #   run: |
+      #     set -e
+      #     git fetch --no-tags origin master
+      #     diff=$(git diff -U0 origin/master)
+      #     if [[ -z "$diff" ]]; then
+      #       echo "No changes to lint."
+      #       exit 0
+      #     fi
+      #     echo "$diff" | clang-tidy-diff-18.py -p1 -path build/Debug
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov_filtered.info
+        continue-on-error: true
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true

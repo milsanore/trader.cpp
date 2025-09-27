@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include <quickfix/fix44/Message.h>
 
+#include <memory>
 #include <mutex>
 #include <string>
 

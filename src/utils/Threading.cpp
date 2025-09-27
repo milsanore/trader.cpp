@@ -10,10 +10,12 @@
 
 namespace Utils {
 
+constexpr int MAX_STRING_LENGTH = 15;
+
 void Threading::set_thread_name(const std::string &name) {
 #if defined(__linux__)
   // Linux: Limit is 16 bytes including null terminator
-  pthread_setname_np(pthread_self(), name.substr(0, 15).c_str());
+  pthread_setname_np(pthread_self(), name.substr(0, MAX_STRING_LENGTH).c_str());
 
 #elif defined(__APPLE__)
   // macOS: Only supports setting name from within the thread

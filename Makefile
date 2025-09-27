@@ -22,7 +22,6 @@ withenv:
 ## init: 🏌️ initialize the project, fetch dependencies
 .PHONY: init
 init:
-	test -e .git/hooks/pre-commit || ln -s ../../.githooks/pre-commit .git/hooks/pre-commit
 	rm -rf build && mkdir build
 	python3 -m venv .venv
 	source .venv/bin/activate && \
@@ -46,6 +45,12 @@ test:
 	cmake --build --preset=debug
 	ctest --preset=debug
 	lcov --gcov-tool gcov --capture --directory . --output-file lcov.info
+
+## tidy: 🧹 tidy things up before committing code
+.PHONY: tidy
+tidy:
+	find src/ -name '*.cpp' | xargs clang-tidy -p build/Debug --fix --format-style=.clang-format
+	find src/ tests/ \( -name '*.cpp' -o -name '*.hpp' -o -name '*.c' -o -name '*.h' \) -exec clang-format -i {} +	
 
 ## build-release: 🔨🔨 compile (prod)
 .PHONY: build-release

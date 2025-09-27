@@ -9,21 +9,23 @@
 # trader.cpp
 a proof-of-concept, showcasing some c++ coding combined with some fintech concepts
 
-## RUN REQUIREMENTS
+## Run Requirements
 - a Binance account, with an Ed25519 token that has FIX read permissions enabled 
-- `stunnel` or a local proxy, for TLS encryption
+- `stunnel` for TLS encryption (or a local proxy)
 
-## BUILD REQUIREMENTS
+## Build Requirements
 - C++20
 - `Conan` (and a conan profile)
 - `CMake`
+- `ninja`
 
-## DEV REQUIREMENTS
+## Dev Requirements
+- `make` (convenience)
 - `clang-tidy`
 - `clang-format`
 - `lcov`
 
-## BUILD AND RUN
+## Build and Run
 (NB: this app uses `make` as a task runner, but it's not essential)
 1. copy `.env.example` to `.env`, and set your public/private keys
 2. run an SSL tunnel (e.g. `stunnel binance/stunnel_prod.conf`)
@@ -31,28 +33,40 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 4. `make build-debug`
 5. `make withenv RECIPE=run-debug`
 
-## TEST
+## Test
 `make test`
 
-## HELP
+## Debug
+- vscode
+  - app and test debug profiles are pre-configured in the following files:
+    - `.vscode/launch.json`
+    - `.vscode/tasks.json`
+- intellij (clion)
+  - enable the `debug` CMake profile
+
+## Help
 `make`
 
+## Cloud Config
+- Sonarcloud (click the badge)
+- Codecov (click the badge)
 
-# AIM
 
-## FUNCTIONAL
+# Aims
+
+## Functional
 - ✅ create a FIX connection to Binance
 - ✅ subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
 - fire an order
 - test in the Binance test environment
 
-
-## NON-FUNCTIONAL
+## Non-functional
 - ✅ basic cpp app to start with
 - ✅ makefile and build chain
 - ✅ package management
 - ✅ debugging
+- ✅ single-threaded to start with, then re-architect (and mermaid diagram)
 - ✅ UI
   - ✅ publish messages to thread-safe queue
   - ✅ consume messages from thread-safe queue on a worker thread
@@ -62,47 +76,55 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
     - ✅ fast
     - structured
     - basic schema (severity, correlationId)
-- ✅ dependency injection
-- ✅ single-threaded to start with, then re-architect (and mermaid diagram)
-- ✅ code formatting / clang-format
+- code quality
+  - ✅ clang-format
+    - ✅ configure editor to auto-format
+    - ✅ fail commits if not formatted
+    - ✅ fail builds if not formatted
+  - clang-tidy
+    - ✅ all files tidied
+    - ✅ configured clang-tidy => clang-format
+    - ✅ fail commits/merges if not tidy
+    - ✅ fail builds if not tidy
+    - ✅ `clang-tidy-diff.py` (alias 18)
   - ✅ git hooks
   - ✅ integrated into build pipeline
-  - ✅ coverage badge
-- ✅ custom docker build image with all dependencies (for faster pipelines)
-- ✅ static code analysis
+  - ✅ badges
   - ✅ sonarcloud integrated into build pipeline
-- clang-tidy
-- decimal type
-- sparse arrays
-- release binaries on github
-- ccache.dev
-- zeromq + protobufs?
-- valgrind/cachegrind
-- github releases
-- local github action runner
-- sonarqube integration
-- nix virtual environment
-
-# STANDARDS
-- high unit-test coverage
-- static code analysis
-- configure debugging 
-- git use
-- integration test with mocked Binance
-- load test with mocked Binance (k6?)
-- profiling
-- github action
-    - containerised integration tests / dind
+  - sonarcloud coverage
+- pipeline
+  - ✅ custom docker build image with all dependencies (hosted on GHCR for faster pipelines)
+  - cron
+    - comprehensive clang-tidy & clang-format checks
+    - sonarqube
+  - nix
+  - ccache (faster pipelines)
+  - github releases
+  - local github action runner (`act`)
+  - containerised integration tests / dind
+- testing
+  - ✅ dependency injection
+  - integration test with mocked Binance
+- performance
+  - profiling (valgrind/cachegrind)
+  - load test with mocked Binance server (k6?)
+  - sparse arrays
+  - memory-mapped files
 - observability
-    - opentelemetry
-    - grafana+tempo via docker-compose
+  - opentelemetry
+  - grafana+tempo via docker-compose
 - versioning
-  - conventional commits
+  - master branch merge check for conventional commit message (e.g. regex)
+    - maybe a merge git gook check
   - automated semantic versioning
   - github-changelog-generator
-  - master branch merge check for conventional commit message
-  - maybe a git gook check for merges
-- memory-mapped files
+- other
+  - decimal type
+  - zeromq + protobufs?
+  - shellcheck?
+  - conan build_requires
+- deployment
+  - terraform
 
-# CREDITS
+# Credits
 - https://github.com/binance/binance-fix-connector-python

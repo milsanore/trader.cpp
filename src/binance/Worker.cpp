@@ -22,7 +22,7 @@ Worker::Worker(std::unique_ptr<FixApp> app,
                std::unique_ptr<FIX::SessionSettings> settings,
                std::unique_ptr<FIX::FileLogFactory> fileLogFactory,
                std::unique_ptr<FIX::SocketInitiator> initiator,
-               std::function<void(std::stop_token)> task)
+               const std::function<void(std::stop_token)> &task)
     : app_(std::move(app)),
       store_(std::move(fileStoreFactory)),
       settings_(std::move(settings)),
@@ -31,7 +31,7 @@ Worker::Worker(std::unique_ptr<FixApp> app,
       workerTask_(task) {
   // default behaviour
   if (!task) {
-    workerTask_ = ([this](std::stop_token stoken) {
+    workerTask_ = ([this](const std::stop_token &stoken) {
       Utils::Threading::set_thread_name("tradercppFIX");
       // NB: SocketInitiator::start() is a blocking call, so the stop_token
       // cannot cancel the thread. NB: The `stop()` function has to forcibly
@@ -69,7 +69,9 @@ void Worker::start() {
 
 void Worker::stop() {
   try {
-    if (initiator_) initiator_->stop();  // TODO: does this need a try/catch?
+    if (initiator_) {
+      initiator_->stop();  // TODO(mils): does this need a try/catch?
+    }
     spdlog::info("stopped FIX session");
   } catch (const std::exception &e) {
     spdlog::error("error stopping binance FIX session, error [{}]", e.what());

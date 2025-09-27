@@ -18,12 +18,12 @@ std::string getEnvOrThrow(const char *key) {
   if (const char *val = std::getenv(key)) {
     spdlog::info(
         std::format("fetched environment variable, key [{}], value [{}]", key, val));
-    return std::string(val);
+    return {val};
   }
   throw std::runtime_error(std::format("envvar not defined, key [{}]", key));
 };
 
-// TODO: for keys, use `std::vector<unsigned char>` instead of string
+// TODO(mils): for keys, use `std::vector<unsigned char>` instead of string
 
 /// @brief load Binance configuration from env
 /// (static member function)
@@ -35,7 +35,9 @@ Config Config::fromEnv() {
   const std::string instStr = getEnvOrThrow("SYMBOLS");
   std::vector<std::string> symbols;
   for (auto inst : std::views::split(instStr, ',')) {
-    if (inst.size() > 0) symbols.emplace_back(inst.begin(), inst.end());
+    if (!inst.empty()) {
+      symbols.emplace_back(inst.begin(), inst.end());
+    }
   }
 
   // copy

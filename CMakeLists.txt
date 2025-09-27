@@ -15,6 +15,7 @@ endif()
 # Find packages from Conan
 find_package(concurrentqueue REQUIRED)
 find_package(ftxui REQUIRED)
+find_package(Microsoft.GSL REQUIRED)
 find_package(GTest REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(quickfix REQUIRED CONFIG)
@@ -43,6 +44,7 @@ endif()
 target_link_libraries(traderlib PUBLIC
     concurrentqueue::concurrentqueue
     ftxui::ftxui
+    Microsoft.GSL::GSL
     OpenSSL::SSL
     OpenSSL::Crypto
     quickfix::quickfix
