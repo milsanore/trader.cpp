@@ -52,6 +52,8 @@ jobs:
             --rc geninfo_unexecuted_blocks=1 \
             --ignore-errors mismatch
           lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
+      - name: Configure git safe directory
+        run: git config --global --add safe.directory $(pwd)
       - name: clang-tidy (delta)
         run: |
           set -e
