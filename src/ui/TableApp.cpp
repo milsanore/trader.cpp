@@ -1,181 +1,59 @@
 #include "TableApp.h"
 
-#include <quickfix/fix44/MarketDataIncrementalRefresh.h>
-#include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 #include <quickfix/fix44/Message.h>
 
 #include <algorithm>
-#include <chrono>
-#include <cmath>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
 
-#include "./../utils/Threading.h"
-#include "BidAsk.h"
 #include "IScreen.h"
+#include "LogBox.h"
+#include "OrderBookBox.h"
+#include "TradeBox.h"
+#include "WalletBox.h"
 #include "concurrentqueue.h"
 #include "spdlog/spdlog.h"
 
 namespace UI {
 
-// Helper to pad or truncate a string to a fixed width
-std::string Pad(const std::string &input, const size_t width) {
-  if (input.size() >= width) {
-    return input.substr(0, width);
-  }
-
-  std::string result = input;
-  result.resize(width, ' ');
-  return result;
-}
-std::string Pad(const double input, const size_t width) {
-  return Pad(std::isnan(input) ? "" : std::to_string(input), width);
-}
-/// @brief generate an FTXUI table containing the order book, from the bid/ask
-/// maps
-/// @return the FTXUI element that the UI will render
-ftxui::Element orderbookToTable(OrderBook &ob) {
-  ftxui::Elements table_elements;
-  constexpr int num_columns = 4;
-  constexpr int column_width = 15;
-  const std::vector<std::string> column_headers = {"Bid Sz", "Bid", "Ask", "Ask Sz"};
-
-  // ─────────── Header Row ───────────
-  ftxui::Elements header_cells;
-  for (int col = 0; col < num_columns; ++col) {
-    std::string label = (col < column_headers.size()) ? column_headers[col]
-                                                      : "Col " + std::to_string(col);
-    header_cells.push_back(ftxui::text(Pad(label, column_width)) | ftxui::bold);
-  }
-
-  // Combine header row and separator
-  table_elements.push_back(
-      ftxui::vbox({hbox(std::move(header_cells)), ftxui::separator()}));
-
-  // ─────────── Data Rows ───────────
-  const std::vector<BidAsk> x = ob.toVector();
-  constexpr size_t max_rows = 15;
-  const size_t rowCount = std::min(x.size(), max_rows);
-  for (size_t i = 0; i < rowCount; ++i) {
-    ftxui::Elements cells;
-    cells.push_back(ftxui::text(Pad(x[i].bid_sz, column_width)));
-    cells.push_back(ftxui::text(Pad(x[i].bid_px, column_width)));
-    cells.push_back(ftxui::text(Pad(x[i].ask_px, column_width)));
-    cells.push_back(ftxui::text(Pad(x[i].ask_sz, column_width)));
-    table_elements.push_back(hbox(std::move(cells)));
-  }
-  if (rowCount >= max_rows) {
-    ftxui::Elements cells;
-    cells.push_back(ftxui::text(Pad("...", column_width)));
-    cells.push_back(ftxui::text(Pad("...", column_width)));
-    cells.push_back(ftxui::text(Pad("...", column_width)));
-    cells.push_back(ftxui::text(Pad("...", column_width)));
-    table_elements.push_back(hbox(std::move(cells)));
-  }
-
-  return vbox(std::move(table_elements));
-};
-
 ///////////////////////////////////////
 
 TableApp::TableApp(
-    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &queue,
-    std::unique_ptr<OrderBook> ob, std::unique_ptr<IScreen> screen,
-    std::function<void(std::stop_token)> task)
-    : queue_(queue),
-      book_(std::move(ob)),
-      screen_(std::move(screen)),
-      workerTask_(std::move(task)) {
-  // default behaviour
-  if (!workerTask_) {
-    workerTask_ = ([this](const std::stop_token &stoken) {
-      Utils::Threading::set_thread_name("tradercppUI");
-      pollQueue(stoken);
-      spdlog::info("started polling queue on background thread");
-    });
-  }
-};
+    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &orderQueue,
+    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &tradeQueue,
+    std::unique_ptr<IScreen> screen)
+    : screen_(std::move(screen)),
+      trades_(""),
+      wallet_(""),
+      book_(*screen_, orderQueue),
+      logs_(LogBox::fromEnv(*screen_)) {};
 
 // main thread
 void TableApp::start() {
   // TODO(mils): why does the order of these two items affect the rendered result?
 
-  // start worker thread
-  worker_ = std::jthread(workerTask_);
+  // start worker threads
+  book_.Start();
+  logs_.Start();
+  // trades_.Start();
 
-  // Start the main UI loop
-  const auto renderer = ftxui::Renderer([&]() { return orderbookToTable(*book_); });
-  screen_->Loop(renderer);
-}
-
-// worker thread
-void TableApp::pollQueue(const std::stop_token &stoken) {
-  try {
-    /// Adaptive backoff strategy for spin+sleep polling
-    /// Performs an adaptive backoff by spinning then sleeping, increasing sleep
-    /// time exponentially. Yield 10x times, followed by a 2x sleep capped at
-    /// 1ms
-    constexpr int INITIAL_SLEEP_US = 10;
-    int spinCount = 0;
-    int sleepTimeUs = INITIAL_SLEEP_US;
-    auto adaptiveBackoff = [&spinCount, &sleepTimeUs]() {
-      constexpr int MIN_SPINS = 10;
-      constexpr int MAX_SLEEP_US = 1000;
-      if (spinCount < MIN_SPINS) {
-        ++spinCount;
-        std::this_thread::yield();
-      } else {
-        std::this_thread::sleep_for(std::chrono::microseconds(sleepTimeUs));
-        sleepTimeUs = std::min(sleepTimeUs * 2, MAX_SLEEP_US);
-      }
-    };
-
-    OrderBook &book = *book_;
-    IScreen &screen = *screen_;
-    while (!stoken.stop_requested()) {
-      std::shared_ptr<const FIX44::Message> msg;
-      while (!queue_.try_dequeue(msg)) {
-        if (stoken.stop_requested()) {
-          return;
-        }
-        adaptiveBackoff();
-      }
-
-      if (auto snap =
-              std::dynamic_pointer_cast<const FIX44::MarketDataSnapshotFullRefresh>(
-                  msg)) {
-        book.applySnapshot(*snap);
-        screen.PostEvent(ftxui::Event::Custom);  // Trigger re-render
-      } else if (auto inc =
-                     std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(
-                         msg)) {
-        book.applyIncrement(*inc);
-        screen.PostEvent(ftxui::Event::Custom);  // Trigger re-render
-      } else {
-        spdlog::error("unknown message type");
-      }
-
-      // Reset backoff state
-      spinCount = 0;
-      sleepTimeUs = INITIAL_SLEEP_US;
-    }
-    spdlog::info("closing worker thread...");
-  }
-  // TODO(mils): log error
-  catch (const std::exception &e) {
-    spdlog::error("error in ui worker thread, error [{}]", e.what());
-    thread_exception = std::current_exception();
-  } catch (...) {
-    spdlog::error(std::format("error in ui worker thread, unknown error"));
-    thread_exception = std::current_exception();
-  }
+  // Start the main UI loop,
+  // Arrange in 2×2 grid via containers
+  using namespace ftxui;
+  auto row1 = Container::Horizontal(
+      {Container::Vertical({book_.GetComponent() | flex}) | size(WIDTH, EQUAL, 70),
+       Container::Vertical({trades_.GetComponent() | flex}) | flex});
+  auto row2 = Container::Horizontal(
+      {Container::Vertical({wallet_.GetComponent() | flex}) | size(WIDTH, EQUAL, 50),
+       Container::Vertical({logs_.GetComponent() | flex}) | flex});
+  auto root = Container::Vertical({row1 | size(HEIGHT, EQUAL, 20), row2 | flex});
+  screen_->Loop(root);
 }
 
 }  // namespace UI

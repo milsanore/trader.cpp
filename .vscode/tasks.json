@@ -7,7 +7,7 @@
       "command": "bash",
       "args": [
         "-c",
-        "mkdir -p build && source .venv/bin/activate && conan install . --build=missing -s build_type=Debug && cmake --preset=debug && cmake --build --preset=debug"
+        "source .venv/bin/activate && conan install . --build=missing -s build_type=Debug && cmake --preset=debug && cmake --build --preset=debug"
       ],
       "group": {
         "kind": "build",

@@ -1,9 +1,9 @@
-#ifndef UI_BID_ASK_H
-#define UI_BID_ASK_H
+#ifndef CORE_BID_ASK_H
+#define CORE_BID_ASK_H
 
 #include <cmath>
 
-namespace UI {
+namespace Core {
 
 /// @brief Binance config parameters, fetched from env
 struct BidAsk {
@@ -28,6 +28,6 @@ struct BidAsk {
   };
 };
 
-}  // namespace UI
+}  // namespace Core
 
-#endif  // UI_BID_ASK_H
+#endif  // CORE_BID_ASK_H

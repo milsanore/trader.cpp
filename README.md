@@ -60,6 +60,10 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - create a basic trading signal (e.g. standard deviations)
 - fire an order
 - test in the Binance test environment
+- momentum indicators
+- throughput indicators (messages/sec)
+- orders
+  - update balance for in-flight orders (reconcile asynchronously)
 
 ## Non-functional
 - ✅ basic cpp app to start with
@@ -74,6 +78,8 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - 60fps limit
 - ✅ logging
     - ✅ fast
+    - ✅ compiled out 'debug' logging for release builds
+    - output thread name
     - structured
     - basic schema (severity, correlationId)
 - code quality
@@ -94,31 +100,44 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - sonarcloud coverage
 - pipeline
   - ✅ custom docker build image with all dependencies (hosted on GHCR for faster pipelines)
-  - cron
-    - comprehensive clang-tidy & clang-format checks
+  - ✅ cron
+    - ✅ comprehensive clang-tidy & clang-format checks
     - sonarcloud
-  - nix
-  - ccache (faster pipelines)
-  - github releases
+  - ccache or precomiled headers
   - local github action runner (`act`)
   - containerised integration tests / dind
 - testing
   - ✅ dependency injection
-  - integration test with mocked Binance
+  - integration test with mocked Binance server
 - performance
+  - release compile flags
   - profiling (valgrind/cachegrind)
-  - load test with mocked Binance server (k6?)
-  - sparse arrays
+  - gperftools
+  - profile-guided optimization (pgo)
+  - load test with mocked FIX server
+- latency
+  - sparse arrays & flat matrix
   - memory-mapped files
-- observability
-  - opentelemetry
-  - grafana+tempo via docker-compose
-- versioning
-  - master branch merge check for conventional commit message (e.g. regex)
+  - (analyse) find Binance's server location for a low-latency connection
+  - (analyse) how to quantify latency?
+  - FIX SSL connectivity, to avoid stunnel latency overhead
+  - QuickFIX alternative (Fix8)
+  - kernel space vs user space
+  - RT OS
+- release process
+  - versioning
+    - master branch merge check for conventional commit message (e.g. regex)
     - maybe a merge git gook check
-  - automated semantic versioning
-  - github-changelog-generator
+    - automated semantic versioning
+    - github-changelog-generator
+- observability
+  - opentelemetry (asynchronous)
+  - grafana+tempo via docker-compose
+- FIX
+  - ✅ debug quickfix to confirm if it's running in it's own thread
+  - switch to Fix8
 - other
+  - nix
   - decimal type
   - zeromq + protobufs?
   - shellcheck?
@@ -126,5 +145,23 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - deployment
   - terraform
 
+# Design
+```mermaid
+sequenceDiagram
+    participant T1 as Thread 1<br>(Main + UI)
+    participant T2 as Thread 2<br>(UI Worker)
+    participant T3 as Thread 3<br>(FIX Worker)
+
+    T1->>T3: Start FIX Worker
+    T1->>T2: Start UI Worker
+    T3-->>T3: subscribe + push to <queue>
+    T3->>T2: pull from <queue>
+    T2-->>T2: build UI
+    T2->>T1: request render
+    T3-->>T1: Thread 3 done
+    T2-->>T1: Thread 2 done
+```
+
 # Credits
 - https://github.com/binance/binance-fix-connector-python
+- harjus

@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <cassert>
 #include <format>
-#include <fstream>
 #include <gsl/gsl>
 #include <iomanip>
 #include <memory>

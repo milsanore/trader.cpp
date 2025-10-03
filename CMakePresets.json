@@ -14,7 +14,20 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Debug/generators/conan_toolchain.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Debug/generators/conan_toolchain.cmake",
+        "CMAKE_CXX_FLAGS": "-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Conan Release Build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Release/generators/conan_toolchain.cmake",
+        "CMAKE_CXX_FLAGS": "-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO"
       }
     }
   ],
@@ -23,12 +36,24 @@
       "name": "debug",
       "configurePreset": "debug",
       "jobs": 0
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "jobs": 0
     }
   ],
   "testPresets": [
     {
       "name": "debug",
       "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
       "output": {
         "outputOnFailure": true
       }

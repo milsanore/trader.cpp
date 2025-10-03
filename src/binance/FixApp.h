@@ -23,7 +23,10 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
   /// @brief
   void subscribeToDepth(const FIX::SessionID &sessionId) const;
   /// @brief queue of market messages from Binance
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> queue;
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> orderQueue_;
+  /// @brief queue of trade messages from Binance
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> tradeQueue_;
+
   // TODO: performance implication of a polymorphic queue
   // TODO: perhaps better to run two queues, or something else
   // TODO: we will have one of these per instrument

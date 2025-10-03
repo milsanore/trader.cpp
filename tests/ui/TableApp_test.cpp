@@ -9,16 +9,16 @@
 
 #include "FakeScreen.h"
 #include "concurrentqueue.h"
+#include "core/OrderBook.h"
 #include "spdlog/spdlog.h"
 #include "ui/IScreen.h"
-#include "ui/OrderBook.h"
 
 TEST(TableApp, start) {
   // create app
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> queue{};
-  auto book = std::make_unique<UI::OrderBook>();
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> orderQueue{};
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> tradeQueue{};
   std::unique_ptr<UI::IScreen> screen = std::make_unique<FakeScreen>();
-  UI::TableApp tblApp{queue, std::move(book), std::move(screen)};
+  UI::TableApp tblApp{orderQueue, tradeQueue, std::move(screen)};
   tblApp.start();
 
   // publish update
@@ -37,7 +37,8 @@ TEST(TableApp, start) {
   askEntry.set(FIX::MDEntrySize(11));
   message.addGroup(askEntry);
   // push
-  queue.enqueue(std::make_shared<const FIX44::MarketDataSnapshotFullRefresh>(message));
+  orderQueue.enqueue(
+      std::make_shared<const FIX44::MarketDataSnapshotFullRefresh>(message));
 
   // TODO: how to assert this? how to evaluate the UI change based on the input message?
 }

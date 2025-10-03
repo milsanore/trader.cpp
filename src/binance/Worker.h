@@ -33,7 +33,10 @@ class Worker final {
   /// updates onto queue. under the hood the {FixApp} is actioned
   void start();
   void stop();
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &getQueue() const;
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &getOrderQueue()
+      const;
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &getTradeQueue()
+      const;
 
  private:
   // worker thread

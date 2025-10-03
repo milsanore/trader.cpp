@@ -81,9 +81,14 @@ void Worker::stop() {
   worker_ = std::jthread();
 }
 
-moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &Worker::getQueue()
-    const {
-  return app_->queue;
+moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &
+Worker::getOrderQueue() const {
+  return app_->orderQueue_;
+}
+
+moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &
+Worker::getTradeQueue() const {
+  return app_->tradeQueue_;
 }
 
 }  // namespace Binance

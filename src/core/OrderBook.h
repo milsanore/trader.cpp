@@ -1,5 +1,5 @@
-#ifndef UI_ORDER_BOOK_H
-#define UI_ORDER_BOOK_H
+#ifndef CORE_ORDER_BOOK_H
+#define CORE_ORDER_BOOK_H
 
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
@@ -10,7 +10,7 @@
 
 #include "BidAsk.h"
 
-namespace UI {
+namespace Core {
 
 /// An order book class backed by two (synchronised) bid/ask maps
 class OrderBook {
@@ -44,6 +44,6 @@ class OrderBook {
   // std::vector<BidAsk> v(5000);
 };
 
-}  // namespace UI
+}  // namespace Core
 
-#endif  // UI_ORDER_BOOK_H
+#endif  // CORE_ORDER_BOOK_H

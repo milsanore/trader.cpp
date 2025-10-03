@@ -9,7 +9,7 @@ namespace UI {
 
 class FtxuiScreen : public IScreen {
  public:
-  FtxuiScreen() : screen_(ftxui::ScreenInteractive::TerminalOutput()) {}
+  FtxuiScreen() : screen_(ftxui::ScreenInteractive::Fullscreen()) {}
 
   void Loop(ftxui::Component renderer) override { screen_.Loop(renderer); }
 

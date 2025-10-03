@@ -3,7 +3,7 @@
 #include "BidAsk.h"
 #include "spdlog/spdlog.h"
 
-namespace UI {
+namespace Core {
 
 OrderBook::OrderBook(std::map<double, double, std::greater<>> bidMap,
                      std::map<double, double> askMap)
@@ -55,10 +55,10 @@ void OrderBook::applySnapshot(const FIX44::MarketDataSnapshotFullRefresh &msg) {
   std::lock_guard lock(mutex_);
   FIX::Symbol symbol;
   msg.get(symbol);
-  spdlog::debug(std::format("MD snapshot message, symbol [{}]", symbol.getString()));
+  spdlog::debug("MD snapshot message, symbol [{}]", symbol.getString());
 
   if (std::string s = symbol.getValue(); s != "BTCUSDT") {
-    spdlog::debug(std::format("wrong symbol, skipping snapshot. value [{}]", s));
+    spdlog::debug("wrong symbol, skipping snapshot. value [{}]", s);
     return;
   }
 
@@ -105,7 +105,7 @@ void OrderBook::applyIncrement(const FIX44::MarketDataIncrementalRefresh &msg) {
       }
     }
     if (symbol.empty() && symbol != "BTCUSDT") {
-      spdlog::debug(std::format("wrong symbol, skipping increment. value [{}]", symbol));
+      spdlog::debug("wrong symbol, skipping increment. value [{}]", symbol);
       continue;
     }
 
@@ -124,7 +124,7 @@ void OrderBook::applyIncrement(const FIX44::MarketDataIncrementalRefresh &msg) {
 
     if (action.getValue() == FIX::MDUpdateAction_NEW ||
         action.getValue() == FIX::MDUpdateAction_CHANGE) {
-      spdlog::debug(std::format("price upsert"));
+      spdlog::debug("price upsert");
 
       if (group.isSetField(FIX::FIELD::MDEntrySize)) {
         FIX::MDEntrySize sz;
@@ -136,7 +136,7 @@ void OrderBook::applyIncrement(const FIX44::MarketDataIncrementalRefresh &msg) {
         }
       }
     } else if (action.getValue() == FIX::MDUpdateAction_DELETE) {
-      spdlog::debug(std::format("price delete"));
+      spdlog::debug("price delete");
 
       if (entryType == FIX::MDEntryType_BID) {
         bidMap_.erase(px.getValue());
@@ -149,4 +149,4 @@ void OrderBook::applyIncrement(const FIX44::MarketDataIncrementalRefresh &msg) {
   }
 }
 
-}  // namespace UI
+}  // namespace Core
