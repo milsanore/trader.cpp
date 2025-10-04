@@ -27,7 +27,7 @@ int main() {
   bWorker.start();
 
   // UI APP (READS FROM QUEUE)
-  auto app = UI::TableApp(bWorker.getOrderQueue(), bWorker.getTradeQueue());
+  auto app = UI::TableApp::fromEnv(bWorker.getOrderQueue(), bWorker.getTradeQueue());
   app.start();
 
   if (app.thread_exception) {

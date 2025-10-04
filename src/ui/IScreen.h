@@ -7,9 +7,9 @@ namespace UI {
 
 class IScreen {
  public:
+  virtual ~IScreen() = default;
   virtual void Loop(ftxui::Component renderer) = 0;
   virtual void PostEvent(const ftxui::Event &) = 0;
-  virtual ~IScreen() = default;
 };
 
 }  // namespace UI

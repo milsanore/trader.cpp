@@ -1,7 +1,6 @@
 #ifndef BINANCE_MESSAGE_HANDLING_MODE_H
 #define BINANCE_MESSAGE_HANDLING_MODE_H
 
-#include <cstdint>
 #include <string>
 
 namespace Binance {

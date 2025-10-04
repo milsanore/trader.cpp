@@ -1,8 +1,6 @@
 #pragma once
 
-#include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/dom/elements.hpp>
 
 /*
 step 1: vector of trades
@@ -15,16 +13,12 @@ namespace UI {
 class TradeBox {
  public:
   // Constructor: takes a label string
-  TradeBox(const std::string& initial_label);
-
-  // Update the label
-  void SetLabel(const std::string& new_label);
+  TradeBox();
 
   // Return the FTXUI component to plug into layout
   ftxui::Component GetComponent();
 
  private:
-  std::string label_;
   ftxui::Component component_;
 };
 

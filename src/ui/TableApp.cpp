@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "FtxuiScreen.h"
 #include "IScreen.h"
 #include "LogBox.h"
 #include "OrderBookBox.h"
@@ -20,6 +21,14 @@
 #include "concurrentqueue.h"
 #include "spdlog/spdlog.h"
 
+using ftxui::EQUAL;
+using ftxui::flex;
+using ftxui::HEIGHT;
+using ftxui::size;
+using ftxui::WIDTH;
+using ftxui::Container::Horizontal;
+using ftxui::Container::Vertical;
+
 namespace UI {
 
 ///////////////////////////////////////
@@ -27,12 +36,21 @@ namespace UI {
 TableApp::TableApp(
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &orderQueue,
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &tradeQueue,
-    std::unique_ptr<IScreen> screen)
+    std::unique_ptr<IScreen> screen, std::unique_ptr<LogBox> logs)
     : screen_(std::move(screen)),
-      trades_(""),
-      wallet_(""),
       book_(*screen_, orderQueue),
-      logs_(LogBox::fromEnv(*screen_)) {};
+      trades_(),
+      wallet_(),
+      logs_(std::move(logs)) {};
+
+// static function
+TableApp TableApp::fromEnv(
+    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &orderQueue,
+    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &tradeQueue) {
+  std::unique_ptr<IScreen> screen = std::make_unique<FtxuiScreen>();
+  auto logBox = LogBox::fromEnv(*screen);
+  return TableApp(orderQueue, tradeQueue, std::move(screen), std::move(logBox));
+}
 
 // main thread
 void TableApp::start() {
@@ -40,19 +58,18 @@ void TableApp::start() {
 
   // start worker threads
   book_.Start();
-  logs_.Start();
+  logs_->Start();
   // trades_.Start();
 
   // Start the main UI loop,
   // Arrange in 2×2 grid via containers
-  using namespace ftxui;
-  auto row1 = Container::Horizontal(
-      {Container::Vertical({book_.GetComponent() | flex}) | size(WIDTH, EQUAL, 70),
-       Container::Vertical({trades_.GetComponent() | flex}) | flex});
-  auto row2 = Container::Horizontal(
-      {Container::Vertical({wallet_.GetComponent() | flex}) | size(WIDTH, EQUAL, 50),
-       Container::Vertical({logs_.GetComponent() | flex}) | flex});
-  auto root = Container::Vertical({row1 | size(HEIGHT, EQUAL, 20), row2 | flex});
+  auto row1 =
+      Horizontal({Vertical({book_.GetComponent() | flex}) | size(WIDTH, EQUAL, 70),
+                  Vertical({trades_.GetComponent() | flex}) | flex});
+  auto row2 =
+      Horizontal({Vertical({wallet_.GetComponent() | flex}) | size(WIDTH, EQUAL, 50),
+                  Vertical({logs_->GetComponent() | flex}) | flex});
+  auto root = Vertical({row1 | size(HEIGHT, EQUAL, 20), row2 | flex});
   screen_->Loop(root);
 }
 

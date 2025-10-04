@@ -1,6 +1,5 @@
 #include "Worker.h"
 
-#include <quickfix/Application.h>
 #include <quickfix/FileLog.h>
 #include <quickfix/FileStore.h>
 #include <quickfix/Session.h>

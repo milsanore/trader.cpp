@@ -4,21 +4,36 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <mutex>
-#include <sstream>
 #include <thread>
 
 #include "../core/Env.h"
 #include "./../utils/Threading.h"
+#include "FileLogReader.h"
+#include "ILogReader.h"
 #include "IScreen.h"
+#include "MockLogReader.h"
 #include "spdlog/spdlog.h"
 
-using namespace ftxui;
+using ftxui::bold;
+using ftxui::border;
+using ftxui::Color;
+using ftxui::Component;
+using ftxui::dim;
+using ftxui::Direction;
+using ftxui::Elements;
+using ftxui::flex;
+using ftxui::focusPositionRelative;
+using ftxui::frame;
+using ftxui::Renderer;
+using ftxui::SliderOption;
+using ftxui::text;
+using ftxui::vbox;
 
 namespace UI {
 
-LogBox::LogBox(IScreen& screen, std::string logFilePath,
+LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogReader> logReader,
                std::function<void(std::stop_token)> task)
-    : screen_(screen), workerTask_(std::move(task)), logFilePath_(logFilePath) {
+    : screen_(screen), logReader_(std::move(logReader)), workerTask_(std::move(task)) {
   if (!workerTask_) {
     workerTask_ = ([this](const std::stop_token& stoken) {
       Utils::Threading::set_thread_name("tradercppuiLOG");
@@ -63,12 +78,12 @@ LogBox::LogBox(IScreen& screen, std::string logFilePath,
            focusPositionRelative(scroll_x, scroll_y) | frame | flex;
   });
 
-  component_ = Container::Vertical({
-      Container::Horizontal({
+  component_ = ftxui::Container::Vertical({
+      ftxui::Container::Horizontal({
           content,
           scrollbar_y,
       }) | flex,
-      Container::Horizontal({
+      ftxui::Container::Horizontal({
           scrollbar_x,
           Renderer([] { return text(L"x"); }),
       }),
@@ -76,9 +91,39 @@ LogBox::LogBox(IScreen& screen, std::string logFilePath,
 }
 
 // static function
-LogBox LogBox::fromEnv(IScreen& screen) {
+std::unique_ptr<LogBox> LogBox::fromEnv(IScreen& screen) {
   const std::string logPath = Core::Env::getEnvOrThrow("LOG_PATH");
-  return LogBox(screen, logPath);
+  std::unique_ptr<ILogReader> logReader = std::make_unique<FileLogReader>(logPath);
+  return std::make_unique<LogBox>(screen, std::move(logReader));
+}
+
+// move constructor
+LogBox::LogBox(LogBox&& other) noexcept
+    : screen_(other.screen_),
+      component_(std::move(other.component_)),
+      scroll_x(other.scroll_x),
+      scroll_y(other.scroll_y),
+      logReader_(std::move(other.logReader_)),
+      worker_(std::move(other.worker_)),
+      workerTask_(std::move(other.workerTask_)),
+      logBuffer_(std::move(other.logBuffer_)) {
+  // mutex is not copied/moved, a new instance is created
+}
+
+// move-assignment constructor
+LogBox& LogBox::operator=(LogBox&& other) noexcept {
+  if (this != &other) {
+    screen_ = other.screen_;
+    component_ = std::move(other.component_);
+    scroll_x = other.scroll_x;
+    scroll_y = other.scroll_y;
+    logReader_ = std::move(other.logReader_);
+    worker_ = std::move(other.worker_);
+    workerTask_ = std::move(other.workerTask_);
+    logBuffer_ = std::move(other.logBuffer_);
+    // mutex is not copied/moved, a new instance is created
+  }
+  return *this;
 }
 
 Component LogBox::GetComponent() { return component_; }
@@ -87,34 +132,28 @@ void LogBox::Start() { worker_ = std::jthread(workerTask_); }
 
 void LogBox::tailLogFile(const std::stop_token& stoken) {
   try {
-    std::ifstream file(logFilePath_);
-    if (!file.is_open()) {
-      throw std::runtime_error(
-          std::format("failed to open log file for reading. path [{}]", logFilePath_));
+    if (!logReader_ || logReader_->hasError()) {
+      throw std::runtime_error("Log reader init error: " +
+                               (logReader_ ? logReader_->getError() : "null logReader"));
     }
 
-    std::string line;
     while (!stoken.stop_requested()) {
-      if (std::getline(file, line)) {
+      auto lineOpt = logReader_->readNextLine();
+      if (lineOpt.has_value()) {
         std::lock_guard<std::mutex> lock(buffer_mutex);
         if (logBuffer_.size() >= MAX_LINES_) {
           logBuffer_.pop_front();
         }
-        logBuffer_.push_back(line);
+        logBuffer_.push_back(lineOpt.value());
         screen_.PostEvent(ftxui::Event::Custom);
       } else {
-        if (file.eof()) {
-          file.clear();  // Clear EOF flag
-          spdlog::info("sleeping between log file polls");
-          std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        } else {
-          throw std::runtime_error(
-              std::format("log file read error. path [{}]", logFilePath_));
-          break;
+        if (logReader_->hasError()) {
+          throw std::runtime_error("Log read error: " + logReader_->getError());
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       }
     }
-    file.close();
   } catch (const std::exception& e) {
     spdlog::error("error in log worker thread, error [{}]", e.what());
     thread_exception = std::current_exception();

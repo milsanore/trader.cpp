@@ -7,7 +7,11 @@
 #include "IScreen.h"
 #include "spdlog/spdlog.h"
 
-using namespace ftxui;
+using ftxui::bold;
+using ftxui::border;
+using ftxui::Component;
+using ftxui::dim;
+using ftxui::Renderer;
 
 namespace UI {
 

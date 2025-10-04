@@ -12,13 +12,20 @@
 #include "core/OrderBook.h"
 #include "spdlog/spdlog.h"
 #include "ui/IScreen.h"
+#include "ui/LogBox.h"
+#include "ui/MockLogReader.h"
 
 TEST(TableApp, start) {
   // create app
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> orderQueue{};
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> tradeQueue{};
+
   std::unique_ptr<UI::IScreen> screen = std::make_unique<FakeScreen>();
-  UI::TableApp tblApp{orderQueue, tradeQueue, std::move(screen)};
+  std::unique_ptr<UI::ILogReader> logReader = std::make_unique<UI::MockLogReader>();
+  auto task = ([](const std::stop_token& stoken) { spdlog::info("mock task"); });
+  auto logBox = std::make_unique<UI::LogBox>(*screen.get(), std::move(logReader), task);
+
+  UI::TableApp tblApp{orderQueue, tradeQueue, std::move(screen), std::move(logBox)};
   tblApp.start();
 
   // publish update
