@@ -11,10 +11,10 @@ namespace binance {
 enum class MessageHandlingMode : uint16_t {
   /// @brief UNORDERED(1) - Messages from the client are allowed to be sent to the
   /// matching engine in any order
-  Unordered = 1,
+  UNORDERED = 1,
   /// @brief SEQUENTIAL(2) - Messages from the client are always sent to the matching
   /// engine in MsgSeqNum (34) order
-  Sequential = 2,
+  SEQUENTIAL = 2,
   /// @brief FIELD_ID(25035) - The Field ID that Binance uses for "Message Handling Mode"
   FIELD_ID = 25035,
 };

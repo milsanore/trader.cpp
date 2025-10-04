@@ -68,7 +68,7 @@ void FixApp::toAdmin(FIX::Message &msg, const FIX::SessionID &sessionId) {
     msg.setField(FIX::RawData(signature));
     msg.setField(FIX::RawDataLength(static_cast<FIX::LENGTH>(signature.size())));
     msg.setField(FIX::StringField(to_int(MessageHandlingMode::FIELD_ID),
-                                  to_string(MessageHandlingMode::Sequential)));
+                                  to_string(MessageHandlingMode::SEQUENTIAL)));
   }
 };
 void FixApp::toApp(FIX::Message &msg, const FIX::SessionID &sessionId) noexcept(false) {
