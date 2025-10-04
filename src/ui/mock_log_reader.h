@@ -8,11 +8,11 @@ namespace ui {
 
 class MockLogReader : public ILogReader {
  public:
-  void AddLine(const std::string& line) { lines_.push(line); }
+  void add_line(const std::string& line) { lines_.push(line); }
 
-  void SetError(const std::string& message) { error_ = message; }
+  void set_error(const std::string& message) { error_ = message; }
 
-  std::optional<std::string> readNextLine() override {
+  std::optional<std::string> read_next_line() override {
     if (error_.has_value()) return std::nullopt;
     if (lines_.empty()) return std::nullopt;
 
@@ -21,9 +21,9 @@ class MockLogReader : public ILogReader {
     return line;
   }
 
-  bool hasError() const override { return error_.has_value(); }
+  bool has_error() const override { return error_.has_value(); }
 
-  std::string getError() const override { return error_.value_or("No error"); }
+  std::string get_error() const override { return error_.value_or("No error"); }
 
  private:
   std::queue<std::string> lines_;

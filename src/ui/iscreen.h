@@ -7,10 +7,8 @@ namespace ui {
 class IScreen {
  public:
   virtual ~IScreen() = default;
-  virtual void Loop(ftxui::Component renderer) = 0;
-  virtual void PostEvent(const ftxui::Event &) = 0;
+  virtual void loop(ftxui::Component renderer) = 0;
+  virtual void post_event(const ftxui::Event &) = 0;
 };
 
 }  // namespace ui
-
-#pragma once

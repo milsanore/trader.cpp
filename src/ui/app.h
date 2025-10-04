@@ -18,19 +18,19 @@ namespace ui {
 login screen?
 */
 
-class TableApp {
+class App {
  public:
-  explicit TableApp(
-      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &orderQueue,
-      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &tradeQueue,
+  explicit App(
+      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &order_queue,
+      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &trade_queue,
       std::unique_ptr<IScreen> screen, std::unique_ptr<LogBox> logs);
   /// @brief start UI workers
   void start();
   /// if any exceptions occurred
   std::exception_ptr thread_exception;
-  static TableApp fromEnv(
-      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &orderQueue,
-      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &tradeQueue);
+  static App from_env(
+      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &order_queue,
+      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &trade_queue);
 
  private:
   std::unique_ptr<IScreen> screen_;

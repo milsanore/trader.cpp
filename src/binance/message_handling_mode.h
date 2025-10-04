@@ -19,9 +19,9 @@ enum class MessageHandlingMode : uint16_t {
   FIELD_ID = 25035,
 };
 
-int toInt(const MessageHandlingMode m) { return static_cast<int>(m); }
+int to_int(const MessageHandlingMode m) { return static_cast<int>(m); }
 
-std::string toString(const MessageHandlingMode m) {
+std::string to_string(const MessageHandlingMode m) {
   return std::to_string(static_cast<int>(m));
 }
 

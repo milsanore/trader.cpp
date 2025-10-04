@@ -16,7 +16,7 @@ class TradeBox {
   TradeBox();
 
   // Return the FTXUI component to plug into layout
-  ftxui::Component GetComponent();
+  ftxui::Component get_component();
 
  private:
   ftxui::Component component_;

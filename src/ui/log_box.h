@@ -13,15 +13,15 @@ namespace ui {
 
 class LogBox {
  public:
-  LogBox(IScreen &screen, std::unique_ptr<ILogReader> logReader,
+  LogBox(IScreen &screen, std::unique_ptr<ILogReader> log_reader,
          std::function<void(std::stop_token)> task = {});
-  static std::unique_ptr<LogBox> fromEnv(IScreen &screen);
+  static std::unique_ptr<LogBox> from_env(IScreen &screen);
   // Return the FTXUI component to plug into layout
-  ftxui::Component GetComponent();
+  ftxui::Component get_component();
   /// if any exceptions occurred
   std::exception_ptr thread_exception;
   // start log reader worker thread
-  void Start();
+  void start();
 
   // LogBox has a worker thread and a handle to the log file.
   // 1. Delete copy constructor and copy assignment
@@ -37,12 +37,12 @@ class LogBox {
   float scroll_x = 0.1;
   float scroll_y = 1;
 
-  std::unique_ptr<ILogReader> logReader_;
+  std::unique_ptr<ILogReader> log_reader_;
   std::jthread worker_;
-  std::function<void(std::stop_token)> workerTask_;
-  void tailLogFile(const std::stop_token &stoken);
+  std::function<void(std::stop_token)> worker_task_;
+  void tail_log_file(const std::stop_token &stoken);
   static constexpr int MAX_LINES_ = 100;
-  std::deque<std::string> logBuffer_;
+  std::deque<std::string> log_buffer_;
   std::mutex buffer_mutex;
 };
 

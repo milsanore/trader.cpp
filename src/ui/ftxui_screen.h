@@ -10,9 +10,9 @@ class FtxuiScreen : public IScreen {
  public:
   FtxuiScreen() : screen_(ftxui::ScreenInteractive::Fullscreen()) {}
 
-  void Loop(ftxui::Component renderer) override { screen_.Loop(renderer); }
+  void loop(ftxui::Component renderer) override { screen_.Loop(renderer); }
 
-  void PostEvent(const ftxui::Event &event) override { screen_.PostEvent(event); }
+  void post_event(const ftxui::Event &event) override { screen_.PostEvent(event); }
 
  private:
   ftxui::ScreenInteractive screen_;

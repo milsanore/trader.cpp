@@ -20,11 +20,11 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
   FixApp(const std::vector<std::string> &symbols, std::unique_ptr<IAuth> auth);
   ~FixApp() override = default;
   /// @brief
-  void subscribeToDepth(const FIX::SessionID &sessionId) const;
+  void subscribe_to_depth(const FIX::SessionID &session_id) const;
   /// @brief queue of market messages from Binance
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> orderQueue_;
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> order_queue_;
   /// @brief queue of trade messages from Binance
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> tradeQueue_;
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> trade_queue_;
 
   // TODO: performance implication of a polymorphic queue
   // TODO: perhaps better to run two queues, or something else

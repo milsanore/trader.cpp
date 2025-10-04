@@ -5,14 +5,14 @@
 #include "spdlog/cfg/env.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
-#include "ui/table_app.h"
+#include "ui/app.h"
 #include "utils/threading.h"
 
 int main() {
   // LOG CONFIG
   spdlog::cfg::load_env_levels("LOG_LEVEL");
-  const char* logPath = std::getenv("LOG_PATH");
-  const auto logger = spdlog::basic_logger_mt("basic_logger", logPath);
+  const char* log_path = std::getenv("LOG_PATH");
+  const auto logger = spdlog::basic_logger_mt("basic_logger", log_path);
   spdlog::set_default_logger(logger);
   // Set a global pattern without the logger name
   spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%t] %v");
@@ -22,17 +22,17 @@ int main() {
   utils::Threading::set_thread_name("tradercppMAIN");
 
   // BINANCE MARKET DATA GENERATOR
-  auto bConf = binance::Config::fromEnv();
-  auto bWorker = binance::Worker::fromConf(bConf);
-  bWorker.start();
+  auto b_conf = binance::Config::from_env();
+  auto b_worker = binance::Worker::from_conf(b_conf);
+  b_worker.start();
 
   // UI APP (READS FROM QUEUE)
-  auto app = ui::TableApp::fromEnv(bWorker.getOrderQueue(), bWorker.getTradeQueue());
-  app.start();
+  auto ui = ui::App::from_env(b_worker.get_order_queue(), b_worker.get_trade_queue());
+  ui.start();
 
-  if (app.thread_exception) {
-    std::rethrow_exception(app.thread_exception);
+  if (ui.thread_exception) {
+    std::rethrow_exception(ui.thread_exception);
   }
-  bWorker.stop();
+  b_worker.stop();
   spdlog::info("goodbye");
 }

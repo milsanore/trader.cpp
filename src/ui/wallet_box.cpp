@@ -20,6 +20,6 @@ WalletBox::WalletBox() {
   });
 }
 
-Component WalletBox::GetComponent() { return component_; }
+Component WalletBox::get_component() { return component_; }
 
 }  // namespace ui

@@ -14,11 +14,11 @@ namespace binance {
 /// @brief load Binance configuration from env
 /// (static member function)
 /// @return Config object
-Config Config::fromEnv() {
-  const std::string apiKey = core::Env::getEnvOrThrow("API_KEY");
-  const std::string privateKey = core::Env::getEnvOrThrow("PRIVATE_KEY_PATH");
-  const std::string fixConfig = core::Env::getEnvOrThrow("FIX_CONFIG_PATH");
-  const std::string instStr = core::Env::getEnvOrThrow("SYMBOLS");
+Config Config::from_env() {
+  const std::string apiKey = core::Env::get_env_or_throw("API_KEY");
+  const std::string privateKey = core::Env::get_env_or_throw("PRIVATE_KEY_PATH");
+  const std::string fixConfig = core::Env::get_env_or_throw("FIX_CONFIG_PATH");
+  const std::string instStr = core::Env::get_env_or_throw("SYMBOLS");
 
   spdlog::info("fetched environment variable, key [API_KEY], value [{}]",
                apiKey.substr(0, 3) + "..." + apiKey.substr(apiKey.length() - 3));

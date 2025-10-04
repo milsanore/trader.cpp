@@ -11,14 +11,14 @@ namespace ui {
 
 class FileLogReader : public ILogReader {
  public:
-  explicit FileLogReader(const std::string& filePath)
-      : file_(filePath), filePath_(filePath) {
+  explicit FileLogReader(const std::string& file_path)
+      : file_(file_path), file_path_(file_path) {
     if (!file_.is_open()) {
-      error_ = std::format("Failed to open log file. path [{}]", filePath);
+      error_ = std::format("Failed to open log file. path [{}]", file_path);
     }
   }
 
-  std::optional<std::string> readNextLine() override {
+  std::optional<std::string> read_next_line() override {
     if (error_.has_value()) {
       return std::nullopt;
     }
@@ -33,18 +33,18 @@ class FileLogReader : public ILogReader {
       return std::nullopt;  // Signal to wait/sleep
     }
 
-    error_ = std::format("Error reading log file. path [{}]", filePath_);
+    error_ = std::format("Error reading log file. path [{}]", file_path_);
     return std::nullopt;
   }
 
-  bool hasError() const override { return error_.has_value(); }
+  bool has_error() const override { return error_.has_value(); }
 
   // TODO: magic string?
-  std::string getError() const override { return error_.value_or("No error"); }
+  std::string get_error() const override { return error_.value_or("No error"); }
 
  private:
   std::ifstream file_;
-  std::string filePath_;
+  std::string file_path_;
   std::optional<std::string> error_;
 };
 

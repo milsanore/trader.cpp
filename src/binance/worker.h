@@ -18,29 +18,28 @@ namespace binance {
 /// @brief Binance DI container
 class Worker final {
  public:
-  Worker(std::unique_ptr<FixApp> fixApp,
-         std::unique_ptr<FIX::FileStoreFactory> fileStoreFactory,
+  Worker(std::unique_ptr<FixApp> fix_app, std::unique_ptr<FIX::FileStoreFactory> store,
          std::unique_ptr<FIX::SessionSettings> settings,
-         std::unique_ptr<FIX::FileLogFactory> fileLogFactory,
+         std::unique_ptr<FIX::FileLogFactory> log,
          std::unique_ptr<FIX::SocketInitiator> initiator,
          const std::function<void(std::stop_token)> &task = {});
   /// @brief factory for concrete Binance instances, using config
   /// @param conf binance configuration parameters
   /// @return
-  static Worker fromConf(Config &conf);
+  static Worker from_conf(Config &conf);
   /// @brief start worker thread, connect to Binance, subscribe to updates, push
   /// updates onto queue. under the hood the {FixApp} is actioned
   void start();
   void stop();
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &getOrderQueue()
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &get_order_queue()
       const;
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &getTradeQueue()
+  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &get_trade_queue()
       const;
 
  private:
   // worker thread
   std::jthread worker_;
-  std::function<void(std::stop_token)> workerTask_;
+  std::function<void(std::stop_token)> worker_task_;
   // FIX
   std::unique_ptr<FixApp> app_;
   std::unique_ptr<FIX::FileStoreFactory> store_;

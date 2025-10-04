@@ -20,38 +20,40 @@
 
 namespace binance {
 
-Auth::Auth(std::string &apiKey, std::string &privatePemPath)
-    : apiKey_(apiKey), privatePemPath_(privatePemPath) {
+Auth::Auth(std::string &api_key, std::string &private_pem_path)
+    : api_key_(api_key), private_pem_path_(private_pem_path) {
   if (sodium_init() < 0) {
     throw std::runtime_error("libsodium failed to initialize");
   }
 }
 
-const std::string &Auth::getApiKey() const { return apiKey_; }
+const std::string &Auth::get_api_key() const { return api_key_; }
 
-std::string Auth::signPayload(const std::string &payload) {
-  const std::vector<unsigned char> seed = getSeedFromPem();
-  const std::string signature = signPayload(payload, seed);
+std::string Auth::sign_payload(const std::string &payload) {
+  const std::vector<unsigned char> seed = get_seed_from_pem();
+  const std::string signature = sign_payload(payload, seed);
   return signature;
 }
 
-std::vector<unsigned char> Auth::getSeedFromPem() const {
+std::vector<unsigned char> Auth::get_seed_from_pem() const {
   // fopen is unsafe, wrap in RAII
-  const auto fileCloser = [](gsl::owner<FILE *> fp) {
+  const auto file_closer = [](gsl::owner<FILE *> fp) {
     if (fp) fclose(fp);
   };
-  std::unique_ptr<FILE, decltype(fileCloser)> fp(fopen(privatePemPath_.c_str(), "r"),
-                                                 fileCloser);
+  std::unique_ptr<FILE, decltype(file_closer)> fp(fopen(private_pem_path_.c_str(), "r"),
+                                                  file_closer);
   if (!fp) {
     throw std::runtime_error("Failed to open PEM file");
   }
 
   // PEM_read_PrivateKey is unsafe, wrap in RAII
-  const auto keyCloser = [](EVP_PKEY *pkey) {
-    if (pkey) EVP_PKEY_free(pkey);
+  const auto key_closer = [](EVP_PKEY *pkey) {
+    if (pkey) {
+      EVP_PKEY_free(pkey);
+    }
   };
-  std::unique_ptr<EVP_PKEY, decltype(keyCloser)> pkey(
-      PEM_read_PrivateKey(fp.get(), nullptr, nullptr, nullptr), keyCloser);
+  std::unique_ptr<EVP_PKEY, decltype(key_closer)> pkey(
+      PEM_read_PrivateKey(fp.get(), nullptr, nullptr, nullptr), key_closer);
   if (!pkey) {
     throw std::runtime_error("Failed to read private key from PEM");
   }
@@ -71,8 +73,8 @@ std::vector<unsigned char> Auth::getSeedFromPem() const {
 }
 
 // static
-std::string Auth::signPayload(const std::string &payload,
-                              const std::vector<unsigned char> &seed) {
+std::string Auth::sign_payload(const std::string &payload,
+                               const std::vector<unsigned char> &seed) {
   std::array<unsigned char, crypto_sign_PUBLICKEYBYTES> pk{};
   std::array<unsigned char, crypto_sign_SECRETKEYBYTES> sk{};  // 64 bytes
 
@@ -98,12 +100,12 @@ std::string Auth::signPayload(const std::string &payload,
   return {b64.data()};
 }
 
-void Auth::clearKeys() {
+void Auth::clear_keys() {
   // logon successful, nullify access keys
-  std::ranges::fill(apiKey_, 0);
-  apiKey_.clear();
-  std::ranges::fill(privatePemPath_, 0);
-  privatePemPath_.clear();
+  std::ranges::fill(api_key_, 0);
+  api_key_.clear();
+  std::ranges::fill(private_pem_path_, 0);
+  private_pem_path_.clear();
 }
 
 }  // namespace binance

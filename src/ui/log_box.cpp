@@ -31,14 +31,14 @@ using ftxui::vbox;
 
 namespace ui {
 
-LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogReader> logReader,
+LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogReader> log_reader,
                std::function<void(std::stop_token)> task)
-    : screen_(screen), logReader_(std::move(logReader)), workerTask_(std::move(task)) {
-  if (!workerTask_) {
-    workerTask_ = ([this](const std::stop_token& stoken) {
+    : screen_(screen), log_reader_(std::move(log_reader)), worker_task_(std::move(task)) {
+  if (!worker_task_) {
+    worker_task_ = ([this](const std::stop_token& stoken) {
       utils::Threading::set_thread_name("tradercppuiLOG");
       spdlog::info("starting polling log file on background thread");
-      tailLogFile(stoken);
+      tail_log_file(stoken);
     });
   }
 
@@ -66,7 +66,7 @@ LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogReader> logReader,
     std::deque<std::string> snapshot;
     {
       std::lock_guard<std::mutex> lock(buffer_mutex);
-      snapshot = logBuffer_;  // safe copy
+      snapshot = log_buffer_;  // safe copy
     }
 
     Elements lines;
@@ -91,10 +91,10 @@ LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogReader> logReader,
 }
 
 // static function
-std::unique_ptr<LogBox> LogBox::fromEnv(IScreen& screen) {
-  const std::string logPath = core::Env::getEnvOrThrow("LOG_PATH");
-  std::unique_ptr<ILogReader> logReader = std::make_unique<FileLogReader>(logPath);
-  return std::make_unique<LogBox>(screen, std::move(logReader));
+std::unique_ptr<LogBox> LogBox::from_env(IScreen& screen) {
+  const std::string log_path = core::Env::get_env_or_throw("LOG_PATH");
+  std::unique_ptr<ILogReader> log_reader = std::make_unique<FileLogReader>(log_path);
+  return std::make_unique<LogBox>(screen, std::move(log_reader));
 }
 
 // move constructor
@@ -103,10 +103,10 @@ LogBox::LogBox(LogBox&& other) noexcept
       component_(std::move(other.component_)),
       scroll_x(other.scroll_x),
       scroll_y(other.scroll_y),
-      logReader_(std::move(other.logReader_)),
+      log_reader_(std::move(other.log_reader_)),
       worker_(std::move(other.worker_)),
-      workerTask_(std::move(other.workerTask_)),
-      logBuffer_(std::move(other.logBuffer_)) {
+      worker_task_(std::move(other.worker_task_)),
+      log_buffer_(std::move(other.log_buffer_)) {
   // mutex is not copied/moved, a new instance is created
 }
 
@@ -117,38 +117,39 @@ LogBox& LogBox::operator=(LogBox&& other) noexcept {
     component_ = std::move(other.component_);
     scroll_x = other.scroll_x;
     scroll_y = other.scroll_y;
-    logReader_ = std::move(other.logReader_);
+    log_reader_ = std::move(other.log_reader_);
     worker_ = std::move(other.worker_);
-    workerTask_ = std::move(other.workerTask_);
-    logBuffer_ = std::move(other.logBuffer_);
+    worker_task_ = std::move(other.worker_task_);
+    log_buffer_ = std::move(other.log_buffer_);
     // mutex is not copied/moved, a new instance is created
   }
   return *this;
 }
 
-Component LogBox::GetComponent() { return component_; }
+Component LogBox::get_component() { return component_; }
 
-void LogBox::Start() { worker_ = std::jthread(workerTask_); }
+void LogBox::start() { worker_ = std::jthread(worker_task_); }
 
-void LogBox::tailLogFile(const std::stop_token& stoken) {
+void LogBox::tail_log_file(const std::stop_token& stoken) {
   try {
-    if (!logReader_ || logReader_->hasError()) {
-      throw std::runtime_error("Log reader init error: " +
-                               (logReader_ ? logReader_->getError() : "null logReader"));
+    if (!log_reader_ || log_reader_->has_error()) {
+      throw std::runtime_error("Log reader init error: " + (log_reader_
+                                                                ? log_reader_->get_error()
+                                                                : "null logReader"));
     }
 
     while (!stoken.stop_requested()) {
-      auto lineOpt = logReader_->readNextLine();
-      if (lineOpt.has_value()) {
+      auto line_opt = log_reader_->read_next_line();
+      if (line_opt.has_value()) {
         std::lock_guard<std::mutex> lock(buffer_mutex);
-        if (logBuffer_.size() >= MAX_LINES_) {
-          logBuffer_.pop_front();
+        if (log_buffer_.size() >= MAX_LINES_) {
+          log_buffer_.pop_front();
         }
-        logBuffer_.push_back(lineOpt.value());
-        screen_.PostEvent(ftxui::Event::Custom);
+        log_buffer_.push_back(line_opt.value());
+        screen_.post_event(ftxui::Event::Custom);
       } else {
-        if (logReader_->hasError()) {
-          throw std::runtime_error("Log read error: " + logReader_->getError());
+        if (log_reader_->has_error()) {
+          throw std::runtime_error("Log read error: " + log_reader_->get_error());
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));

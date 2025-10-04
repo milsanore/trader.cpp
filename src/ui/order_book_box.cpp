@@ -21,27 +21,27 @@ OrderBookBox::OrderBookBox(
     std::unique_ptr<core::OrderBook> ob, std::function<void(std::stop_token)> task)
     : screen_(screen),
       queue_(queue),
-      coreBook_(std::move(ob)),
-      workerTask_(std::move(task)) {
+      core_book_(std::move(ob)),
+      worker_task_(std::move(task)) {
   // default behaviour
-  if (!workerTask_) {
-    workerTask_ = ([this](const std::stop_token &stoken) {
+  if (!worker_task_) {
+    worker_task_ = ([this](const std::stop_token &stoken) {
       utils::Threading::set_thread_name("tradercppuiBOOK");
       spdlog::info("starting polling order queue on background thread");
-      pollQueue(stoken);
+      poll_queue(stoken);
     });
   }
 
   component_ = Renderer(
-      [this](bool focused) { return toTable() | border | (focused ? bold : dim); });
+      [this](bool focused) { return to_table() | border | (focused ? bold : dim); });
 }
 
-void OrderBookBox::Start() {
+void OrderBookBox::start() {
   // start worker thread
-  worker_ = std::jthread(workerTask_);
+  worker_ = std::jthread(worker_task_);
 }
 
-Component OrderBookBox::GetComponent() { return component_; }
+Component OrderBookBox::get_component() { return component_; }
 
 // Helper to pad or truncate a string to a fixed width
 std::string Pad(const std::string &input, const size_t width) {
@@ -59,7 +59,7 @@ std::string Pad(const double input, const size_t width) {
 
 /// @brief generate an FTXUI table containing the order book
 /// @return the FTXUI element that the UI will render
-ftxui::Element OrderBookBox::toTable() {
+ftxui::Element OrderBookBox::to_table() {
   // NB: runs on main thread
   ftxui::Elements table_elements;
   constexpr int num_columns = 4;
@@ -79,10 +79,10 @@ ftxui::Element OrderBookBox::toTable() {
       ftxui::vbox({hbox(std::move(header_cells)), ftxui::separator()}));
 
   // ─────────── Data Rows ───────────
-  const std::vector<core::BidAsk> x = coreBook_->toVector();
+  const std::vector<core::BidAsk> x = core_book_->to_vector();
   constexpr size_t max_rows = 15;
-  const size_t rowCount = std::min(x.size(), max_rows);
-  for (size_t i = 0; i < rowCount; ++i) {
+  const size_t row_count = std::min(x.size(), max_rows);
+  for (size_t i = 0; i < row_count; ++i) {
     ftxui::Elements cells;
     cells.push_back(ftxui::text(Pad(x[i].bid_sz, column_width)));
     cells.push_back(ftxui::text(Pad(x[i].bid_px, column_width)));
@@ -90,7 +90,7 @@ ftxui::Element OrderBookBox::toTable() {
     cells.push_back(ftxui::text(Pad(x[i].ask_sz, column_width)));
     table_elements.push_back(hbox(std::move(cells)));
   }
-  if (rowCount >= max_rows) {
+  if (row_count >= max_rows) {
     ftxui::Elements cells;
     cells.push_back(ftxui::text(Pad("...", column_width)));
     cells.push_back(ftxui::text(Pad("...", column_width)));
@@ -103,54 +103,54 @@ ftxui::Element OrderBookBox::toTable() {
 };
 
 // worker thread
-void OrderBookBox::pollQueue(const std::stop_token &stoken) {
+void OrderBookBox::poll_queue(const std::stop_token &stoken) {
   try {
     /// Adaptive backoff strategy for spin+sleep polling
     /// Performs an adaptive backoff by spinning then sleeping, increasing sleep
     /// time exponentially. Yield 10x times, followed by a 2x sleep capped at
     /// 1ms
     constexpr int INITIAL_SLEEP_US = 10;
-    int spinCount = 0;
-    int sleepTimeUs = INITIAL_SLEEP_US;
-    auto adaptiveBackoff = [&spinCount, &sleepTimeUs]() {
+    int spin_count = 0;
+    int sleep_time_us = INITIAL_SLEEP_US;
+    auto adaptive_backoff = [&spin_count, &sleep_time_us]() {
       constexpr int MIN_SPINS = 10;
       constexpr int MAX_SLEEP_US = 1000;
-      if (spinCount < MIN_SPINS) {
-        ++spinCount;
+      if (spin_count < MIN_SPINS) {
+        ++spin_count;
         std::this_thread::yield();
       } else {
-        std::this_thread::sleep_for(std::chrono::microseconds(sleepTimeUs));
-        sleepTimeUs = std::min(sleepTimeUs * 2, MAX_SLEEP_US);
+        std::this_thread::sleep_for(std::chrono::microseconds(sleep_time_us));
+        sleep_time_us = std::min(sleep_time_us * 2, MAX_SLEEP_US);
       }
     };
 
-    core::OrderBook &book = *coreBook_;
+    core::OrderBook &book = *core_book_;
     while (!stoken.stop_requested()) {
       std::shared_ptr<const FIX44::Message> msg;
       while (!queue_.try_dequeue(msg)) {
         if (stoken.stop_requested()) {
           return;
         }
-        adaptiveBackoff();
+        adaptive_backoff();
       }
 
       if (auto snap =
               std::dynamic_pointer_cast<const FIX44::MarketDataSnapshotFullRefresh>(
                   msg)) {
-        book.applySnapshot(*snap);
-        screen_.PostEvent(ftxui::Event::Custom);  // Trigger re-render
+        book.apply_snapshot(*snap);
+        screen_.post_event(ftxui::Event::Custom);  // Trigger re-render
       } else if (auto inc =
                      std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(
                          msg)) {
-        book.applyIncrement(*inc);
-        screen_.PostEvent(ftxui::Event::Custom);  // Trigger re-render
+        book.apply_increment(*inc);
+        screen_.post_event(ftxui::Event::Custom);  // Trigger re-render
       } else {
         spdlog::error("unknown message type");
       }
 
       // Reset backoff state
-      spinCount = 0;
-      sleepTimeUs = INITIAL_SLEEP_US;
+      spin_count = 0;
+      sleep_time_us = INITIAL_SLEEP_US;
     }
     spdlog::info("closing worker thread...");
   }

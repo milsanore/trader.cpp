@@ -16,17 +16,17 @@ TEST(OrderBook, toVector) {
       {98, 13},
   };
   ui::OrderBook x{bids, asks};
-  std::vector<ui::BidAsk> obVec = x.toVector();
+  std::vector<ui::BidAsk> ob_vec = x.toVector();
 
   std::vector check = {
       ui::BidAsk{10, 95, 96, 11},
       ui::BidAsk{9, 94, 97, 12},
       ui::BidAsk{NAN, NAN, 98, 13},
   };
-  ASSERT_EQ(obVec, check);
+  ASSERT_EQ(ob_vec, check);
 
-  std::vector badCheck = {ui::BidAsk{10, 95, 96, 11}, ui::BidAsk{9, 94, 97, 12}};
-  ASSERT_NE(obVec, badCheck);
+  std::vector bad_check = {ui::BidAsk{10, 95, 96, 11}, ui::BidAsk{9, 94, 97, 12}};
+  ASSERT_NE(ob_vec, bad_check);
 }
 
 TEST(OrderBook, constructors) {
@@ -52,22 +52,22 @@ TEST(OrderBook, constructors) {
 TEST(OrderBook, applySnapshot) {
   ui::OrderBook book{};
 
-  FIX44::MarketDataSnapshotFullRefresh message;
-  message.set(FIX::Symbol("BTCUSDT"));
+  FIX44::MarketDataSnapshotFullRefresh msg;
+  msg.set(FIX::Symbol("BTCUSDT"));
   // Add a bid entry
-  FIX44::MarketDataSnapshotFullRefresh::NoMDEntries bidEntry;
-  bidEntry.set(FIX::MDEntryType(FIX::MDEntryType_BID));
-  bidEntry.set(FIX::MDEntryPx(95));
-  bidEntry.set(FIX::MDEntrySize(10));
-  message.addGroup(bidEntry);
+  FIX44::MarketDataSnapshotFullRefresh::NoMDEntries bid;
+  bid.set(FIX::MDEntryType(FIX::MDEntryType_BID));
+  bid.set(FIX::MDEntryPx(95));
+  bid.set(FIX::MDEntrySize(10));
+  msg.addGroup(bid);
   // Add an ask entry
-  FIX44::MarketDataSnapshotFullRefresh::NoMDEntries askEntry;
-  askEntry.set(FIX::MDEntryType(FIX::MDEntryType_OFFER));
-  askEntry.set(FIX::MDEntryPx(96));
-  askEntry.set(FIX::MDEntrySize(11));
-  message.addGroup(askEntry);
+  FIX44::MarketDataSnapshotFullRefresh::NoMDEntries ask;
+  ask.set(FIX::MDEntryType(FIX::MDEntryType_OFFER));
+  ask.set(FIX::MDEntryPx(96));
+  ask.set(FIX::MDEntrySize(11));
+  msg.addGroup(ask);
 
-  book.applySnapshot(message);
+  book.applySnapshot(msg);
   std::vector<ui::BidAsk> check = {{10, 95, 96, 11}};
   ASSERT_EQ(book.toVector(), check);
 }
@@ -82,24 +82,24 @@ TEST(OrderBook, applyIncrement) {
   };
   ui::OrderBook book{bids, asks};
 
-  FIX44::MarketDataIncrementalRefresh message;
+  FIX44::MarketDataIncrementalRefresh msg;
   // Add a bid update
-  FIX44::MarketDataIncrementalRefresh::NoMDEntries bidEntry;
-  bidEntry.set(FIX::Symbol("BTCUSDT"));
-  bidEntry.set(FIX::MDUpdateAction(FIX::MDUpdateAction_NEW));
-  bidEntry.set(FIX::MDEntryType(FIX::MDEntryType_BID));
-  bidEntry.set(FIX::MDEntryPx(95));
-  bidEntry.set(FIX::MDEntrySize(100));
-  message.addGroup(bidEntry);
+  FIX44::MarketDataIncrementalRefresh::NoMDEntries bid;
+  bid.set(FIX::Symbol("BTCUSDT"));
+  bid.set(FIX::MDUpdateAction(FIX::MDUpdateAction_NEW));
+  bid.set(FIX::MDEntryType(FIX::MDEntryType_BID));
+  bid.set(FIX::MDEntryPx(95));
+  bid.set(FIX::MDEntrySize(100));
+  msg.addGroup(bid);
   // Add an ask delete
-  FIX44::MarketDataIncrementalRefresh::NoMDEntries askDelete;
-  askDelete.set(FIX::Symbol("BTCUSDT"));
-  askDelete.set(FIX::MDUpdateAction(FIX::MDUpdateAction_DELETE));
-  askDelete.set(FIX::MDEntryType(FIX::MDEntryType_OFFER));
-  askDelete.set(FIX::MDEntryPx(97));
-  message.addGroup(askDelete);
+  FIX44::MarketDataIncrementalRefresh::NoMDEntries ask_delete;
+  ask_delete.set(FIX::Symbol("BTCUSDT"));
+  ask_delete.set(FIX::MDUpdateAction(FIX::MDUpdateAction_DELETE));
+  ask_delete.set(FIX::MDEntryType(FIX::MDEntryType_OFFER));
+  ask_delete.set(FIX::MDEntryPx(97));
+  msg.addGroup(ask_delete);
 
-  book.applyIncrement(message);
+  book.applyIncrement(msg);
   std::vector<ui::BidAsk> vec = book.toVector();
   std::vector<ui::BidAsk> check = {{100, 95, 96, 11}};
   ASSERT_EQ(vec, check);
