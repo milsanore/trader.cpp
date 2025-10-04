@@ -1,5 +1,4 @@
-#ifndef TEST_FAKE_SCREEN_H
-#define TEST_FAKE_SCREEN_H
+#pragma once
 
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
@@ -28,5 +27,3 @@ class FakeScreen : public UI::IScreen {
 
   bool simulate_loop = false;  // Enable to auto-render once during test
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef CORE_ENV_H
-#define CORE_ENV_H
+#pragma once
 
 #include <format>
 #include <stdexcept>
@@ -21,5 +20,3 @@ struct Env {
 };
 
 }  // namespace Core
-
-#endif  // CORE_ENV_H

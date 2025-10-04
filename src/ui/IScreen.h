@@ -1,5 +1,4 @@
-#ifndef UI_ISCREEN_H
-#define UI_ISCREEN_H
+#pragma once
 
 #include <ftxui/component/screen_interactive.hpp>
 
@@ -14,4 +13,4 @@ class IScreen {
 
 }  // namespace UI
 
-#endif  // UI_ISCREEN_H
+#pragma once

@@ -1,5 +1,4 @@
-#ifndef BINANCE_FIX_APP_H
-#define BINANCE_FIX_APP_H
+#pragma once
 
 #include <quickfix/Application.h>
 #include <quickfix/MessageCracker.h>
@@ -51,5 +50,3 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
 };
 
 }  // namespace Binance
-
-#endif

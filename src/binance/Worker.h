@@ -1,5 +1,4 @@
-#ifndef BINANCE_WORKER_H
-#define BINANCE_WORKER_H
+#pragma once
 
 #include <quickfix/FileLog.h>
 #include <quickfix/FileStore.h>
@@ -51,5 +50,3 @@ class Worker final {
 };
 
 }  // namespace Binance
-
-#endif  // BINANCE_WORKER_H

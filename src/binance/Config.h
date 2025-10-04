@@ -1,5 +1,4 @@
-#ifndef BINANCE_CONFIG_H
-#define BINANCE_CONFIG_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -18,5 +17,3 @@ struct Config {
 };
 
 }  // namespace Binance
-
-#endif  // BINANCE_CONFIG_H

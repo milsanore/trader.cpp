@@ -1,5 +1,4 @@
-#ifndef UTILS_THREADING_H
-#define UTILS_THREADING_H
+#pragma once
 
 #include <string>
 
@@ -11,5 +10,3 @@ class Threading {
 };
 
 }  // namespace Utils
-
-#endif  // UTILS_THREADING_H

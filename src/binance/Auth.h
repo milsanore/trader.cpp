@@ -1,5 +1,4 @@
-#ifndef BINANCE_AUTH_H
-#define BINANCE_AUTH_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -33,5 +32,3 @@ class Auth final : public IAuth {
 };
 
 }  // namespace Binance
-
-#endif  // BINANCE_AUTH_H

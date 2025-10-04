@@ -1,5 +1,4 @@
-#ifndef CORE_ORDER_BOOK_H
-#define CORE_ORDER_BOOK_H
+#pragma once
 
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
@@ -45,5 +44,3 @@ class OrderBook {
 };
 
 }  // namespace Core
-
-#endif  // CORE_ORDER_BOOK_H

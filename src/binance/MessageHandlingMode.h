@@ -1,5 +1,4 @@
-#ifndef BINANCE_MESSAGE_HANDLING_MODE_H
-#define BINANCE_MESSAGE_HANDLING_MODE_H
+#pragma once
 
 #include <string>
 
@@ -27,5 +26,3 @@ std::string toString(const MessageHandlingMode m) {
 }
 
 }  // namespace Binance
-
-#endif  // BINANCE_MESSAGE_HANDLING_MODE_H

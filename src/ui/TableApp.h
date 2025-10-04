@@ -1,5 +1,4 @@
-#ifndef UI_TABLE_APP_H
-#define UI_TABLE_APP_H
+#pragma once
 
 #include <quickfix/fix44/Message.h>
 
@@ -42,5 +41,3 @@ class TableApp {
 };
 
 }  // namespace UI
-
-#endif  // UI_TABLE_APP_H

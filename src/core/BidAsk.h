@@ -1,5 +1,4 @@
-#ifndef CORE_BID_ASK_H
-#define CORE_BID_ASK_H
+#pragma once
 
 #include <cmath>
 
@@ -29,5 +28,3 @@ struct BidAsk {
 };
 
 }  // namespace Core
-
-#endif  // CORE_BID_ASK_H

@@ -1,5 +1,4 @@
-#ifndef UI_FTX_UI_SCREEN_H
-#define UI_FTX_UI_SCREEN_H
+#pragma once
 
 #include <ftxui/component/screen_interactive.hpp>
 
@@ -20,5 +19,3 @@ class FtxuiScreen : public IScreen {
 };
 
 }  // namespace UI
-
-#endif  // UI_FTX_UI_SCREEN_H

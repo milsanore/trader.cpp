@@ -1,5 +1,4 @@
-#ifndef UI_ILOGREADER_H
-#define UI_ILOGREADER_H
+#pragma once
 
 namespace UI {
 
@@ -19,5 +18,3 @@ class ILogReader {
 };
 
 }  // namespace UI
-
-#endif
