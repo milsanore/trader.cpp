@@ -5,12 +5,12 @@
 #include <memory>
 #include <thread>
 
-#include "IScreen.h"
-#include "LogBox.h"
-#include "OrderBookBox.h"
-#include "TradeBox.h"
-#include "WalletBox.h"
 #include "concurrentqueue.h"
+#include "iscreen.h"
+#include "log_box.h"
+#include "order_book_box.h"
+#include "trade_box.h"
+#include "wallet_box.h"
 
 namespace ui {
 

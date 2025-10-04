@@ -6,8 +6,8 @@
 #include <mutex>
 #include <thread>
 
-#include "ILogReader.h"
-#include "IScreen.h"
+#include "ilog_reader.h"
+#include "iscreen.h"
 
 namespace ui {
 

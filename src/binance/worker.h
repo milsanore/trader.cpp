@@ -9,9 +9,9 @@
 #include <memory>
 #include <thread>
 
-#include "Config.h"
-#include "FixApp.h"
 #include "concurrentqueue.h"
+#include "config.h"
+#include "fix_app.h"
 
 namespace binance {
 

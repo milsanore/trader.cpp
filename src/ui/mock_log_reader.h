@@ -2,7 +2,7 @@
 
 #include <queue>
 
-#include "ILogReader.h"
+#include "ilog_reader.h"
 
 namespace ui {
 

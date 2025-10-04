@@ -1,4 +1,4 @@
-#include "binance/Auth.h"
+#include "binance/auth.h"
 
 #include <gtest/gtest.h>
 

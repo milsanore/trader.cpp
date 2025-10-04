@@ -4,7 +4,7 @@
 #include <optional>
 #include <string>
 
-#include "ILogReader.h"
+#include "ilog_reader.h"
 #include "spdlog/spdlog.h"
 
 namespace ui {

@@ -1,4 +1,4 @@
-#include "TradeBox.h"
+#include "trade_box.h"
 
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>

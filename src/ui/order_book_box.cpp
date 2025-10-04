@@ -1,10 +1,10 @@
-#include "OrderBookBox.h"
+#include "order_book_box.h"
 
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 
-#include "./../utils/Threading.h"
-#include "IScreen.h"
+#include "./../utils/threading.h"
+#include "iscreen.h"
 #include "spdlog/spdlog.h"
 
 using ftxui::bold;

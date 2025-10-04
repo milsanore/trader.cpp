@@ -1,4 +1,4 @@
-#include "TableApp.h"
+#include "table_app.h"
 
 #include <quickfix/fix44/Message.h>
 
@@ -12,14 +12,14 @@
 #include <utility>
 #include <vector>
 
-#include "FtxuiScreen.h"
-#include "IScreen.h"
-#include "LogBox.h"
-#include "OrderBookBox.h"
-#include "TradeBox.h"
-#include "WalletBox.h"
 #include "concurrentqueue.h"
+#include "ftxui_screen.h"
+#include "iscreen.h"
+#include "log_box.h"
+#include "order_book_box.h"
 #include "spdlog/spdlog.h"
+#include "trade_box.h"
+#include "wallet_box.h"
 
 using ftxui::EQUAL;
 using ftxui::flex;

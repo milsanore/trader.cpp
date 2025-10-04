@@ -1,4 +1,4 @@
-#include "FixApp.h"
+#include "fix_app.h"
 
 #include <quickfix/FixValues.h>
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#include "MessageHandlingMode.h"
+#include "message_handling_mode.h"
 #include "spdlog/spdlog.h"
 
 namespace binance {

@@ -1,5 +1,3 @@
-#include "ui/OrderBook.h"
-
 #include <gtest/gtest.h>
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 
@@ -8,6 +6,7 @@
 #include <string>
 
 #include "ui/BidAsk.h"
+#include "ui/OrderBook.h"
 
 TEST(OrderBook, toVector) {
   std::map<double, double, std::greater<>> bids = {{95, 10}, {94, 9}};

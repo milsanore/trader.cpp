@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "IAuth.h"
+#include "iauth.h"
 
 namespace binance {
 

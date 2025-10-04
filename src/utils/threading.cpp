@@ -1,4 +1,4 @@
-#include "Threading.h"
+#include "threading.h"
 
 #include <string>
 #if defined(__linux__) || defined(__APPLE__)

@@ -1,4 +1,4 @@
-#include "ui/TableApp.h"
+#include "ui/table_app.h"
 
 #include <gtest/gtest.h>
 #include <quickfix/fix44/Message.h>
@@ -7,13 +7,13 @@
 #include <mutex>
 #include <string>
 
-#include "FakeScreen.h"
 #include "concurrentqueue.h"
-#include "core/OrderBook.h"
+#include "core/order_book.h"
+#include "fake_screen.h"
 #include "spdlog/spdlog.h"
-#include "ui/IScreen.h"
-#include "ui/LogBox.h"
-#include "ui/MockLogReader.h"
+#include "ui/iscreen.h"
+#include "ui/log_box.h"
+#include "ui/mock_log_reader.h"
 
 TEST(TableApp, start) {
   // create app

@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
-#include "IAuth.h"
 #include "concurrentqueue.h"
+#include "iauth.h"
 
 namespace binance {
 

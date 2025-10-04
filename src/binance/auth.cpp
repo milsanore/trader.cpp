@@ -1,4 +1,4 @@
-#include "Auth.h"
+#include "auth.h"
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>

@@ -5,9 +5,9 @@
 #include <memory>
 #include <thread>
 
-#include "../core/OrderBook.h"
-#include "IScreen.h"
+#include "../core/order_book.h"
 #include "concurrentqueue.h"
+#include "iscreen.h"
 
 namespace ui {
 

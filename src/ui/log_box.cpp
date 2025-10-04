@@ -1,4 +1,4 @@
-#include "LogBox.h"
+#include "log_box.h"
 
 #include <fstream>
 #include <ftxui/component/component.hpp>
@@ -6,12 +6,12 @@
 #include <mutex>
 #include <thread>
 
-#include "../core/Env.h"
-#include "./../utils/Threading.h"
-#include "FileLogReader.h"
-#include "ILogReader.h"
-#include "IScreen.h"
-#include "MockLogReader.h"
+#include "../core/env.h"
+#include "./../utils/threading.h"
+#include "file_log_reader.h"
+#include "ilog_reader.h"
+#include "iscreen.h"
+#include "mock_log_reader.h"
 #include "spdlog/spdlog.h"
 
 using ftxui::bold;

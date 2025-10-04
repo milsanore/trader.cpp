@@ -1,12 +1,12 @@
 #include <string>
 
-#include "binance/Config.h"
-#include "binance/Worker.h"
+#include "binance/config.h"
+#include "binance/worker.h"
 #include "spdlog/cfg/env.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
-#include "ui/TableApp.h"
-#include "utils/Threading.h"
+#include "ui/table_app.h"
+#include "utils/threading.h"
 
 int main() {
   // LOG CONFIG

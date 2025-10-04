@@ -1,4 +1,4 @@
-#include "Worker.h"
+#include "worker.h"
 
 #include <quickfix/FileLog.h>
 #include <quickfix/FileStore.h>
@@ -8,10 +8,10 @@
 
 #include <memory>
 
-#include "./../utils/Threading.h"
-#include "Auth.h"
-#include "Config.h"
-#include "FixApp.h"
+#include "./../utils/threading.h"
+#include "auth.h"
+#include "config.h"
+#include "fix_app.h"
 #include "spdlog/spdlog.h"
 
 namespace binance {

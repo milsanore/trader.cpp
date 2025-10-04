@@ -2,7 +2,7 @@
 
 #include <ftxui/component/screen_interactive.hpp>
 
-#include "IScreen.h"
+#include "iscreen.h"
 
 namespace ui {
 
