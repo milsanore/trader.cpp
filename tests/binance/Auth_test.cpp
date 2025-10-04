@@ -10,7 +10,7 @@ TEST(Auth, signPayload) {
       "0|108=30|25037=5a8455c3-bafd-45b3-8c76-fbc17d118531|10=209";
   std::replace(payload.begin(), payload.end(), '|', '\x01');
   const std::vector<unsigned char> seed(32, 1);
-  const std::string signature = Binance::Auth::signPayload(payload, seed);
+  const std::string signature = binance::Auth::signPayload(payload, seed);
 
   ASSERT_EQ(signature,
             "khyxombd20pcdg2YroiHRztZtM3LqsywFnTjEQdN1W6TK0dN2SQM/"

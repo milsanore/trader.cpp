@@ -9,7 +9,7 @@
 
 #include "BidAsk.h"
 
-namespace Core {
+namespace core {
 
 /// An order book class backed by two (synchronised) bid/ask maps
 class OrderBook {
@@ -43,4 +43,4 @@ class OrderBook {
   // std::vector<BidAsk> v(5000);
 };
 
-}  // namespace Core
+}  // namespace core

@@ -13,12 +13,12 @@ using ftxui::Component;
 using ftxui::dim;
 using ftxui::Renderer;
 
-namespace UI {
+namespace ui {
 
 OrderBookBox::OrderBookBox(
     IScreen &screen,
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &queue,
-    std::unique_ptr<Core::OrderBook> ob, std::function<void(std::stop_token)> task)
+    std::unique_ptr<core::OrderBook> ob, std::function<void(std::stop_token)> task)
     : screen_(screen),
       queue_(queue),
       coreBook_(std::move(ob)),
@@ -26,7 +26,7 @@ OrderBookBox::OrderBookBox(
   // default behaviour
   if (!workerTask_) {
     workerTask_ = ([this](const std::stop_token &stoken) {
-      Utils::Threading::set_thread_name("tradercppuiBOOK");
+      utils::Threading::set_thread_name("tradercppuiBOOK");
       spdlog::info("starting polling order queue on background thread");
       pollQueue(stoken);
     });
@@ -79,7 +79,7 @@ ftxui::Element OrderBookBox::toTable() {
       ftxui::vbox({hbox(std::move(header_cells)), ftxui::separator()}));
 
   // ─────────── Data Rows ───────────
-  const std::vector<Core::BidAsk> x = coreBook_->toVector();
+  const std::vector<core::BidAsk> x = coreBook_->toVector();
   constexpr size_t max_rows = 15;
   const size_t rowCount = std::min(x.size(), max_rows);
   for (size_t i = 0; i < rowCount; ++i) {
@@ -124,7 +124,7 @@ void OrderBookBox::pollQueue(const std::stop_token &stoken) {
       }
     };
 
-    Core::OrderBook &book = *coreBook_;
+    core::OrderBook &book = *coreBook_;
     while (!stoken.stop_requested()) {
       std::shared_ptr<const FIX44::Message> msg;
       while (!queue_.try_dequeue(msg)) {
@@ -164,4 +164,4 @@ void OrderBookBox::pollQueue(const std::stop_token &stoken) {
   }
 }
 
-}  // namespace UI
+}  // namespace ui

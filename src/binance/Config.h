@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace Binance {
+namespace binance {
 
 /// @brief Binance config parameters, fetched from env
 struct Config {
@@ -16,4 +16,4 @@ struct Config {
   static Config fromEnv();
 };
 
-}  // namespace Binance
+}  // namespace binance

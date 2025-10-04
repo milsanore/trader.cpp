@@ -29,14 +29,14 @@ using ftxui::SliderOption;
 using ftxui::text;
 using ftxui::vbox;
 
-namespace UI {
+namespace ui {
 
 LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogReader> logReader,
                std::function<void(std::stop_token)> task)
     : screen_(screen), logReader_(std::move(logReader)), workerTask_(std::move(task)) {
   if (!workerTask_) {
     workerTask_ = ([this](const std::stop_token& stoken) {
-      Utils::Threading::set_thread_name("tradercppuiLOG");
+      utils::Threading::set_thread_name("tradercppuiLOG");
       spdlog::info("starting polling log file on background thread");
       tailLogFile(stoken);
     });
@@ -92,7 +92,7 @@ LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogReader> logReader,
 
 // static function
 std::unique_ptr<LogBox> LogBox::fromEnv(IScreen& screen) {
-  const std::string logPath = Core::Env::getEnvOrThrow("LOG_PATH");
+  const std::string logPath = core::Env::getEnvOrThrow("LOG_PATH");
   std::unique_ptr<ILogReader> logReader = std::make_unique<FileLogReader>(logPath);
   return std::make_unique<LogBox>(screen, std::move(logReader));
 }
@@ -160,4 +160,4 @@ void LogBox::tailLogFile(const std::stop_token& stoken) {
   }
 }
 
-}  // namespace UI
+}  // namespace ui

@@ -7,7 +7,7 @@ step 1: fetch balances of each instrument
 step 2: sortable/searchable collection
 */
 
-namespace UI {
+namespace ui {
 
 class WalletBox {
  public:
@@ -20,4 +20,4 @@ class WalletBox {
   ftxui::Component component_;
 };
 
-}  // namespace UI
+}  // namespace ui

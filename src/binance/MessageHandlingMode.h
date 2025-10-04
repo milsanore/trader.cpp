@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace Binance {
+namespace binance {
 
 /// @brief Binance Message Handling Mode
 /// Controls how the matching engine processes your messages
@@ -25,4 +25,4 @@ std::string toString(const MessageHandlingMode m) {
   return std::to_string(static_cast<int>(m));
 }
 
-}  // namespace Binance
+}  // namespace binance

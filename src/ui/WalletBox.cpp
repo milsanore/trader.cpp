@@ -11,7 +11,7 @@ using ftxui::Renderer;
 using ftxui::text;
 using ftxui::vbox;
 
-namespace UI {
+namespace ui {
 
 WalletBox::WalletBox() {
   component_ = Renderer([this](bool focused) {
@@ -22,4 +22,4 @@ WalletBox::WalletBox() {
 
 Component WalletBox::GetComponent() { return component_; }
 
-}  // namespace UI
+}  // namespace ui

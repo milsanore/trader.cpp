@@ -16,7 +16,7 @@
 #include "MessageHandlingMode.h"
 #include "spdlog/spdlog.h"
 
-namespace Binance {
+namespace binance {
 
 // PRIVATE
 
@@ -143,4 +143,4 @@ void FixApp::subscribeToDepth(const FIX::SessionID &sessionId) const {
   FIX::Session::sendToTarget(marketDataRequest, sessionId);
 }
 
-}  // namespace Binance
+}  // namespace binance

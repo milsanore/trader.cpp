@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace Binance {
+namespace binance {
 
 class IAuth {
  public:
@@ -16,4 +16,4 @@ class IAuth {
   virtual void clearKeys() = 0;
 };
 
-}  // namespace Binance
+}  // namespace binance

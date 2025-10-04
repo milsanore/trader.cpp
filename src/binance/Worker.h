@@ -13,7 +13,7 @@
 #include "FixApp.h"
 #include "concurrentqueue.h"
 
-namespace Binance {
+namespace binance {
 
 /// @brief Binance DI container
 class Worker final {
@@ -49,4 +49,4 @@ class Worker final {
   std::unique_ptr<FIX::SocketInitiator> initiator_;
 };
 
-}  // namespace Binance
+}  // namespace binance

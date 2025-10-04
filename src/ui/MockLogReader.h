@@ -4,7 +4,7 @@
 
 #include "ILogReader.h"
 
-namespace UI {
+namespace ui {
 
 class MockLogReader : public ILogReader {
  public:
@@ -30,4 +30,4 @@ class MockLogReader : public ILogReader {
   std::optional<std::string> error_;
 };
 
-}  // namespace UI
+}  // namespace ui

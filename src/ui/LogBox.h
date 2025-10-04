@@ -9,7 +9,7 @@
 #include "ILogReader.h"
 #include "IScreen.h"
 
-namespace UI {
+namespace ui {
 
 class LogBox {
  public:
@@ -46,4 +46,4 @@ class LogBox {
   std::mutex buffer_mutex;
 };
 
-}  // namespace UI
+}  // namespace ui

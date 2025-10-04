@@ -7,7 +7,7 @@
 #include "ILogReader.h"
 #include "spdlog/spdlog.h"
 
-namespace UI {
+namespace ui {
 
 class FileLogReader : public ILogReader {
  public:
@@ -48,4 +48,4 @@ class FileLogReader : public ILogReader {
   std::optional<std::string> error_;
 };
 
-}  // namespace UI
+}  // namespace ui

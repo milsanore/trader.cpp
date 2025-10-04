@@ -80,6 +80,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
     - ✅ fast
     - ✅ compiled out 'debug' logging for release builds
     - output thread name
+    - rolling
     - structured
     - basic schema (severity, correlationId)
 - code quality
@@ -109,6 +110,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - testing
   - ✅ dependency injection
   - integration test with mocked Binance server
+  - UI snapshot testing
 - performance
   - release compile flags
   - profiling (valgrind/cachegrind)

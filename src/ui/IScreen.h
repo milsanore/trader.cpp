@@ -2,7 +2,7 @@
 
 #include <ftxui/component/screen_interactive.hpp>
 
-namespace UI {
+namespace ui {
 
 class IScreen {
  public:
@@ -11,6 +11,6 @@ class IScreen {
   virtual void PostEvent(const ftxui::Event &) = 0;
 };
 
-}  // namespace UI
+}  // namespace ui
 
 #pragma once

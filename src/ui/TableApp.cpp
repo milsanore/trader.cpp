@@ -29,7 +29,7 @@ using ftxui::WIDTH;
 using ftxui::Container::Horizontal;
 using ftxui::Container::Vertical;
 
-namespace UI {
+namespace ui {
 
 ///////////////////////////////////////
 
@@ -37,11 +37,7 @@ TableApp::TableApp(
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &orderQueue,
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &tradeQueue,
     std::unique_ptr<IScreen> screen, std::unique_ptr<LogBox> logs)
-    : screen_(std::move(screen)),
-      book_(*screen_, orderQueue),
-      trades_(),
-      wallet_(),
-      logs_(std::move(logs)) {};
+    : screen_(std::move(screen)), book_(*screen_, orderQueue), logs_(std::move(logs)) {};
 
 // static function
 TableApp TableApp::fromEnv(
@@ -73,4 +69,4 @@ void TableApp::start() {
   screen_->Loop(root);
 }
 
-}  // namespace UI
+}  // namespace ui

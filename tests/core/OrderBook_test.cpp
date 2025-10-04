@@ -16,17 +16,17 @@ TEST(OrderBook, toVector) {
       {97, 12},
       {98, 13},
   };
-  UI::OrderBook x{bids, asks};
-  std::vector<UI::BidAsk> obVec = x.toVector();
+  ui::OrderBook x{bids, asks};
+  std::vector<ui::BidAsk> obVec = x.toVector();
 
   std::vector check = {
-      UI::BidAsk{10, 95, 96, 11},
-      UI::BidAsk{9, 94, 97, 12},
-      UI::BidAsk{NAN, NAN, 98, 13},
+      ui::BidAsk{10, 95, 96, 11},
+      ui::BidAsk{9, 94, 97, 12},
+      ui::BidAsk{NAN, NAN, 98, 13},
   };
   ASSERT_EQ(obVec, check);
 
-  std::vector badCheck = {UI::BidAsk{10, 95, 96, 11}, UI::BidAsk{9, 94, 97, 12}};
+  std::vector badCheck = {ui::BidAsk{10, 95, 96, 11}, ui::BidAsk{9, 94, 97, 12}};
   ASSERT_NE(obVec, badCheck);
 }
 
@@ -37,21 +37,21 @@ TEST(OrderBook, constructors) {
   std::map<double, double> asks = {
       {96, 11},
   };
-  UI::OrderBook o1{bids, asks};
+  ui::OrderBook o1{bids, asks};
   // test move-constructor operator
-  UI::OrderBook moved1 = std::move(o1);
+  ui::OrderBook moved1 = std::move(o1);
 
-  std::vector<UI::BidAsk> check = {{10, 95, 96, 11}};
+  std::vector<ui::BidAsk> check = {{10, 95, 96, 11}};
   ASSERT_EQ(moved1.toVector(), check);
 
-  UI::OrderBook moved2{};
+  ui::OrderBook moved2{};
   // test move-assignment operator
   moved2 = std::move(moved1);
   ASSERT_EQ(moved2.toVector(), check);
 }
 
 TEST(OrderBook, applySnapshot) {
-  UI::OrderBook book{};
+  ui::OrderBook book{};
 
   FIX44::MarketDataSnapshotFullRefresh message;
   message.set(FIX::Symbol("BTCUSDT"));
@@ -69,7 +69,7 @@ TEST(OrderBook, applySnapshot) {
   message.addGroup(askEntry);
 
   book.applySnapshot(message);
-  std::vector<UI::BidAsk> check = {{10, 95, 96, 11}};
+  std::vector<ui::BidAsk> check = {{10, 95, 96, 11}};
   ASSERT_EQ(book.toVector(), check);
 }
 
@@ -81,7 +81,7 @@ TEST(OrderBook, applyIncrement) {
       {96, 11},
       {97, 12},
   };
-  UI::OrderBook book{bids, asks};
+  ui::OrderBook book{bids, asks};
 
   FIX44::MarketDataIncrementalRefresh message;
   // Add a bid update
@@ -101,7 +101,7 @@ TEST(OrderBook, applyIncrement) {
   message.addGroup(askDelete);
 
   book.applyIncrement(message);
-  std::vector<UI::BidAsk> vec = book.toVector();
-  std::vector<UI::BidAsk> check = {{100, 95, 96, 11}};
+  std::vector<ui::BidAsk> vec = book.toVector();
+  std::vector<ui::BidAsk> check = {{100, 95, 96, 11}};
   ASSERT_EQ(vec, check);
 }

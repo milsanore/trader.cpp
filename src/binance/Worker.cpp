@@ -14,7 +14,7 @@
 #include "FixApp.h"
 #include "spdlog/spdlog.h"
 
-namespace Binance {
+namespace binance {
 
 Worker::Worker(std::unique_ptr<FixApp> app,
                std::unique_ptr<FIX::FileStoreFactory> fileStoreFactory,
@@ -31,7 +31,7 @@ Worker::Worker(std::unique_ptr<FixApp> app,
   // default behaviour
   if (!task) {
     workerTask_ = ([this](const std::stop_token &stoken) {
-      Utils::Threading::set_thread_name("tradercppFIX");
+      utils::Threading::set_thread_name("tradercppFIX");
       // NB: SocketInitiator::start() is a blocking call, so the stop_token
       // cannot cancel the thread. NB: The `stop()` function has to forcibly
       // stop it with `initiator_->stop()`.
@@ -90,4 +90,4 @@ Worker::getTradeQueue() const {
   return app_->tradeQueue_;
 }
 
-}  // namespace Binance
+}  // namespace binance

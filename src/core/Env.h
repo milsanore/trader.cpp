@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Core {
+namespace core {
 
 struct Env {
  public:
@@ -19,4 +19,4 @@ struct Env {
   };
 };
 
-}  // namespace Core
+}  // namespace core

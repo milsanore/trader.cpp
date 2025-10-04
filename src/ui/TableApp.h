@@ -12,7 +12,7 @@
 #include "WalletBox.h"
 #include "concurrentqueue.h"
 
-namespace UI {
+namespace ui {
 
 /*
 login screen?
@@ -40,4 +40,4 @@ class TableApp {
   std::unique_ptr<LogBox> logs_;
 };
 
-}  // namespace UI
+}  // namespace ui

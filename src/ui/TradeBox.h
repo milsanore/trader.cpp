@@ -8,7 +8,7 @@ step 2: sortable/searchable collection
 step 3: fetch historical trades
 */
 
-namespace UI {
+namespace ui {
 
 class TradeBox {
  public:
@@ -22,4 +22,4 @@ class TradeBox {
   ftxui::Component component_;
 };
 
-}  // namespace UI
+}  // namespace ui

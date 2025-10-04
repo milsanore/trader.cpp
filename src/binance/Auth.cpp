@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-namespace Binance {
+namespace binance {
 
 Auth::Auth(std::string &apiKey, std::string &privatePemPath)
     : apiKey_(apiKey), privatePemPath_(privatePemPath) {
@@ -106,4 +106,4 @@ void Auth::clearKeys() {
   privatePemPath_.clear();
 }
 
-}  // namespace Binance
+}  // namespace binance

@@ -8,7 +8,7 @@
 #include <windows.h>
 #endif
 
-namespace Utils {
+namespace utils {
 
 constexpr int MAX_STRING_LENGTH = 15;
 
@@ -38,4 +38,4 @@ void Threading::set_thread_name(const std::string &name) {
 #endif
 }
 
-}  // namespace Utils
+}  // namespace utils

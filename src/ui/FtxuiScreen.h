@@ -4,7 +4,7 @@
 
 #include "IScreen.h"
 
-namespace UI {
+namespace ui {
 
 class FtxuiScreen : public IScreen {
  public:
@@ -18,4 +18,4 @@ class FtxuiScreen : public IScreen {
   ftxui::ScreenInteractive screen_;
 };
 
-}  // namespace UI
+}  // namespace ui

@@ -6,7 +6,7 @@
 
 #include "ui/IScreen.h"
 
-class FakeScreen : public UI::IScreen {
+class FakeScreen : public ui::IScreen {
  public:
   void Loop(ftxui::Component renderer) override {
     loop_called = true;

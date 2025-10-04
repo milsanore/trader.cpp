@@ -20,12 +20,12 @@ TEST(TableApp, start) {
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> orderQueue{};
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> tradeQueue{};
 
-  std::unique_ptr<UI::IScreen> screen = std::make_unique<FakeScreen>();
-  std::unique_ptr<UI::ILogReader> logReader = std::make_unique<UI::MockLogReader>();
+  std::unique_ptr<ui::IScreen> screen = std::make_unique<FakeScreen>();
+  std::unique_ptr<ui::ILogReader> logReader = std::make_unique<ui::MockLogReader>();
   auto task = ([](const std::stop_token& stoken) { spdlog::info("mock task"); });
-  auto logBox = std::make_unique<UI::LogBox>(*screen.get(), std::move(logReader), task);
+  auto logBox = std::make_unique<ui::LogBox>(*screen.get(), std::move(logReader), task);
 
-  UI::TableApp tblApp{orderQueue, tradeQueue, std::move(screen), std::move(logBox)};
+  ui::TableApp tblApp{orderQueue, tradeQueue, std::move(screen), std::move(logBox)};
   tblApp.start();
 
   // publish update

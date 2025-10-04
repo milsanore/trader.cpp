@@ -1,6 +1,6 @@
 #pragma once
 
-namespace UI {
+namespace ui {
 
 class ILogReader {
  public:
@@ -17,4 +17,4 @@ class ILogReader {
   virtual std::string getError() const = 0;
 };
 
-}  // namespace UI
+}  // namespace ui

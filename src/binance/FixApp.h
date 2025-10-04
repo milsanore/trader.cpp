@@ -12,7 +12,7 @@
 #include "IAuth.h"
 #include "concurrentqueue.h"
 
-namespace Binance {
+namespace binance {
 
 /// @brief Binance FIX App - Manages FIX connectivity to Binance
 class FixApp final : public FIX::Application, public FIX::MessageCracker {
@@ -49,4 +49,4 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
                  const FIX::SessionID &) override;
 };
 
-}  // namespace Binance
+}  // namespace binance

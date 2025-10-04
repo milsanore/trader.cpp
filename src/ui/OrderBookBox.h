@@ -9,14 +9,14 @@
 #include "IScreen.h"
 #include "concurrentqueue.h"
 
-namespace UI {
+namespace ui {
 
 class OrderBookBox {
  public:
   // Constructor: takes a label string
   OrderBookBox(IScreen& screen,
                moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
-               std::unique_ptr<Core::OrderBook> ob = std::make_unique<Core::OrderBook>(),
+               std::unique_ptr<core::OrderBook> ob = std::make_unique<core::OrderBook>(),
                std::function<void(std::stop_token)> task = {});
   // Return the FTXUI component to plug into layout
   ftxui::Component GetComponent();
@@ -27,7 +27,7 @@ class OrderBookBox {
 
  private:
   IScreen& screen_;
-  std::unique_ptr<Core::OrderBook> coreBook_;
+  std::unique_ptr<core::OrderBook> coreBook_;
   ftxui::Component component_;
 
   // worker thread
@@ -45,4 +45,4 @@ class OrderBookBox {
   ftxui::Element toTable();
 };
 
-}  // namespace UI
+}  // namespace ui

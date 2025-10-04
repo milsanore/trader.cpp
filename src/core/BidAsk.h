@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace Core {
+namespace core {
 
 /// @brief Binance config parameters, fetched from env
 struct BidAsk {
@@ -27,4 +27,4 @@ struct BidAsk {
   };
 };
 
-}  // namespace Core
+}  // namespace core

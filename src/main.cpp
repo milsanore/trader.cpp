@@ -19,15 +19,15 @@ int main() {
   spdlog::flush_every(std::chrono::microseconds(100));
 
   spdlog::info("hello");
-  Utils::Threading::set_thread_name("tradercppMAIN");
+  utils::Threading::set_thread_name("tradercppMAIN");
 
   // BINANCE MARKET DATA GENERATOR
-  auto bConf = Binance::Config::fromEnv();
-  auto bWorker = Binance::Worker::fromConf(bConf);
+  auto bConf = binance::Config::fromEnv();
+  auto bWorker = binance::Worker::fromConf(bConf);
   bWorker.start();
 
   // UI APP (READS FROM QUEUE)
-  auto app = UI::TableApp::fromEnv(bWorker.getOrderQueue(), bWorker.getTradeQueue());
+  auto app = ui::TableApp::fromEnv(bWorker.getOrderQueue(), bWorker.getTradeQueue());
   app.start();
 
   if (app.thread_exception) {

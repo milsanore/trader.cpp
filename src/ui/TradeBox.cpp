@@ -11,7 +11,7 @@ using ftxui::Renderer;
 using ftxui::text;
 using ftxui::vbox;
 
-namespace UI {
+namespace ui {
 
 TradeBox::TradeBox() {
   component_ = Renderer([this](bool focused) {
@@ -22,4 +22,4 @@ TradeBox::TradeBox() {
 
 Component TradeBox::GetComponent() { return component_; }
 
-}  // namespace UI
+}  // namespace ui

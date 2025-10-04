@@ -3,7 +3,7 @@
 #include "BidAsk.h"
 #include "spdlog/spdlog.h"
 
-namespace Core {
+namespace core {
 
 OrderBook::OrderBook(std::map<double, double, std::greater<>> bidMap,
                      std::map<double, double> askMap)
@@ -149,4 +149,4 @@ void OrderBook::applyIncrement(const FIX44::MarketDataIncrementalRefresh &msg) {
   }
 }
 
-}  // namespace Core
+}  // namespace core

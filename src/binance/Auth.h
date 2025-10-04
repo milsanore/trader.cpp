@@ -5,7 +5,7 @@
 
 #include "IAuth.h"
 
-namespace Binance {
+namespace binance {
 
 /// @brief Binance's proprietary FIX authentication mechanism - helper functions
 class Auth final : public IAuth {
@@ -31,4 +31,4 @@ class Auth final : public IAuth {
   std::vector<unsigned char> getSeedFromPem() const;
 };
 
-}  // namespace Binance
+}  // namespace binance
