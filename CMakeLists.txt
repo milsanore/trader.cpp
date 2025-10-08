@@ -14,6 +14,7 @@ endif()
 
 # Find packages from Conan
 find_package(concurrentqueue REQUIRED)
+find_package(efsw REQUIRED)
 find_package(ftxui REQUIRED)
 find_package(Microsoft.GSL REQUIRED)
 find_package(GTest REQUIRED)
@@ -43,6 +44,7 @@ endif()
 # Link dependencies to the library (so both exe and tests get them)
 target_link_libraries(traderlib PUBLIC
     concurrentqueue::concurrentqueue
+    efsw::efsw
     ftxui::ftxui
     Microsoft.GSL::GSL
     OpenSSL::SSL

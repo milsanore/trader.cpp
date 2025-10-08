@@ -20,6 +20,8 @@ TradeBox::TradeBox() {
   });
 }
 
-Component TradeBox::get_component() { return component_; }
+Component TradeBox::get_component() {
+  return component_;
+}
 
 }  // namespace ui

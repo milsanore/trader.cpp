@@ -4,47 +4,72 @@
 #include <ftxui/dom/elements.hpp>
 
 #include "./../utils/threading.h"
-#include "iscreen.h"
+#include "app/iscreen.h"
 #include "spdlog/spdlog.h"
 
 using ftxui::bold;
 using ftxui::border;
+using ftxui::Color;
 using ftxui::Component;
 using ftxui::dim;
+using ftxui::Direction;
+using ftxui::flex;
+using ftxui::focusPositionRelative;
+using ftxui::frame;
 using ftxui::Renderer;
+using ftxui::SliderOption;
+using ftxui::text;
 
 namespace ui {
 
 OrderBookBox::OrderBookBox(
-    IScreen &screen,
-    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &queue,
-    std::unique_ptr<core::OrderBook> ob, std::function<void(std::stop_token)> task)
+    IScreen& screen,
+    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
+    core::OrderBook ob,
+    std::function<void(std::stop_token)> task)
     : screen_(screen),
       queue_(queue),
       core_book_(std::move(ob)),
       worker_task_(std::move(task)) {
   // default behaviour
   if (!worker_task_) {
-    worker_task_ = ([this](const std::stop_token &stoken) {
-      utils::Threading::set_thread_name("tradercppuiBOOK");
+    worker_task_ = ([this](const std::stop_token& stoken) {
+      utils::Threading::set_thread_name(thread_name_);
       spdlog::info("starting polling order queue on background thread");
       poll_queue(stoken);
     });
   }
 
-  component_ = Renderer(
-      [this](bool focused) { return to_table() | border | (focused ? bold : dim); });
+  SliderOption<float> option_y;
+  option_y.value = &scroll_y;
+  option_y.min = 0.1f;
+  option_y.max = 1.f;
+  option_y.increment = 0.1f;
+  option_y.direction = Direction::Down;
+  option_y.color_active = Color::Yellow;
+  option_y.color_inactive = Color::YellowLight;
+  auto scrollbar_y = Slider(option_y);
+
+  auto content = Renderer([this](bool focused) {
+    return to_table() | (focused ? bold : dim) | focusPositionRelative(0, scroll_y) |
+           frame | flex | border;
+  });
+
+  component_ = ftxui::Container::Horizontal({content, scrollbar_y}) | flex;
 }
 
 void OrderBookBox::start() {
+  // TODO (mils): thread_exception
   // start worker thread
   worker_ = std::jthread(worker_task_);
 }
 
-Component OrderBookBox::get_component() { return component_; }
+Component OrderBookBox::get_component() {
+  return component_;
+}
 
 // Helper to pad or truncate a string to a fixed width
-std::string Pad(const std::string &input, const size_t width) {
+std::string Pad(const std::string& input, const size_t width) {
   if (input.size() >= width) {
     return input.substr(0, width);
   }
@@ -79,9 +104,8 @@ ftxui::Element OrderBookBox::to_table() {
       ftxui::vbox({hbox(std::move(header_cells)), ftxui::separator()}));
 
   // ─────────── Data Rows ───────────
-  const std::vector<core::BidAsk> x = core_book_->to_vector();
-  constexpr size_t max_rows = 15;
-  const size_t row_count = std::min(x.size(), max_rows);
+  const std::vector<core::BidAsk> x = core_book_.to_vector();
+  const size_t row_count = x.size();
   for (size_t i = 0; i < row_count; ++i) {
     ftxui::Elements cells;
     cells.push_back(ftxui::text(Pad(x[i].bid_sz, column_width)));
@@ -90,20 +114,12 @@ ftxui::Element OrderBookBox::to_table() {
     cells.push_back(ftxui::text(Pad(x[i].ask_sz, column_width)));
     table_elements.push_back(hbox(std::move(cells)));
   }
-  if (row_count >= max_rows) {
-    ftxui::Elements cells;
-    cells.push_back(ftxui::text(Pad("...", column_width)));
-    cells.push_back(ftxui::text(Pad("...", column_width)));
-    cells.push_back(ftxui::text(Pad("...", column_width)));
-    cells.push_back(ftxui::text(Pad("...", column_width)));
-    table_elements.push_back(hbox(std::move(cells)));
-  }
 
   return vbox(table_elements);
 };
 
 // worker thread
-void OrderBookBox::poll_queue(const std::stop_token &stoken) {
+void OrderBookBox::poll_queue(const std::stop_token& stoken) {
   try {
     /// Adaptive backoff strategy for spin+sleep polling
     /// Performs an adaptive backoff by spinning then sleeping, increasing sleep
@@ -124,7 +140,6 @@ void OrderBookBox::poll_queue(const std::stop_token &stoken) {
       }
     };
 
-    core::OrderBook &book = *core_book_;
     while (!stoken.stop_requested()) {
       std::shared_ptr<const FIX44::Message> msg;
       while (!queue_.try_dequeue(msg)) {
@@ -137,12 +152,12 @@ void OrderBookBox::poll_queue(const std::stop_token &stoken) {
       if (auto snap =
               std::dynamic_pointer_cast<const FIX44::MarketDataSnapshotFullRefresh>(
                   msg)) {
-        book.apply_snapshot(*snap);
+        core_book_.apply_snapshot(*snap);
         screen_.post_event(ftxui::Event::Custom);  // Trigger re-render
       } else if (auto inc =
                      std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(
                          msg)) {
-        book.apply_increment(*inc);
+        core_book_.apply_increment(*inc);
         screen_.post_event(ftxui::Event::Custom);  // Trigger re-render
       } else {
         spdlog::error("unknown message type");
@@ -155,7 +170,7 @@ void OrderBookBox::poll_queue(const std::stop_token &stoken) {
     spdlog::info("closing worker thread...");
   }
   // TODO(mils): log error
-  catch (const std::exception &e) {
+  catch (const std::exception& e) {
     spdlog::error("error in orderbook worker thread, error [{}]", e.what());
     thread_exception = std::current_exception();
   } catch (...) {

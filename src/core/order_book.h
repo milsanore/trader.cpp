@@ -19,14 +19,14 @@ class OrderBook {
 
   // Mutex is not copyable:
   // 1. Delete copy constructor and copy assignment
-  OrderBook(const OrderBook &) = delete;
-  OrderBook &operator=(const OrderBook &) = delete;
+  OrderBook(const OrderBook&) = delete;
+  OrderBook& operator=(const OrderBook&) = delete;
   // 2. Declare move and move-assignment constructors
-  OrderBook(OrderBook &&) noexcept;
-  OrderBook &operator=(OrderBook &&) noexcept;
+  OrderBook(OrderBook&&) noexcept;
+  OrderBook& operator=(OrderBook&&) noexcept;
 
-  void apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh &);
-  void apply_increment(const FIX44::MarketDataIncrementalRefresh &);
+  void apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh&);
+  void apply_increment(const FIX44::MarketDataIncrementalRefresh&);
   /// @brief return the contents of the order book as a simple vector.
   /// useful for generating the UI
   std::vector<BidAsk> to_vector();

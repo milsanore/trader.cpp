@@ -1,10 +1,9 @@
-[![Build](https://github.com/milsanore/trader.cpp/actions/workflows/build.yml/badge.svg)](https://github.com/milsanore/trader.cpp/actions/workflows/build.yml)
+[![Build](https://github.com/milsanore/trader.cpp/actions/workflows/commits.yml/badge.svg)](https://github.com/milsanore/trader.cpp/actions/workflows/commits.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=milsanore_trader.cpp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=milsanore_trader.cpp)
 [![codecov](https://codecov.io/github/milsanore/trader.cpp/graph/badge.svg?token=C787ZTXBQC)](https://codecov.io/github/milsanore/trader.cpp)
 
-<img src="https://static.wikia.nocookie.net/surrealmemes/images/8/80/2f0.png"
-	alt="stonks"
-	width="250" />
+<img src="docs/app.png" alt="stonks" width="750" />
+<!-- <img src="docs/stonks.png" alt="stonks" width="250" /> -->
 
 # trader.cpp
 a proof-of-concept, showcasing some c++ coding combined with some fintech concepts
@@ -58,6 +57,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - ✅ create a FIX connection to Binance
 - ✅ subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
+- use a precise number type for money
 - fire an order
 - test in the Binance test environment
 - momentum indicators
@@ -99,6 +99,11 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - ✅ badges
   - ✅ sonarcloud integrated into build pipeline
   - sonarcloud coverage
+- diagnostics
+  - ✅ ASan
+  - UBSan
+  - TSan
+  - Valgrind
 - pipeline
   - ✅ custom docker build image with all dependencies (hosted on GHCR for faster pipelines)
   - ✅ cron
@@ -111,6 +116,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - ✅ dependency injection
   - integration test with mocked Binance server
   - UI snapshot testing
+  - ✅ coverage gutters
 - performance
   - release compile flags
   - profiling (valgrind/cachegrind)
@@ -151,17 +157,16 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 ```mermaid
 sequenceDiagram
     participant T1 as Thread 1<br>(Main + UI)
-    participant T2 as Thread 2<br>(UI Worker)
+    participant T2 as Thread 2<br>(UI Orderbook Worker)
     participant T3 as Thread 3<br>(FIX Worker)
+    participant T4 as Thread 4<br>(UI Log Worker)
 
-    T1->>T3: Start FIX Worker
-    T1->>T2: Start UI Worker
-    T3-->>T3: subscribe + push to <queue>
+    T3-->>T3: subscribe to Binance <br> + push to <queue>
     T3->>T2: pull from <queue>
     T2-->>T2: build UI
     T2->>T1: request render
-    T3-->>T1: Thread 3 done
-    T2-->>T1: Thread 2 done
+    T4-->>T4: poll log file <br> + build UI
+    T4->>T1: request render
 ```
 
 # Credits

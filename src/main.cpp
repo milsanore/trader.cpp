@@ -5,10 +5,12 @@
 #include "spdlog/cfg/env.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
-#include "ui/app.h"
+#include "ui/app/app.h"
 #include "utils/threading.h"
 
 int main() {
+  utils::Threading::set_thread_name("tradercppMAIN");
+
   // LOG CONFIG
   spdlog::cfg::load_env_levels("LOG_LEVEL");
   const char* log_path = std::getenv("LOG_PATH");
@@ -19,7 +21,6 @@ int main() {
   spdlog::flush_every(std::chrono::microseconds(100));
 
   spdlog::info("hello");
-  utils::Threading::set_thread_name("tradercppMAIN");
 
   // BINANCE MARKET DATA GENERATOR
   auto b_conf = binance::Config::from_env();

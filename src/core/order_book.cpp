@@ -10,7 +10,7 @@ OrderBook::OrderBook(std::map<double, double, std::greater<>> bid_map,
     : bid_map_(std::move(bid_map)), ask_map_(std::move(ask_map)) {}
 
 // move constructor
-OrderBook::OrderBook(OrderBook &&other) noexcept
+OrderBook::OrderBook(OrderBook&& other) noexcept
     : bid_map_(std::move(other.bid_map_)), ask_map_(std::move(other.ask_map_)) {
   // lock other.mutex_ to ensure safe access to its internal maps while moving
   std::lock_guard lock(other.mutex_);
@@ -19,7 +19,7 @@ OrderBook::OrderBook(OrderBook &&other) noexcept
 }
 
 // move-assignment constructor
-OrderBook &OrderBook::operator=(OrderBook &&other) noexcept {
+OrderBook& OrderBook::operator=(OrderBook&& other) noexcept {
   if (this != &other) {
     // Lock both mutexes without deadlock
     std::scoped_lock lock(mutex_, other.mutex_);
@@ -36,14 +36,14 @@ std::vector<BidAsk> OrderBook::to_vector() {
   std::vector<BidAsk> v(row_count);
   // bids
   int i = 0;
-  for (const auto &[px, sz] : bid_map_) {
+  for (const auto& [px, sz] : bid_map_) {
     v[i].bid_sz = sz;
     v[i].bid_px = px;
     i++;
   }
   // asks
   i = 0;
-  for (const auto &[px, sz] : ask_map_) {
+  for (const auto& [px, sz] : ask_map_) {
     v[i].ask_sz = sz;
     v[i].ask_px = px;
     i++;
@@ -51,7 +51,7 @@ std::vector<BidAsk> OrderBook::to_vector() {
   return v;
 };
 
-void OrderBook::apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh &msg) {
+void OrderBook::apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) {
   std::lock_guard lock(mutex_);
   FIX::Symbol symbol;
   msg.get(symbol);
@@ -86,7 +86,7 @@ void OrderBook::apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh &msg) 
   }
 }
 
-void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh &msg) {
+void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh& msg) {
   std::lock_guard lock(mutex_);
   FIX::NoMDEntries entries;
   msg.get(entries);

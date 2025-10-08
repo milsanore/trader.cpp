@@ -1,5 +1,6 @@
 file(GLOB_RECURSE TEST_SOURCES
     binance/*_test.cpp
+    core/*_test.cpp
     ui/*_test.cpp
     utils/*_test.cpp
 )

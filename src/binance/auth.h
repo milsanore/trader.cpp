@@ -10,22 +10,22 @@ namespace binance {
 /// @brief Binance's proprietary FIX authentication mechanism - helper functions
 class Auth final : public IAuth {
  public:
-  Auth(std::string &api_key, std::string &private_pem_path);
-  std::string sign_payload(const std::string &payload) override;
+  Auth(std::string& api_key, std::string& private_pem_path);
+  std::string sign_payload(const std::string& payload) override;
   /// Generate a payload signature using a private key.
   /// Expand the key to a 64-byte secret key (using libsodium), sign a payload,
   /// output base64 signature.
   /// @param payload payload to be signed
   /// @param seed a 32-byte Ed25519 seed
   /// @return base64 payload signature
-  static std::string sign_payload(const std::string &payload,
-                                  const std::vector<unsigned char> &seed);
-  const std::string &get_api_key() const override;
+  static std::string sign_payload(const std::string& payload,
+                                  const std::vector<unsigned char>& seed);
+  const std::string& get_api_key() const override;
   void clear_keys() override;
 
  private:
-  std::string &api_key_;
-  std::string &private_pem_path_;
+  std::string& api_key_;
+  std::string& private_pem_path_;
   /// Fetch a 32-byte Ed25519 seed from a private key PEM file (using OpenSSL)
   /// @return 32-byte Ed25519 seed
   std::vector<unsigned char> get_seed_from_pem() const;

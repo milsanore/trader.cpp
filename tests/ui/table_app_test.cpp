@@ -8,23 +8,26 @@
 #include "concurrentqueue.h"
 #include "core/order_book.h"
 #include "fake_screen.h"
+#include "mock_log_watcher.h"
 #include "spdlog/spdlog.h"
-#include "ui/app.h"
-#include "ui/iscreen.h"
-#include "ui/log_box.h"
-#include "ui/mock_log_reader.h"
+#include "ui/app/app.h"
+#include "ui/app/iscreen.h"
+#include "ui/log_box/ilog_watcher.h"
+#include "ui/log_box/log_box.h"
 
-TEST(UiApp, start) {
+TEST(App, start) {
   // create app
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> order_queue{};
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> trade_queue{};
 
   std::unique_ptr<ui::IScreen> screen = std::make_unique<FakeScreen>();
-  std::unique_ptr<ui::ILogReader> log_reader = std::make_unique<ui::MockLogReader>();
+  std::unique_ptr<ui::ILogWatcher> log_reader = std::make_unique<ui::MockLogWatcher>();
   auto task = ([](const std::stop_token& stoken) { spdlog::info("mock task"); });
-  auto log_box = std::make_unique<ui::LogBox>(*screen.get(), std::move(log_reader), task);
+  auto log_box = std::make_unique<ui::LogBox>(*screen.get(), std::move(log_reader));
+  auto book = std::make_unique<ui::OrderBookBox>(*screen, order_queue);
 
-  ui::App app{order_queue, trade_queue, std::move(screen), std::move(log_box)};
+  ui::App app{order_queue, trade_queue, std::move(screen), std::move(book),
+              std::move(log_box)};
   app.start();
 
   // publish update

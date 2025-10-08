@@ -39,20 +39,13 @@ init-build-container:
 build-debug:
 	cmake --build --preset=debug
 
-## test: 🧪 run google-test
-.PHONY: test
-test:
-	cmake --build --preset=debug
-	ctest --preset=debug
-	lcov --gcov-tool gcov --capture --directory . --output-file lcov.info
+## build-diagnostic: 🩺 compile (diagnostic)
+.PHONY: build-diagnostic
+build-diagnostic:
+	cmake --preset diagnostic
+	cmake --build --preset=diagnostic
 
-## tidy: 🧹 tidy things up before committing code
-.PHONY: tidy
-tidy:
-	find src/ -name '*.cpp' | xargs clang-tidy -p build/Debug --fix --format-style=.clang-format
-	find src/ tests/ \( -name '*.cpp' -o -name '*.hpp' -o -name '*.c' -o -name '*.h' \) -exec clang-format -i {} +	
-
-## build-release: 🔨🔨 compile (prod)
+## build-release: 🏎️ compile (prod)
 .PHONY: build-release
 build-release:
 	source .venv/bin/activate && \
@@ -60,12 +53,33 @@ build-release:
 	cmake --preset=release
 	cmake --build --preset=release
 
-## run-debug: 🏃‍♂️ run the app (debug) (don't forget `withenv`)
+## test: 🧪 run google-test
+.PHONY: test
+test:
+	cmake --preset debug
+	cmake --build --preset=debug
+	ctest --preset=debug
+	lcov --gcov-tool gcov --capture --directory . --output-file lcov.info
+
+## tidy: 🧹 tidy things up before committing code
+.PHONY: tidy
+tidy:
+	find src/ tests/ \( -name '*.cpp' -o -name '*.hpp' -o -name '*.c' -o -name '*.h' \) -exec clang-format -i {} +	
+	find tests/ -name '*.cpp' | xargs clang-tidy -p build/Debug --fix --format-style=.clang-format
+	find src/ -name '*.cpp' | xargs clang-tidy -p build/Debug --fix --format-style=.clang-format
+
+## run-debug: 🏃‍♂️  run the app (debug) (don't forget `withenv`)
 .PHONY: run-debug
 run-debug:
 	build/Debug/tradercpp
 
-## run-release: 🏎️ run the app (prod)
+## run-diagnostic: 🩺 run the app (diagnostic) (don't forget `withenv`)
+.PHONY: run-diagnostic
+run-diagnostic:
+	ASAN_OPTIONS=detect_leaks=1:leak_check_at_exit=1:fast_unwind_on_malloc=0:suppressions=asan.supp \
+	build/Diagnostic/tradercpp
+
+## run-release: 🏎️  run the app (prod)
 .PHONY: run-release
 run-release:
 	build/Release/tradercpp

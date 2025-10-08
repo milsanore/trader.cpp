@@ -4,7 +4,7 @@
 #include <ftxui/component/event.hpp>
 #include <vector>
 
-#include "ui/iscreen.h"
+#include "ui/app/iscreen.h"
 
 class FakeScreen : public ui::IScreen {
  public:

@@ -1,4 +1,4 @@
-name: Build commits and merges to master
+name: Build
 
 on:
   push:
@@ -24,8 +24,10 @@ jobs:
     container:
       image: ghcr.io/milsanore/tradercppbuild:v1.5
     steps:
-      - name: Checkout repository
+      - name: Checkout full history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Restore Conan cache
         uses: actions/cache@v4
         with:
@@ -39,16 +41,16 @@ jobs:
           rm -rf build
           conan profile detect --force
           conan install . --build=missing -s build_type=Debug
-      - name: Build and Test
+      - name: Build
         run: |
           set -e
           cmake --preset=debug
           cmake --build --preset=debug
+      - name: Test
+        run: |
+          set -e
           ctest --preset=debug
-          lcov --gcov-tool gcov \
-            --capture \
-            --directory . \
-            --output-file lcov.info \
+          lcov --gcov-tool gcov --capture --directory . --output-file lcov.info \
             --rc geninfo_unexecuted_blocks=1 \
             --ignore-errors mismatch
           lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
@@ -58,7 +60,7 @@ jobs:
         run: |
           set -e
           git fetch --no-tags origin master
-          diff=$(git diff -U0 origin/master)
+          diff=$(git diff -U0 origin/master...HEAD -- '*.cpp')
           if [[ -z "$diff" ]]; then
             echo "No changes to lint."
             exit 0
@@ -77,4 +79,6 @@ jobs:
         with:
           args: >
             -Dsonar.javascript.lcov.reportPaths=lcov_filtered.info
+            -Dsonar.sources=src
+            -Dsonar.projectBaseDir=.
         continue-on-error: true

@@ -20,16 +20,18 @@
 
 namespace binance {
 
-Auth::Auth(std::string &api_key, std::string &private_pem_path)
+Auth::Auth(std::string& api_key, std::string& private_pem_path)
     : api_key_(api_key), private_pem_path_(private_pem_path) {
   if (sodium_init() < 0) {
     throw std::runtime_error("libsodium failed to initialize");
   }
 }
 
-const std::string &Auth::get_api_key() const { return api_key_; }
+const std::string& Auth::get_api_key() const {
+  return api_key_;
+}
 
-std::string Auth::sign_payload(const std::string &payload) {
+std::string Auth::sign_payload(const std::string& payload) {
   const std::vector<unsigned char> seed = get_seed_from_pem();
   const std::string signature = sign_payload(payload, seed);
   return signature;
@@ -37,8 +39,10 @@ std::string Auth::sign_payload(const std::string &payload) {
 
 std::vector<unsigned char> Auth::get_seed_from_pem() const {
   // fopen is unsafe, wrap in RAII
-  const auto file_closer = [](gsl::owner<FILE *> fp) {
-    if (fp) fclose(fp);
+  const auto file_closer = [](gsl::owner<FILE*> fp) {
+    if (fp) {
+      fclose(fp);
+    }
   };
   std::unique_ptr<FILE, decltype(file_closer)> fp(fopen(private_pem_path_.c_str(), "r"),
                                                   file_closer);
@@ -47,7 +51,7 @@ std::vector<unsigned char> Auth::get_seed_from_pem() const {
   }
 
   // PEM_read_PrivateKey is unsafe, wrap in RAII
-  const auto key_closer = [](EVP_PKEY *pkey) {
+  const auto key_closer = [](EVP_PKEY* pkey) {
     if (pkey) {
       EVP_PKEY_free(pkey);
     }
@@ -73,8 +77,8 @@ std::vector<unsigned char> Auth::get_seed_from_pem() const {
 }
 
 // static
-std::string Auth::sign_payload(const std::string &payload,
-                               const std::vector<unsigned char> &seed) {
+std::string Auth::sign_payload(const std::string& payload,
+                               const std::vector<unsigned char>& seed) {
   std::array<unsigned char, crypto_sign_PUBLICKEYBYTES> pk{};
   std::array<unsigned char, crypto_sign_SECRETKEYBYTES> sk{};  // 64 bytes
 
@@ -86,7 +90,7 @@ std::string Auth::sign_payload(const std::string &payload,
   std::array<unsigned char, crypto_sign_BYTES> sig{};
   if (crypto_sign_detached(
           sig.data(), nullptr,
-          static_cast<const unsigned char *>(static_cast<const void *>(payload.data())),
+          static_cast<const unsigned char*>(static_cast<const void*>(payload.data())),
           payload.size(), sk.data()) != 0) {
     throw std::runtime_error("Failed to sign payload");
   }

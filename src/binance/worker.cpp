@@ -16,11 +16,12 @@
 
 namespace binance {
 
-Worker::Worker(std::unique_ptr<FixApp> app, std::unique_ptr<FIX::FileStoreFactory> store,
-               std::unique_ptr<FIX::SessionSettings> settings,
+Worker::Worker(std::unique_ptr<FixApp> app,
+               std::unique_ptr<FIX::FileStoreFactory> store,
+               FIX::SessionSettings settings,
                std::unique_ptr<FIX::FileLogFactory> log,
                std::unique_ptr<FIX::SocketInitiator> initiator,
-               const std::function<void(std::stop_token)> &task)
+               const std::function<void(std::stop_token)>& task)
     : app_(std::move(app)),
       store_(std::move(store)),
       settings_(std::move(settings)),
@@ -29,8 +30,8 @@ Worker::Worker(std::unique_ptr<FixApp> app, std::unique_ptr<FIX::FileStoreFactor
       worker_task_(task) {
   // default behaviour
   if (!task) {
-    worker_task_ = ([this](const std::stop_token &stoken) {
-      utils::Threading::set_thread_name("tradercppFIX");
+    worker_task_ = ([this](const std::stop_token& stoken) {
+      utils::Threading::set_thread_name(thread_name_);
       // NB: SocketInitiator::start() is a blocking call, so the stop_token
       // cannot cancel the thread. NB: The `stop()` function has to forcibly
       // stop it with `initiator_->stop()`.
@@ -41,14 +42,14 @@ Worker::Worker(std::unique_ptr<FixApp> app, std::unique_ptr<FIX::FileStoreFactor
 }
 
 // static member function
-Worker Worker::from_conf(Config &conf) {
+Worker Worker::from_conf(Config& conf) {
   std::unique_ptr<IAuth> auth =
       std::make_unique<Auth>(conf.api_key, conf.private_key_path);
   auto app = std::make_unique<FixApp>(conf.symbols, std::move(auth));
-  auto settings = std::make_unique<FIX::SessionSettings>(conf.fix_config_path);
-  auto store = std::make_unique<FIX::FileStoreFactory>(*settings);
-  auto log = std::make_unique<FIX::FileLogFactory>(*settings);
-  auto initiator = std::make_unique<FIX::SocketInitiator>(*app, *store, *settings, *log);
+  auto settings = FIX::SessionSettings(conf.fix_config_path);
+  auto store = std::make_unique<FIX::FileStoreFactory>(settings);
+  auto log = std::make_unique<FIX::FileLogFactory>(settings);
+  auto initiator = std::make_unique<FIX::SocketInitiator>(*app, *store, settings, *log);
 
   // hand over object ownership to the instance being created (by the static
   // function)
@@ -59,7 +60,7 @@ Worker Worker::from_conf(Config &conf) {
 void Worker::start() {
   try {
     worker_ = std::jthread(worker_task_);
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     spdlog::error("error starting binance FIX session, error [{}]", e.what());
   } catch (...) {
     spdlog::error("error starting binance FIX session, unknown error");
@@ -72,7 +73,7 @@ void Worker::stop() {
       initiator_->stop();  // TODO(mils): does this need a try/catch?
     }
     spdlog::info("stopped FIX session");
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     spdlog::error("error stopping binance FIX session, error [{}]", e.what());
   } catch (...) {
     spdlog::error("error stopping binance FIX session, unknown error");
@@ -80,12 +81,12 @@ void Worker::stop() {
   worker_ = std::jthread();
 }
 
-moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &
+moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>&
 Worker::get_order_queue() const {
   return app_->order_queue_;
 }
 
-moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> &
+moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>&
 Worker::get_trade_queue() const {
   return app_->trade_queue_;
 }

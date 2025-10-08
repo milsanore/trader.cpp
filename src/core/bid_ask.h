@@ -15,14 +15,16 @@ struct BidAsk {
   double ask_px = NAN;
   double ask_sz = NAN;
 
-  bool operator==(const BidAsk &other) const {
+  bool operator==(const BidAsk& other) const {
     return eq(bid_sz, other.bid_sz) && eq(bid_px, other.bid_px) &&
            eq(ask_sz, other.ask_sz) && eq(ask_px, other.ask_px);
   }
 
  private:
   inline bool eq(const double a, const double b) const {
-    if (std::isnan(a) && std::isnan(b)) return true;
+    if (std::isnan(a) && std::isnan(b)) {
+      return true;
+    }
     return a == b;
   };
 };

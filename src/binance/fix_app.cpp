@@ -21,32 +21,32 @@ namespace binance {
 // PRIVATE
 
 // better FIX message logging
-std::string replace_soh(const std::string &input) {
+std::string replace_soh(const std::string& input) {
   std::string output = input;
   std::ranges::replace(output.begin(), output.end(), '\x01', '|');
   return output;
 }
 
-void FixApp::onCreate(const FIX::SessionID &sessionId) {
+void FixApp::onCreate(const FIX::SessionID& sessionId) {
   spdlog::info("Session created, id [{}]", sessionId.toString());
 };
-void FixApp::onLogon(const FIX::SessionID &sessionId) {
+void FixApp::onLogon(const FIX::SessionID& sessionId) {
   spdlog::info("Session logon, id [{}]", sessionId.toString());
   // logon successful, nullify access keys
   auth_->clear_keys();
   subscribe_to_depth(sessionId);
 };
-void FixApp::onLogout(const FIX::SessionID &sessionId) {
+void FixApp::onLogout(const FIX::SessionID& sessionId) {
   spdlog::info("Session logout, id [{}]", sessionId.toString());
 };
-void FixApp::toAdmin(FIX::Message &msg, const FIX::SessionID &sessionId) {
-  const FIX::Header &header = msg.getHeader();
+void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
+  const FIX::Header& header = msg.getHeader();
   FIX::MsgType msg_type;
   header.getField(msg_type);
   spdlog::info("toAdmin, session Id [{}], type [{}], message [{}]", sessionId.toString(),
                msg_type.getString(), replace_soh(msg.toString()));
 
-  if (msg_type.getString() == static_cast<const char *>(FIX::MsgType_Logon)) {
+  if (msg_type.getString() == static_cast<const char*>(FIX::MsgType_Logon)) {
     spdlog::info("authenticating");
 
     // collect required fields
@@ -71,43 +71,41 @@ void FixApp::toAdmin(FIX::Message &msg, const FIX::SessionID &sessionId) {
                                   to_string(MessageHandlingMode::SEQUENTIAL)));
   }
 };
-void FixApp::toApp(FIX::Message &msg, const FIX::SessionID &sessionId) noexcept(false) {
-  const FIX::Header &header = msg.getHeader();
+void FixApp::toApp(FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
+  const FIX::Header& header = msg.getHeader();
   FIX::MsgType msg_type;
   header.getField(msg_type);
   spdlog::debug("toApp, session Id [{}], type [{}], message [{}]", sessionId.toString(),
                 msg_type.getString(), replace_soh(msg.toString()));
 };
-void FixApp::fromAdmin(const FIX::Message &msg,
-                       const FIX::SessionID &sessionId) noexcept(false) {
-  const FIX::Header &header = msg.getHeader();
+void FixApp::fromAdmin(const FIX::Message& msg,
+                       const FIX::SessionID& sessionId) noexcept(false) {
+  const FIX::Header& header = msg.getHeader();
   FIX::MsgType msg_type;
   header.getField(msg_type);
   spdlog::debug("fromAdmin, session Id [{}], type [{}], message [{}]",
                 sessionId.toString(), msg_type.getString(), replace_soh(msg.toString()));
 };
-void FixApp::fromApp(const FIX::Message &msg,
-                     const FIX::SessionID &sessionId) noexcept(false) {
+void FixApp::fromApp(const FIX::Message& msg,
+                     const FIX::SessionID& sessionId) noexcept(false) {
   FIX::MessageCracker::crack(msg, sessionId);
-  spdlog::trace("fromApp, session Id [{}], message [{}]", sessionId.toString(),
-                replace_soh(msg.toString()));
 }
 
-void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh &m,
-                       const FIX::SessionID &sessionID) {
+void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m,
+                       const FIX::SessionID& sessionID) {
   order_queue_.enqueue(std::make_shared<const FIX44::MarketDataSnapshotFullRefresh>(m));
 }
-void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh &m,
-                       const FIX::SessionID &sessionID) {
+void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m,
+                       const FIX::SessionID& sessionID) {
   order_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
 }
 
 // PUBLIC
 
-FixApp::FixApp(const std::vector<std::string> &symbols, std::unique_ptr<IAuth> auth)
+FixApp::FixApp(const std::vector<std::string>& symbols, std::unique_ptr<IAuth> auth)
     : symbols_(symbols), auth_(std::move(auth)) {}
 
-void FixApp::subscribe_to_depth(const FIX::SessionID &session_id) const {
+void FixApp::subscribe_to_depth(const FIX::SessionID& session_id) const {
   spdlog::debug("Subscribe to depth");
   FIX44::MarketDataRequest md_req;
 
@@ -120,7 +118,7 @@ void FixApp::subscribe_to_depth(const FIX::SessionID &session_id) const {
       FIX::SubscriptionRequestType(FIX::SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES));
 
   // Set market depth
-  constexpr int BINANCE_MAX_DEPTH = 15;
+  constexpr int BINANCE_MAX_DEPTH = 100;
   md_req.set(FIX::MarketDepth(BINANCE_MAX_DEPTH));
 
   // Create NoMDEntryTypes group for requesting BID and OFFER
@@ -133,7 +131,7 @@ void FixApp::subscribe_to_depth(const FIX::SessionID &session_id) const {
   md_req.addGroup(e_types);
 
   // Add symbols
-  for (const auto &instrument : symbols_) {
+  for (const auto& instrument : symbols_) {
     FIX44::MarketDataRequest::NoRelatedSym group;
     group.set(FIX::Symbol(instrument));
     md_req.addGroup(group);
