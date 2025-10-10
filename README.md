@@ -14,12 +14,14 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 
 ## Build Requirements
 - C++20
-- `Conan` (and a conan profile)
-- `CMake`
+- `python3`, `python3.8-venv`, pip
+- Conan (tested with >= 2)
+- CMake (tested with >= 4)
 - `ninja`
 
 ## Dev Requirements
 - `make` (convenience)
+- `gdb`
 - `clang-tidy`
 - `clang-format`
 - `lcov`

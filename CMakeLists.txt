@@ -62,13 +62,13 @@ target_link_libraries(tradercpp PRIVATE traderlib)
 ############################################
 
 # Run clang-format on all source files before building
-add_custom_command(
-    TARGET tradercpp
-    PRE_BUILD
-    COMMAND clang-format -i ${CMAKE_SOURCE_DIR}/src/**/*.cpp ${CMAKE_SOURCE_DIR}/src/**/*.h
-         && clang-format -i ${CMAKE_SOURCE_DIR}/tests/**/*.cpp ${CMAKE_SOURCE_DIR}/tests/**/*.h
-    COMMENT "Running clang-format on all source and header files"
-)
+# add_custom_command(
+#     TARGET tradercpp
+#     PRE_BUILD
+#     COMMAND clang-format -i ${CMAKE_SOURCE_DIR}/src/**/*.cpp ${CMAKE_SOURCE_DIR}/src/**/*.h
+#          && clang-format -i ${CMAKE_SOURCE_DIR}/tests/**/*.cpp ${CMAKE_SOURCE_DIR}/tests/**/*.h
+#     COMMENT "Running clang-format on all source and header files"
+# )
 
 # set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-config-file=.clang-tidy;-checks=*")
 

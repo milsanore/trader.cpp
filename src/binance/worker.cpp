@@ -45,7 +45,7 @@ Worker::Worker(std::unique_ptr<FixApp> app,
 Worker Worker::from_conf(Config& conf) {
   std::unique_ptr<IAuth> auth =
       std::make_unique<Auth>(conf.api_key, conf.private_key_path);
-  auto app = std::make_unique<FixApp>(conf.symbols, std::move(auth));
+  auto app = std::make_unique<FixApp>(conf.symbols, std::move(auth), conf.MAX_DEPTH);
   auto settings = FIX::SessionSettings(conf.fix_config_path);
   auto store = std::make_unique<FIX::FileStoreFactory>(settings);
   auto log = std::make_unique<FIX::FileLogFactory>(settings);

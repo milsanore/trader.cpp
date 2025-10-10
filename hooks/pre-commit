@@ -13,11 +13,13 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Run subscripts
 
-echo "Running strict pre-commit checks..."
+echo "Running strict pre-commit checks (clang-tidy, clang-format, build-debug)..."
 
 git diff -U0 master...HEAD -- '*.cpp' | \
   clang-tidy-diff-18.py -p1 -path "$DIR/../build/Debug"
 
 bash "$DIR/check_clang_format.sh"
+
+make build-debug
 
 echo "✅ Pre-commit checks passed on full codebase."

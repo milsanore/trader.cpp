@@ -152,11 +152,13 @@ void OrderBookBox::poll_queue(const std::stop_token& stoken) {
       if (auto snap =
               std::dynamic_pointer_cast<const FIX44::MarketDataSnapshotFullRefresh>(
                   msg)) {
+        // TODO (mils): wrap each update in a try/catch?
         core_book_.apply_snapshot(*snap);
         screen_.post_event(ftxui::Event::Custom);  // Trigger re-render
       } else if (auto inc =
                      std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(
                          msg)) {
+        // TODO (mils): wrap each update in a try/catch?
         core_book_.apply_increment(*inc);
         screen_.post_event(ftxui::Event::Custom);  // Trigger re-render
       } else {
@@ -174,7 +176,7 @@ void OrderBookBox::poll_queue(const std::stop_token& stoken) {
     spdlog::error("error in orderbook worker thread, error [{}]", e.what());
     thread_exception = std::current_exception();
   } catch (...) {
-    spdlog::error(std::format("error in orderbook worker thread, unknown error"));
+    spdlog::error("error in orderbook worker thread, unknown error");
     thread_exception = std::current_exception();
   }
 }

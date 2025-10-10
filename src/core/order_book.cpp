@@ -55,10 +55,10 @@ void OrderBook::apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) 
   std::lock_guard lock(mutex_);
   FIX::Symbol symbol;
   msg.get(symbol);
-  spdlog::debug("MD snapshot message, symbol [{}]", symbol.getString());
+  spdlog::info("MD snapshot message, symbol [{}]", symbol.getString());
 
   if (std::string s = symbol.getValue(); s != "BTCUSDT") {
-    spdlog::debug("wrong symbol, skipping snapshot. value [{}]", s);
+    spdlog::error("wrong symbol, skipping snapshot. value [{}]", s);
     return;
   }
 
@@ -81,7 +81,7 @@ void OrderBook::apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) 
     } else if (entry_type == FIX::MDEntryType_OFFER) {
       ask_map_[px.getValue()] = sz.getValue();
     } else {
-      spdlog::error(std::format("unknown bid/offer type [{}]", entry_type.getString()));
+      spdlog::error("unknown bid/offer type [{}]", entry_type.getString());
     }
   }
 }
@@ -91,21 +91,28 @@ void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh& msg) 
   FIX::NoMDEntries entries;
   msg.get(entries);
   const int num_entries = entries.getValue();
+
   std::string symbol;
   for (int i = 1; i <= num_entries; i++) {
     FIX44::MarketDataIncrementalRefresh::NoMDEntries group;
     msg.getGroup(i, group);
 
-    // if symbol unchanged, field won't be set
-    if (group.isSetField(FIX::FIELD::Symbol)) {
-      FIX::Symbol smbl;
-      group.get(smbl);
-      if (std::string s = smbl.getValue(); !s.empty()) {
-        symbol = s;
+    // get the symbol on the first iteration.
+    // if the symbol is unchanged it won't be set, otherwise new symbol
+    if (i == 1 || group.isSetField(FIX::FIELD::Symbol)) {
+      FIX::Symbol fsym;
+      group.get(fsym);
+      std::string s = fsym.getValue();
+      if (s.empty()) {
+        throw std::runtime_error(
+            std::format("missing symbol on market data increment. i [{}]", i));
       }
+      symbol = s;
     }
-    if (symbol.empty() && symbol != "BTCUSDT") {
-      spdlog::debug("wrong symbol, skipping increment. value [{}]", symbol);
+
+    // debug
+    if (symbol.empty() || symbol != "BTCUSDT") {
+      spdlog::error("wrong symbol, skipping increment. value [{}]", symbol);
       continue;
     }
 
@@ -116,35 +123,49 @@ void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh& msg) 
     group.get(entry_type);
     group.get(px);
 
-    if (entry_type != FIX::MDEntryType_BID && entry_type != FIX::MDEntryType_OFFER) {
-      spdlog::error(std::format("unknown entry type, skipping. value [{}]",
-                                entry_type.getString()));
-      continue;
-    }
-
-    if (action.getValue() == FIX::MDUpdateAction_NEW ||
-        action.getValue() == FIX::MDUpdateAction_CHANGE) {
-      spdlog::debug("price upsert");
-
-      if (group.isSetField(FIX::FIELD::MDEntrySize)) {
+    if (entry_type == FIX::MDEntryType_BID) {
+      if (action.getValue() == FIX::MDUpdateAction_NEW) {
         FIX::MDEntrySize sz;
         group.get(sz);
-        if (entry_type == FIX::MDEntryType_BID) {
-          bid_map_[px.getValue()] = sz.getValue();
-        } else if (entry_type == FIX::MDEntryType_OFFER) {
-          ask_map_[px.getValue()] = sz.getValue();
-        }
-      }
-    } else if (action.getValue() == FIX::MDUpdateAction_DELETE) {
-      spdlog::debug("price delete");
-
-      if (entry_type == FIX::MDEntryType_BID) {
+        bid_map_[px.getValue()] = sz.getValue();
+      } else if (action.getValue() == FIX::MDUpdateAction_CHANGE) {
+        // [!NOTE] In the Individual Symbol Book Ticker Stream, when MDUpdateAction is set
+        // to CHANGE(1) in a MarketDataIncrementalRefresh<X> message sent from the server,
+        // it replaces the previous best quote.
+        bid_map_.clear();
+        //
+        FIX::MDEntrySize sz;
+        group.get(sz);
+        bid_map_[px.getValue()] = sz.getValue();
+      } else if (action.getValue() == FIX::MDUpdateAction_DELETE) {
+        spdlog::info("price delete");
         bid_map_.erase(px.getValue());
-      } else if (entry_type == FIX::MDEntryType_OFFER) {
+      } else {
+        spdlog::error("unknown price action. value [{}]", action.getValue());
+      }
+    } else if (entry_type == FIX::MDEntryType_OFFER) {
+      if (action.getValue() == FIX::MDUpdateAction_NEW) {
+        FIX::MDEntrySize sz;
+        group.get(sz);
+        ask_map_[px.getValue()] = sz.getValue();
+      } else if (action.getValue() == FIX::MDUpdateAction_CHANGE) {
+        // [!NOTE] In the Individual Symbol Book Ticker Stream, when MDUpdateAction is set
+        // to CHANGE(1) in a MarketDataIncrementalRefresh<X> message sent from the server,
+        // it replaces the previous best quote.
+        ask_map_.clear();
+        //
+        FIX::MDEntrySize sz;
+        group.get(sz);
+        ask_map_[px.getValue()] = sz.getValue();
+      } else if (action.getValue() == FIX::MDUpdateAction_DELETE) {
+        spdlog::info("price delete");
         ask_map_.erase(px.getValue());
+      } else {
+        spdlog::error("unknown price action. value [{}]", action.getValue());
       }
     } else {
-      spdlog::error(std::format("unknown price action. value [{}]", action.getValue()));
+      spdlog::error("unknown bid/offer FIX::MDEntryType. value [{}]",
+                    entry_type.getValue());
     }
   }
 }

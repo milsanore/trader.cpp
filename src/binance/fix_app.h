@@ -17,7 +17,9 @@ namespace binance {
 /// @brief Binance FIX App - Manages FIX connectivity to Binance
 class FixApp final : public FIX::Application, public FIX::MessageCracker {
  public:
-  FixApp(const std::vector<std::string>& symbols, std::unique_ptr<IAuth> auth);
+  FixApp(const std::vector<std::string>& symbols,
+         std::unique_ptr<IAuth> auth,
+         int max_depth);
   ~FixApp() override = default;
   /// @brief
   void subscribe_to_depth(const FIX::SessionID& session_id) const;
@@ -33,6 +35,7 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
  private:
   const std::vector<std::string>& symbols_;
   const std::unique_ptr<IAuth> auth_;
+  const int MAX_DEPTH_;
 
   void onCreate(const FIX::SessionID&) override;
   void onLogon(const FIX::SessionID&) override;

@@ -18,6 +18,48 @@
 
 namespace binance {
 
+// PUBLIC
+
+FixApp::FixApp(const std::vector<std::string>& symbols,
+               std::unique_ptr<IAuth> auth,
+               int max_depth)
+    : symbols_(symbols), auth_(std::move(auth)), MAX_DEPTH_(max_depth) {}
+
+void FixApp::subscribe_to_depth(const FIX::SessionID& session_id) const {
+  spdlog::info("Subscribe to depth");
+  FIX44::MarketDataRequest md_req;
+
+  // Generate a unique request ID for this session's request
+  const std::string req_id = "MDReq-" + std::to_string(std::time(nullptr));
+  md_req.set(FIX::MDReqID(req_id));
+
+  // Set subscription type (1 = Subscribe)
+  md_req.set(
+      FIX::SubscriptionRequestType(FIX::SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES));
+
+  // Careful with binance depth, use either 1 or 5000
+  md_req.set(FIX::MarketDepth(MAX_DEPTH_));
+
+  // Create NoMDEntryTypes group for requesting BID and OFFER
+  FIX44::MarketDataRequest::NoMDEntryTypes e_types;
+  // Add BID entry type (0)
+  e_types.set(FIX::MDEntryType(FIX::MDEntryType_BID));
+  md_req.addGroup(e_types);
+  // Add OFFER entry type (1)
+  e_types.set(FIX::MDEntryType(FIX::MDEntryType_OFFER));
+  md_req.addGroup(e_types);
+
+  // Add symbols
+  for (const auto& instrument : symbols_) {
+    FIX44::MarketDataRequest::NoRelatedSym group;
+    group.set(FIX::Symbol(instrument));
+    md_req.addGroup(group);
+  }
+
+  // Send the request to the corresponding market data session
+  FIX::Session::sendToTarget(md_req, session_id);
+}
+
 // PRIVATE
 
 // better FIX message logging
@@ -75,16 +117,16 @@ void FixApp::toApp(FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(
   const FIX::Header& header = msg.getHeader();
   FIX::MsgType msg_type;
   header.getField(msg_type);
-  spdlog::debug("toApp, session Id [{}], type [{}], message [{}]", sessionId.toString(),
-                msg_type.getString(), replace_soh(msg.toString()));
+  spdlog::info("toApp, session Id [{}], type [{}], message [{}]", sessionId.toString(),
+               msg_type.getString(), replace_soh(msg.toString()));
 };
 void FixApp::fromAdmin(const FIX::Message& msg,
                        const FIX::SessionID& sessionId) noexcept(false) {
   const FIX::Header& header = msg.getHeader();
   FIX::MsgType msg_type;
   header.getField(msg_type);
-  spdlog::debug("fromAdmin, session Id [{}], type [{}], message [{}]",
-                sessionId.toString(), msg_type.getString(), replace_soh(msg.toString()));
+  spdlog::info("fromAdmin, session Id [{}], type [{}], message [{}]",
+               sessionId.toString(), msg_type.getString(), replace_soh(msg.toString()));
 };
 void FixApp::fromApp(const FIX::Message& msg,
                      const FIX::SessionID& sessionId) noexcept(false) {
@@ -98,47 +140,6 @@ void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m,
 void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m,
                        const FIX::SessionID& sessionID) {
   order_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
-}
-
-// PUBLIC
-
-FixApp::FixApp(const std::vector<std::string>& symbols, std::unique_ptr<IAuth> auth)
-    : symbols_(symbols), auth_(std::move(auth)) {}
-
-void FixApp::subscribe_to_depth(const FIX::SessionID& session_id) const {
-  spdlog::debug("Subscribe to depth");
-  FIX44::MarketDataRequest md_req;
-
-  // Generate a unique request ID for this session's request
-  const std::string req_id = "MDReq-" + std::to_string(std::time(nullptr));
-  md_req.set(FIX::MDReqID(req_id));
-
-  // Set subscription type (1 = Subscribe)
-  md_req.set(
-      FIX::SubscriptionRequestType(FIX::SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES));
-
-  // Set market depth
-  constexpr int BINANCE_MAX_DEPTH = 100;
-  md_req.set(FIX::MarketDepth(BINANCE_MAX_DEPTH));
-
-  // Create NoMDEntryTypes group for requesting BID and OFFER
-  FIX44::MarketDataRequest::NoMDEntryTypes e_types;
-  // Add BID entry type (0)
-  e_types.set(FIX::MDEntryType(FIX::MDEntryType_BID));
-  md_req.addGroup(e_types);
-  // Add OFFER entry type (1)
-  e_types.set(FIX::MDEntryType(FIX::MDEntryType_OFFER));
-  md_req.addGroup(e_types);
-
-  // Add symbols
-  for (const auto& instrument : symbols_) {
-    FIX44::MarketDataRequest::NoRelatedSym group;
-    group.set(FIX::Symbol(instrument));
-    md_req.addGroup(group);
-  }
-
-  // Send the request to the corresponding market data session
-  FIX::Session::sendToTarget(md_req, session_id);
 }
 
 }  // namespace binance

@@ -35,6 +35,8 @@ Config Config::from_env() {
     }
   }
 
+  spdlog::info("MAX_DEPTH, value [{}]", MAX_DEPTH);
+
   // copy
   return Config{apiKey, privateKey, fixConfig, symbols};
 };
