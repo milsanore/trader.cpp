@@ -25,19 +25,21 @@ namespace ui {
 OrderBookBox::OrderBookBox(
     IScreen& screen,
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
+    const int MAX_DEPTH,
     core::OrderBook ob,
     std::function<void(std::stop_token)> task)
-    : screen_(screen),
+    : IS_BOOK_CLEAR_NEEDED_(MAX_DEPTH == 1),
+      screen_(screen),
       queue_(queue),
       core_book_(std::move(ob)),
       worker_task_(std::move(task)) {
   // default behaviour
   if (!worker_task_) {
-    worker_task_ = ([this](const std::stop_token& stoken) {
+    worker_task_ = {[this](const std::stop_token& stoken) {
       utils::Threading::set_thread_name(thread_name_);
       spdlog::info("starting polling order queue on background thread");
       poll_queue(stoken);
-    });
+    }};
   }
 
   SliderOption<float> option_y;
@@ -61,7 +63,7 @@ OrderBookBox::OrderBookBox(
 void OrderBookBox::start() {
   // TODO (mils): thread_exception
   // start worker thread
-  worker_ = std::jthread(worker_task_);
+  worker_ = std::jthread{worker_task_};
 }
 
 Component OrderBookBox::get_component() {
@@ -85,37 +87,32 @@ std::string Pad(const double input, const size_t width) {
 /// @brief generate an FTXUI table containing the order book
 /// @return the FTXUI element that the UI will render
 ftxui::Element OrderBookBox::to_table() {
-  // NB: runs on main thread
-  ftxui::Elements table_elements;
-  constexpr int num_columns = 4;
-  constexpr int column_width = 15;
-  const std::vector<std::string> column_headers = {"Bid Sz", "Bid", "Ask", "Ask Sz"};
+  ftxui::Elements table;
 
   // ─────────── Header Row ───────────
-  ftxui::Elements header_cells;
-  for (int col = 0; col < num_columns; ++col) {
-    std::string label = (col < column_headers.size()) ? column_headers[col]
-                                                      : "Col " + std::to_string(col);
-    header_cells.push_back(ftxui::text(Pad(label, column_width)) | ftxui::bold);
+  const std::vector<std::string> column_names = {"Bid Sz", "Bid", "Ask", "Ask Sz"};
+  constexpr int column_width = 15;
+  constexpr int num_columns = 4;
+  ftxui::Elements header;
+  for (int i = 0; i < num_columns; ++i) {
+    header.push_back(ftxui::text(Pad(column_names[i], column_width)) | ftxui::bold);
   }
-
-  // Combine header row and separator
-  table_elements.push_back(
-      ftxui::vbox({hbox(std::move(header_cells)), ftxui::separator()}));
+  table.push_back(ftxui::vbox({hbox(std::move(header)), ftxui::separator()}));
 
   // ─────────── Data Rows ───────────
-  const std::vector<core::BidAsk> x = core_book_.to_vector();
-  const size_t row_count = x.size();
+  const std::vector<core::BidAsk> book = core_book_.to_vector();
+  const size_t row_count = book.size();
   for (size_t i = 0; i < row_count; ++i) {
-    ftxui::Elements cells;
-    cells.push_back(ftxui::text(Pad(x[i].bid_sz, column_width)));
-    cells.push_back(ftxui::text(Pad(x[i].bid_px, column_width)));
-    cells.push_back(ftxui::text(Pad(x[i].ask_px, column_width)));
-    cells.push_back(ftxui::text(Pad(x[i].ask_sz, column_width)));
-    table_elements.push_back(hbox(std::move(cells)));
+    ftxui::Elements ui_row;
+    const core::BidAsk& book_row = book[i];
+    ui_row.push_back(ftxui::text(Pad(book_row.bid_sz, column_width)));
+    ui_row.push_back(ftxui::text(Pad(book_row.bid_px, column_width)));
+    ui_row.push_back(ftxui::text(Pad(book_row.ask_px, column_width)));
+    ui_row.push_back(ftxui::text(Pad(book_row.ask_sz, column_width)));
+    table.push_back(hbox(std::move(ui_row)));
   }
 
-  return vbox(table_elements);
+  return vbox(table);
 };
 
 // worker thread
@@ -159,7 +156,7 @@ void OrderBookBox::poll_queue(const std::stop_token& stoken) {
                      std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(
                          msg)) {
         // TODO (mils): wrap each update in a try/catch?
-        core_book_.apply_increment(*inc);
+        core_book_.apply_increment(*inc, IS_BOOK_CLEAR_NEEDED_);
         screen_.post_event(ftxui::Event::Custom);  // Trigger re-render
       } else {
         spdlog::error("unknown message type");

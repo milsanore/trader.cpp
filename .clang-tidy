@@ -43,6 +43,7 @@
                     modernize-use-nullptr,
                     modernize-use-override,
                     modernize-use-transparent-functors,
+                    modernize-use-uni-initialization,
                     readability-redundant-member-init'
   # DISABLED CHECKS:
   # An analysis was done of the following checks and they were deemed to either

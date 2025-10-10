@@ -66,7 +66,7 @@ test:
 tidy:
 	find src/ tests/ \( -name '*.cpp' -o -name '*.hpp' -o -name '*.c' -o -name '*.h' \) -exec clang-format -i {} +	
 	find tests/ -name '*.cpp' | xargs clang-tidy -p build/Debug --fix --format-style=.clang-format
-	find src/ -name '*.cpp' | xargs clang-tidy -p build/Debug --fix --format-style=.clang-format
+	find src/   -name '*.cpp' | xargs clang-tidy -p build/Debug --fix --format-style=.clang-format
 
 ## run-debug: 🏃‍♂️  run the app (debug) (don't forget `withenv`)
 .PHONY: run-debug

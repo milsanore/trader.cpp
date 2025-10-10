@@ -19,15 +19,16 @@ OrderBook::OrderBook(OrderBook&& other) noexcept
 }
 
 // move-assignment constructor
-OrderBook& OrderBook::operator=(OrderBook&& other) noexcept {
-  if (this != &other) {
-    // Lock both mutexes without deadlock
-    std::scoped_lock lock(mutex_, other.mutex_);
-    bid_map_ = std::move(other.bid_map_);
-    ask_map_ = std::move(other.ask_map_);
-  }
-  return *this;
-}
+// OrderBook& OrderBook::operator=(OrderBook&& other) noexcept {
+//   if (this != &other) {
+//     // Lock both mutexes without deadlock
+//     std::scoped_lock lock(mutex_, other.mutex_);
+//     bid_map_ = std::move(other.bid_map_);
+//     ask_map_ = std::move(other.ask_map_);
+//   }
+//   return *this;
+// }
+
 std::vector<BidAsk> OrderBook::to_vector() {
   std::lock_guard lock(mutex_);
   const size_t row_count = std::max(bid_map_.size(), ask_map_.size());
@@ -86,19 +87,47 @@ void OrderBook::apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) 
   }
 }
 
-void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh& msg) {
+void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh& msg,
+                                bool is_book_clear_needed) {
   std::lock_guard lock(mutex_);
   FIX::NoMDEntries entries;
   msg.get(entries);
   const int num_entries = entries.getValue();
 
+  // update bids or asks
+  static auto update_map =
+      [](auto& map, FIX::MDUpdateAction action, double price,
+         const FIX44::MarketDataIncrementalRefresh::NoMDEntries& size_group,
+         bool is_book_clear_needed) {
+        static FIX::MDEntrySize sz;
+        switch (action.getValue()) {
+          case FIX::MDUpdateAction_NEW:
+            map[price] = size_group.get(sz).getValue();
+            break;
+          case FIX::MDUpdateAction_CHANGE:
+            if (is_book_clear_needed) {
+              map.clear();
+            }
+            map[price] = size_group.get(sz).getValue();
+            break;
+          case FIX::MDUpdateAction_DELETE:
+            map.erase(price);
+            break;
+          default:
+            spdlog::error("unknown price action. value [{}]", action.getValue());
+        }
+      };
+
   std::string symbol;
+  FIX44::MarketDataIncrementalRefresh::NoMDEntries group;
+  FIX::MDEntryType entry_type;
+  FIX::MDUpdateAction action;
+  FIX::MDEntryPx px;
+  double price, size;
   for (int i = 1; i <= num_entries; i++) {
-    FIX44::MarketDataIncrementalRefresh::NoMDEntries group;
     msg.getGroup(i, group);
 
-    // get the symbol on the first iteration.
-    // if the symbol is unchanged it won't be set, otherwise new symbol
+    // Update symbol if present or first group
     if (i == 1 || group.isSetField(FIX::FIELD::Symbol)) {
       FIX::Symbol fsym;
       group.get(fsym);
@@ -116,56 +145,20 @@ void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh& msg) 
       continue;
     }
 
-    FIX::MDUpdateAction action;
-    FIX::MDEntryType entry_type;
-    FIX::MDEntryPx px;
     group.get(action);
     group.get(entry_type);
-    group.get(px);
+    double price = group.get(px).getValue();
 
-    if (entry_type == FIX::MDEntryType_BID) {
-      if (action.getValue() == FIX::MDUpdateAction_NEW) {
-        FIX::MDEntrySize sz;
-        group.get(sz);
-        bid_map_[px.getValue()] = sz.getValue();
-      } else if (action.getValue() == FIX::MDUpdateAction_CHANGE) {
-        // [!NOTE] In the Individual Symbol Book Ticker Stream, when MDUpdateAction is set
-        // to CHANGE(1) in a MarketDataIncrementalRefresh<X> message sent from the server,
-        // it replaces the previous best quote.
-        bid_map_.clear();
-        //
-        FIX::MDEntrySize sz;
-        group.get(sz);
-        bid_map_[px.getValue()] = sz.getValue();
-      } else if (action.getValue() == FIX::MDUpdateAction_DELETE) {
-        spdlog::info("price delete");
-        bid_map_.erase(px.getValue());
-      } else {
-        spdlog::error("unknown price action. value [{}]", action.getValue());
-      }
-    } else if (entry_type == FIX::MDEntryType_OFFER) {
-      if (action.getValue() == FIX::MDUpdateAction_NEW) {
-        FIX::MDEntrySize sz;
-        group.get(sz);
-        ask_map_[px.getValue()] = sz.getValue();
-      } else if (action.getValue() == FIX::MDUpdateAction_CHANGE) {
-        // [!NOTE] In the Individual Symbol Book Ticker Stream, when MDUpdateAction is set
-        // to CHANGE(1) in a MarketDataIncrementalRefresh<X> message sent from the server,
-        // it replaces the previous best quote.
-        ask_map_.clear();
-        //
-        FIX::MDEntrySize sz;
-        group.get(sz);
-        ask_map_[px.getValue()] = sz.getValue();
-      } else if (action.getValue() == FIX::MDUpdateAction_DELETE) {
-        spdlog::info("price delete");
-        ask_map_.erase(px.getValue());
-      } else {
-        spdlog::error("unknown price action. value [{}]", action.getValue());
-      }
-    } else {
-      spdlog::error("unknown bid/offer FIX::MDEntryType. value [{}]",
-                    entry_type.getValue());
+    switch (entry_type.getValue()) {
+      case FIX::MDEntryType_BID:
+        update_map(bid_map_, action, price, group, is_book_clear_needed);
+        break;
+      case FIX::MDEntryType_OFFER:
+        update_map(ask_map_, action, price, group, is_book_clear_needed);
+        break;
+      default:
+        spdlog::error("unknown bid/offer FIX::MDEntryType. value [{}]",
+                      entry_type.getValue());
     }
   }
 }

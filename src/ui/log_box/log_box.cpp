@@ -9,7 +9,7 @@
 #include <mutex>
 #include <thread>
 
-#include "../../core/env.h"
+#include "../../utils/env.h"
 #include "../app/iscreen.h"
 #include "./../../utils/threading.h"
 #include "ilog_watcher.h"
@@ -85,7 +85,7 @@ LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogWatcher> watcher)
 // static function
 std::unique_ptr<LogBox> LogBox::from_env(IScreen& screen) {
   // parse watch path
-  const std::string log_path = core::Env::get_env_or_throw("LOG_PATH");
+  const std::string log_path = utils::Env::get_env_or_throw("LOG_PATH");
   size_t pos = log_path.find_last_of("/\\");  // handle both forward and backward slashes
   std::string directory;
   std::string filename;

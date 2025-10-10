@@ -23,10 +23,11 @@ class OrderBook {
   OrderBook& operator=(const OrderBook&) = delete;
   // 2. Declare move and move-assignment constructors
   OrderBook(OrderBook&&) noexcept;
-  OrderBook& operator=(OrderBook&&) noexcept;
+  // OrderBook& operator=(OrderBook&&) noexcept;
 
   void apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh&);
-  void apply_increment(const FIX44::MarketDataIncrementalRefresh&);
+  void apply_increment(const FIX44::MarketDataIncrementalRefresh&,
+                       bool is_book_clear_needed);
   /// @brief return the contents of the order book as a simple vector.
   /// useful for generating the UI
   std::vector<BidAsk> to_vector();

@@ -19,7 +19,7 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
  public:
   FixApp(const std::vector<std::string>& symbols,
          std::unique_ptr<IAuth> auth,
-         int max_depth);
+         const int MAX_DEPTH);
   ~FixApp() override = default;
   /// @brief
   void subscribe_to_depth(const FIX::SessionID& session_id) const;

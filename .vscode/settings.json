@@ -1,6 +1,7 @@
 {
 	"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
 	"C_Cpp.default.compileCommands": "${workspaceFolder}/build/Debug/compile_commands.json",
+	"cmake.useCMakePresets": "always",
 	"editor.formatOnSave": true,
 	"sonarlint.connectedMode.project": {
 		"connectionId": "milsanore",

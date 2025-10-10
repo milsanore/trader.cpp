@@ -22,8 +22,8 @@ namespace binance {
 
 FixApp::FixApp(const std::vector<std::string>& symbols,
                std::unique_ptr<IAuth> auth,
-               int max_depth)
-    : symbols_(symbols), auth_(std::move(auth)), MAX_DEPTH_(max_depth) {}
+               const int MAX_DEPTH)
+    : symbols_(symbols), auth_(std::move(auth)), MAX_DEPTH_(MAX_DEPTH) {}
 
 void FixApp::subscribe_to_depth(const FIX::SessionID& session_id) const {
   spdlog::info("Subscribe to depth");
@@ -95,10 +95,10 @@ void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
     const std::string sender = header.getField(FIX::FIELD::SenderCompID);
     const std::string target = header.getField(FIX::FIELD::TargetCompID);
     const std::string seq_num = msg.getHeader().getField(FIX::FIELD::MsgSeqNum);
-    const auto sending_time = FIX::UtcTimeStamp();
+    const auto sending_time = FIX::UtcTimeStamp{};
 
     // construct payload for signing
-    const std::string payload = std::string("A") + '\x01' + sender + '\x01' + target +
+    const std::string payload = std::string{"A"} + '\x01' + sender + '\x01' + target +
                                 '\x01' + seq_num + '\x01' +
                                 FIX::UtcTimeStampConvertor::convert(sending_time);
     const std::string signature = auth_->sign_payload(payload);

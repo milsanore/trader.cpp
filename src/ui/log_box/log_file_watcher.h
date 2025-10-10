@@ -36,12 +36,12 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
   void set_callback(Callback cb) { cb_ = std::move(cb); }
 
   void start() {
-    worker_ = std::jthread([this](const std::stop_token& stoken) {
+    worker_ = std::jthread{[this](const std::stop_token& stoken) {
       utils::Threading::set_thread_name(thread_name_);
       spdlog::info("starting watching log file on background thread, name [{}]",
                    thread_name_);
       watcher_.watch();
-    });
+    }};
   }
 
  private:

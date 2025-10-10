@@ -1,4 +1,4 @@
-#include "app.h"
+#include "ui_app.h"
 
 #include <quickfix/fix44/Message.h>
 
@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../utils/env.h"
 #include "../log_box/log_box.h"
 #include "../order_book_box.h"
 #include "../trade_box.h"
@@ -44,9 +45,10 @@ App::App(moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& ord
 // static function
 App App::from_env(
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& order_queue,
-    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue) {
+    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue,
+    const int MAX_DEPTH) {
   std::unique_ptr<IScreen> screen = std::make_unique<FtxuiScreen>();
-  auto book = std::make_unique<OrderBookBox>(*screen, order_queue);
+  auto book = std::make_unique<OrderBookBox>(*screen, order_queue, MAX_DEPTH);
   auto log_box = LogBox::from_env(*screen);
   return App(order_queue, trade_queue, std::move(screen), std::move(book),
              std::move(log_box));

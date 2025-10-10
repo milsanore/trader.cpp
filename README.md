@@ -125,6 +125,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - gperftools
   - profile-guided optimization (pgo)
   - load test with mocked FIX server
+  - tcmalloc / gperftools
 - latency
   - sparse arrays & flat matrix
   - memory-mapped files

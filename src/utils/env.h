@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace core {
+namespace utils {
 
 struct Env {
  public:
@@ -13,7 +13,7 @@ struct Env {
   /// @return env var string
   static std::string get_env_or_throw(const char* key) {
     if (const char* val = std::getenv(key)) {
-      auto valStr = std::string(val);
+      auto valStr = std::string{val};
       if (valStr.empty()) {
         throw std::runtime_error(std::format("empty envvar, key [{}]", key));
       }
@@ -23,4 +23,4 @@ struct Env {
   };
 };
 
-}  // namespace core
+}  // namespace utils

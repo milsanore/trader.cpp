@@ -44,15 +44,13 @@ TEST(OrderBook, constructors) {
   std::vector<core::BidAsk> check = {{10, 95, 96, 11}};
   ASSERT_EQ(moved1.to_vector(), check);
 
-  core::OrderBook moved2{};
-  // test move-assignment operator
-  moved2 = std::move(moved1);
-  ASSERT_EQ(moved2.to_vector(), check);
+  // // test move-assignment operator
+  // core::OrderBook moved2{};
+  // moved2 = std::move(moved1);
+  // ASSERT_EQ(moved2.to_vector(), check);
 }
 
 TEST(OrderBook, apply_snapshot) {
-  core::OrderBook book{};
-
   FIX44::MarketDataSnapshotFullRefresh msg;
   msg.set(FIX::Symbol("BTCUSDT"));
   // Add a bid entry
@@ -68,6 +66,7 @@ TEST(OrderBook, apply_snapshot) {
   ask.set(FIX::MDEntrySize(11));
   msg.addGroup(ask);
 
+  core::OrderBook book{};
   book.apply_snapshot(msg);
   std::vector<core::BidAsk> check = {{10, 95, 96, 11}};
   ASSERT_EQ(book.to_vector(), check);
@@ -100,7 +99,8 @@ TEST(OrderBook, apply_increment) {
   ask_delete.set(FIX::MDEntryPx(97));
   msg.addGroup(ask_delete);
 
-  book.apply_increment(msg);
+  constexpr bool IS_BOOK_CLEAR_NEEDED_ = false;
+  book.apply_increment(msg, IS_BOOK_CLEAR_NEEDED_);
   std::vector<core::BidAsk> vec = book.to_vector();
   std::vector<core::BidAsk> check = {{100, 95, 96, 11}};
   ASSERT_EQ(vec, check);

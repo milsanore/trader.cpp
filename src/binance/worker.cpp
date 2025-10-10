@@ -30,14 +30,14 @@ Worker::Worker(std::unique_ptr<FixApp> app,
       worker_task_(task) {
   // default behaviour
   if (!task) {
-    worker_task_ = ([this](const std::stop_token& stoken) {
+    worker_task_ = {[this](const std::stop_token& stoken) {
       utils::Threading::set_thread_name(thread_name_);
       // NB: SocketInitiator::start() is a blocking call, so the stop_token
       // cannot cancel the thread. NB: The `stop()` function has to forcibly
       // stop it with `initiator_->stop()`.
       initiator_->start();
       spdlog::info("started FIX session");
-    });
+    }};
   }
 }
 
@@ -46,7 +46,7 @@ Worker Worker::from_conf(Config& conf) {
   std::unique_ptr<IAuth> auth =
       std::make_unique<Auth>(conf.api_key, conf.private_key_path);
   auto app = std::make_unique<FixApp>(conf.symbols, std::move(auth), conf.MAX_DEPTH);
-  auto settings = FIX::SessionSettings(conf.fix_config_path);
+  auto settings = FIX::SessionSettings{conf.fix_config_path};
   auto store = std::make_unique<FIX::FileStoreFactory>(settings);
   auto log = std::make_unique<FIX::FileLogFactory>(settings);
   auto initiator = std::make_unique<FIX::SocketInitiator>(*app, *store, settings, *log);
@@ -59,7 +59,7 @@ Worker Worker::from_conf(Config& conf) {
 
 void Worker::start() {
   try {
-    worker_ = std::jthread(worker_task_);
+    worker_ = std::jthread{worker_task_};
   } catch (const std::exception& e) {
     spdlog::error("error starting binance FIX session, error [{}]", e.what());
   } catch (...) {
@@ -78,7 +78,7 @@ void Worker::stop() {
   } catch (...) {
     spdlog::error("error stopping binance FIX session, unknown error");
   }
-  worker_ = std::jthread();
+  worker_ = std::jthread{};
 }
 
 moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>&

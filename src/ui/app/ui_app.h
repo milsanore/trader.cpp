@@ -30,7 +30,8 @@ class App {
   std::exception_ptr thread_exception;
   static App from_env(
       moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& order_queue,
-      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue);
+      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue,
+      const int MAX_DEPTH);
 
  private:
   std::unique_ptr<IScreen> screen_;

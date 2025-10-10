@@ -5,7 +5,7 @@
 #include "spdlog/cfg/env.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
-#include "ui/app/app.h"
+#include "ui/app/ui_app.h"
 #include "utils/threading.h"
 
 int main() {
@@ -28,7 +28,8 @@ int main() {
   b_worker.start();
 
   // UI APP (READS FROM QUEUE)
-  auto ui = ui::App::from_env(b_worker.get_order_queue(), b_worker.get_trade_queue());
+  auto ui = ui::App::from_env(b_worker.get_order_queue(), b_worker.get_trade_queue(),
+                              b_conf.MAX_DEPTH);
   ui.start();
 
   if (ui.thread_exception) {

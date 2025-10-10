@@ -17,7 +17,8 @@ class OrderBookBox {
   // Constructor: takes a label string
   OrderBookBox(IScreen& screen,
                moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
-               core::OrderBook ob = core::OrderBook(),
+               const int MAX_DEPTH,
+               core::OrderBook ob = core::OrderBook{},
                std::function<void(std::stop_token)> task = {});
   // Return the FTXUI component to plug into layout
   ftxui::Component get_component();
@@ -27,6 +28,11 @@ class OrderBookBox {
   void start();
 
  private:
+  /// when working with Binance, if MAX_DEPTH is set to 1,
+  /// price-update `FIX::MDUpdateAction_CHANGE` events need to clear the book.
+  /// this boolean evaluates this condition.
+  const bool IS_BOOK_CLEAR_NEEDED_;
+
   IScreen& screen_;
   core::OrderBook core_book_;
   ftxui::Component component_;

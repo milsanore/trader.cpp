@@ -44,7 +44,7 @@ struct Config {
     }
   }
 
-  /// @brief 1 == top level, otherwise use 5000 as Binance's maximum depth
+  /// @brief 1 == top level, otherwise 5000 is Binance's maximum depth
   static constexpr int MAX_DEPTH = 5000;
 };
 
