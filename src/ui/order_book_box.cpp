@@ -1,5 +1,9 @@
 #include "order_book_box.h"
 
+#include <quickfix/fix44/MarketDataIncrementalRefresh.h>
+#include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
+#include <quickfix/fix44/Message.h>
+
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 
@@ -147,34 +151,33 @@ void OrderBookBox::poll_queue(const std::stop_token& stoken) {
         adaptive_backoff();
       }
 
-      if (auto snap =
-              std::dynamic_pointer_cast<const FIX44::MarketDataSnapshotFullRefresh>(
-                  msg)) {
-        // TODO (mils): wrap each update in a try/catch?
-        core_book_.apply_snapshot(*snap);
-        screen_.post_event(ftxui::Event::Custom);  // Trigger re-render
-      } else if (auto inc =
-                     std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(
-                         msg)) {
+      if (auto inc =
+              std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(msg)) {
         // TODO (mils): wrap each update in a try/catch?
         core_book_.apply_increment(*inc, IS_BOOK_CLEAR_NEEDED_);
-        screen_.post_event(ftxui::Event::Custom);  // Trigger re-render
+        screen_.post_event(ftxui::Event::Custom);
+      } else if (auto snap = std::dynamic_pointer_cast<
+                     const FIX44::MarketDataSnapshotFullRefresh>(msg)) {
+        // TODO (mils): wrap each update in a try/catch?
+        core_book_.apply_snapshot(*snap);
+        screen_.post_event(ftxui::Event::Custom);
       } else {
-        spdlog::error("unknown message type");
+        spdlog::error(
+            "cannot parse order book update - unknown message type. message [{}]",
+            msg->toString());
       }
 
       // Reset backoff state
       spin_count = 0;
       sleep_time_us = INITIAL_SLEEP_US;
     }
-    spdlog::info("closing worker thread...");
-  }
-  // TODO(mils): log error
-  catch (const std::exception& e) {
-    spdlog::error("error in orderbook worker thread. error [{}]", e.what());
+    spdlog::info("closing worker thread, name [{}]", THREAD_NAME_);
+  } catch (const std::exception& e) {
+    spdlog::error("error in worker thread. name [{}], error [{}]", THREAD_NAME_,
+                  e.what());
     thread_exception = std::current_exception();
   } catch (...) {
-    spdlog::error("error in orderbook worker thread. unknown error");
+    spdlog::error("error in worker thread - unknown error. name [{}]", THREAD_NAME_);
     thread_exception = std::current_exception();
   }
 }

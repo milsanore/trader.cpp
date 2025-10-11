@@ -23,7 +23,9 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
   ~FixApp() override = default;
 
   /// @brief
-  void subscribe_to_depth(const FIX::SessionID& session_id) const;
+  void subscribe_to_prices(const FIX::SessionID& session_id) const;
+  /// @brief
+  void subscribe_to_trades(const FIX::SessionID& session_id) const;
 
   /// @brief queue of market messages from Binance
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> order_queue_;
