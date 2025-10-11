@@ -21,8 +21,10 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
          std::unique_ptr<IAuth> auth,
          const int MAX_DEPTH);
   ~FixApp() override = default;
+
   /// @brief
   void subscribe_to_depth(const FIX::SessionID& session_id) const;
+
   /// @brief queue of market messages from Binance
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> order_queue_;
   /// @brief queue of trade messages from Binance
@@ -33,6 +35,10 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
   // TODO: we will have one of these per instrument
 
  private:
+  static constexpr std::string THREAD_NAME_ = "tradercppFIX2";
+  static constexpr std::string PRICE_SESSION_QUALIFIER_ = "PX";
+  static constexpr std::string TRADE_SESSION_QUALIFIER_ = "TX";
+  static constexpr std::string ORDER_SESSION_QUALIFIER_ = "OX";
   const std::vector<std::string>& symbols_;
   const std::unique_ptr<IAuth> auth_;
   const int MAX_DEPTH_;
@@ -50,6 +56,7 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
                  const FIX::SessionID&) override;
   void onMessage(const FIX44::MarketDataIncrementalRefresh&,
                  const FIX::SessionID&) override;
+  void onMessage(const FIX44::ExecutionReport&, const FIX::SessionID&) override;
 };
 
 }  // namespace binance

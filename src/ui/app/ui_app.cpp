@@ -72,7 +72,7 @@ void App::start() {
   auto row2 =
       Horizontal({Vertical({wallet_box_.get_component() | flex}) | size(WIDTH, EQUAL, 50),
                   Vertical({log_box_->get_component() | flex}) | flex});
-  auto root = Vertical({row1 | size(HEIGHT, EQUAL, 10), row2 | flex});
+  auto root = Vertical({row1 | size(HEIGHT, EQUAL, 20), row2 | flex});
   screen_->loop(root);
 }
 

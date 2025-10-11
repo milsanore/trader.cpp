@@ -57,6 +57,11 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 
 ## Functional
 - ✅ create a FIX connection to Binance
+  - separate price/trade/order sessions
+  - server maintenance, News <B> messages
+  - per-session execution reports / Response Mode
+  - track message limits
+  - OrderMassCancelRequest on error
 - ✅ subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
 - use a precise number type for money
@@ -85,6 +90,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
     - rolling
     - structured
     - basic schema (severity, correlationId)
+    - thread context in logs
 - code quality
   - ✅ clang-format
     - ✅ configure editor to auto-format
@@ -159,17 +165,17 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 # Design
 ```mermaid
 sequenceDiagram
-    participant T1 as Thread 1<br>(Main + UI)
-    participant T2 as Thread 2<br>(UI Orderbook Worker)
-    participant T3 as Thread 3<br>(FIX Worker)
-    participant T4 as Thread 4<br>(UI Log Worker)
+    participant TM as Thread 1<br>(Main + UI)
+    participant TO as Thread 2<br>(UI Orderbook Worker)
+    participant TF as Thread 3<br>(FIX Worker)
+    participant TL as Thread 4<br>(UI Log Worker)
 
-    T3-->>T3: subscribe to Binance <br> + push to <queue>
-    T3->>T2: pull from <queue>
-    T2-->>T2: build UI
-    T2->>T1: request render
-    T4-->>T4: poll log file <br> + build UI
-    T4->>T1: request render
+    TF-->>TF: subscribe to Binance <br> + push to <queue>
+    TF->>TO: pull from <queue>
+    TO-->>TO: build UI
+    TO->>TM: request render
+    TL-->>TL: poll log file <br> + build UI
+    TL->>TM: request render
 ```
 
 # Credits

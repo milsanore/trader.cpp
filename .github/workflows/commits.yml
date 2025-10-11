@@ -61,7 +61,7 @@ jobs:
           set -e
           git fetch --no-tags origin master
           diff=$(git diff -U0 origin/master...HEAD -- '*.cpp')
-          if [[ -z "$diff" ]]; then
+          if [ -z "$diff" ]; then
             echo "No changes to lint."
             exit 0
           fi

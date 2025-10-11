@@ -22,12 +22,12 @@ int main() {
 
   spdlog::info("hello");
 
-  // BINANCE MARKET DATA GENERATOR
+  // Binance market data connectivity
   auto b_conf = binance::Config::from_env();
   auto b_worker = binance::Worker::from_conf(b_conf);
   b_worker.start();
 
-  // UI APP (READS FROM QUEUE)
+  // ui app (reads from Binance's queues)
   auto ui = ui::App::from_env(b_worker.get_order_queue(), b_worker.get_trade_queue(),
                               b_conf.MAX_DEPTH);
   ui.start();

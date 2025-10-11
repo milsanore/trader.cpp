@@ -18,7 +18,7 @@ namespace binance {
 /// @brief Binance DI container
 class Worker final {
  public:
-  static constexpr std::string thread_name_ = "tradercppFIX";
+  static constexpr std::string THREAD_NAME_ = "tradercppFIX1";
   Worker(std::unique_ptr<FixApp> fix_app,
          std::unique_ptr<FIX::FileStoreFactory> store,
          FIX::SessionSettings settings,
@@ -26,7 +26,7 @@ class Worker final {
          std::unique_ptr<FIX::SocketInitiator> initiator,
          const std::function<void(std::stop_token)>& task = {});
   /// @brief factory for concrete Binance instances, using config
-  /// @param conf binance configuration parameters
+  /// @param conf Binance configuration parameters
   /// @return
   static Worker from_conf(Config& conf);
   /// @brief start worker thread, connect to Binance, subscribe to updates, push

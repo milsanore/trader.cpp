@@ -31,12 +31,14 @@ Worker::Worker(std::unique_ptr<FixApp> app,
   // default behaviour
   if (!task) {
     worker_task_ = {[this](const std::stop_token& stoken) {
-      utils::Threading::set_thread_name(thread_name_);
+      utils::Threading::set_thread_name(THREAD_NAME_);
+      spdlog::info("starting FIX wrapper thread. name [{}], id [{}]", THREAD_NAME_,
+                   utils::Threading::get_os_thread_id());
       // NB: SocketInitiator::start() is a blocking call, so the stop_token
       // cannot cancel the thread. NB: The `stop()` function has to forcibly
       // stop it with `initiator_->stop()`.
       initiator_->start();
-      spdlog::info("started FIX session");
+      spdlog::info("started FIX initiator");
     }};
   }
 }
@@ -61,9 +63,9 @@ void Worker::start() {
   try {
     worker_ = std::jthread{worker_task_};
   } catch (const std::exception& e) {
-    spdlog::error("error starting binance FIX session, error [{}]", e.what());
+    spdlog::error("error starting FIX. error [{}]", e.what());
   } catch (...) {
-    spdlog::error("error starting binance FIX session, unknown error");
+    spdlog::error("error starting FIX. unknown error");
   }
 }
 
@@ -72,11 +74,11 @@ void Worker::stop() {
     if (initiator_) {
       initiator_->stop();  // TODO(mils): does this need a try/catch?
     }
-    spdlog::info("stopped FIX session");
+    spdlog::info("stopped FIX initiator");
   } catch (const std::exception& e) {
-    spdlog::error("error stopping binance FIX session, error [{}]", e.what());
+    spdlog::error("error stopping FIX initiator. error [{}]", e.what());
   } catch (...) {
-    spdlog::error("error stopping binance FIX session, unknown error");
+    spdlog::error("error stopping FIX initiator. unknown error");
   }
   worker_ = std::jthread{};
 }

@@ -115,7 +115,7 @@ void LogBox::start() {
   log_watcher_->start();
 }
 
-// runs on log watcher thread ( @ref ui::LogFileWatcher::thread_name_ )
+// runs on log watcher thread ( @ref ui::LogFileWatcher::THREAD_NAME_ )
 void LogBox::on_log_lines(std::vector<std::string> lines) {
   std::lock_guard<std::mutex> lock(log_ring_mutex_);
   for (std::string& line : lines) {

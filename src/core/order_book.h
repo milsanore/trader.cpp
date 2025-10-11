@@ -4,9 +4,9 @@
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 
 #include <functional>
-#include <map>
 #include <mutex>
 
+#include "absl/container/btree_map.h"
 #include "bid_ask.h"
 
 namespace core {
@@ -14,8 +14,8 @@ namespace core {
 /// An order book class backed by two (synchronised) bid/ask maps
 class OrderBook {
  public:
-  explicit OrderBook(std::map<double, double, std::greater<>> bid_map = {},
-                     std::map<double, double> ask_map = {});
+  explicit OrderBook(absl::btree_map<double, double, std::greater<>> bid_map = {},
+                     absl::btree_map<double, double> ask_map = {});
 
   // Mutex is not copyable:
   // 1. Delete copy constructor and copy assignment
@@ -37,9 +37,9 @@ class OrderBook {
   // NB: UI-bound, so performance is acceptable
   mutable std::mutex mutex_;
   /// @brief sorted list of bids (descending), key=price, value=size
-  std::map<double, double, std::greater<>> bid_map_;
+  absl::btree_map<double, double, std::greater<>> bid_map_;
   /// @brief sorted list of offers (ascending), key=price, value=size
-  std::map<double, double> ask_map_;
+  absl::btree_map<double, double> ask_map_;
 
   // std::vector<BidAsk> v(5000);
 };

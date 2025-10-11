@@ -1,12 +1,13 @@
 #include "order_book.h"
 
+#include "absl/container/btree_map.h"
 #include "bid_ask.h"
 #include "spdlog/spdlog.h"
 
 namespace core {
 
-OrderBook::OrderBook(std::map<double, double, std::greater<>> bid_map,
-                     std::map<double, double> ask_map)
+OrderBook::OrderBook(absl::btree_map<double, double, std::greater<>> bid_map,
+                     absl::btree_map<double, double> ask_map)
     : bid_map_(std::move(bid_map)), ask_map_(std::move(ask_map)) {}
 
 // move constructor
@@ -32,31 +33,35 @@ OrderBook::OrderBook(OrderBook&& other) noexcept
 std::vector<BidAsk> OrderBook::to_vector() {
   std::lock_guard lock(mutex_);
   const size_t row_count = std::max(bid_map_.size(), ask_map_.size());
-  // TODO(mils): could this be a pre-allocated/reusable vector with exactly 5000
-  // entries?
-  std::vector<BidAsk> v(row_count);
-  // bids
-  int i = 0;
-  for (const auto& [px, sz] : bid_map_) {
-    v[i].bid_sz = sz;
-    v[i].bid_px = px;
-    i++;
+  std::vector<BidAsk> v;
+  v.reserve(row_count);
+
+  auto bid_it = bid_map_.begin();
+  auto ask_it = ask_map_.begin();
+
+  for (; bid_it != bid_map_.end() || ask_it != ask_map_.end();) {
+    BidAsk ba{};
+    if (bid_it != bid_map_.end()) {
+      ba.bid_px = bid_it->first;
+      ba.bid_sz = bid_it->second;
+      ++bid_it;
+    }
+    if (ask_it != ask_map_.end()) {
+      ba.ask_px = ask_it->first;
+      ba.ask_sz = ask_it->second;
+      ++ask_it;
+    }
+    v.push_back(std::move(ba));
   }
-  // asks
-  i = 0;
-  for (const auto& [px, sz] : ask_map_) {
-    v[i].ask_sz = sz;
-    v[i].ask_px = px;
-    i++;
-  }
+
   return v;
-};
+}
 
 void OrderBook::apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) {
   std::lock_guard lock(mutex_);
   FIX::Symbol symbol;
   msg.get(symbol);
-  spdlog::info("MD snapshot message, symbol [{}]", symbol.getString());
+  spdlog::info("MD snapshot message. symbol [{}]", symbol.getString());
 
   if (std::string s = symbol.getValue(); s != "BTCUSDT") {
     spdlog::error("wrong symbol, skipping snapshot. value [{}]", s);
@@ -94,24 +99,23 @@ void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh& msg,
   msg.get(entries);
   const int num_entries = entries.getValue();
 
-  // update bids or asks
-  static auto update_map =
-      [](auto& map, FIX::MDUpdateAction action, double price,
+  static auto handle_price_level_update =
+      [](auto& bid_ask_map, FIX::MDUpdateAction action, double price,
          const FIX44::MarketDataIncrementalRefresh::NoMDEntries& size_group,
          bool is_book_clear_needed) {
-        static FIX::MDEntrySize sz;
+        FIX::MDEntrySize sz;
         switch (action.getValue()) {
           case FIX::MDUpdateAction_NEW:
-            map[price] = size_group.get(sz).getValue();
+            bid_ask_map[price] = size_group.get(sz).getValue();
             break;
           case FIX::MDUpdateAction_CHANGE:
             if (is_book_clear_needed) {
-              map.clear();
+              bid_ask_map.clear();
             }
-            map[price] = size_group.get(sz).getValue();
+            bid_ask_map[price] = size_group.get(sz).getValue();
             break;
           case FIX::MDUpdateAction_DELETE:
-            map.erase(price);
+            bid_ask_map.erase(price);
             break;
           default:
             spdlog::error("unknown price action. value [{}]", action.getValue());
@@ -147,14 +151,14 @@ void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh& msg,
 
     group.get(action);
     group.get(entry_type);
-    double price = group.get(px).getValue();
+    price = group.get(px).getValue();
 
     switch (entry_type.getValue()) {
       case FIX::MDEntryType_BID:
-        update_map(bid_map_, action, price, group, is_book_clear_needed);
+        handle_price_level_update(bid_map_, action, price, group, is_book_clear_needed);
         break;
       case FIX::MDEntryType_OFFER:
-        update_map(ask_map_, action, price, group, is_book_clear_needed);
+        handle_price_level_update(ask_map_, action, price, group, is_book_clear_needed);
         break;
       default:
         spdlog::error("unknown bid/offer FIX::MDEntryType. value [{}]",
