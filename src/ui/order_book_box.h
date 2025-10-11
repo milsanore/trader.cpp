@@ -13,7 +13,7 @@ namespace ui {
 
 class OrderBookBox {
  public:
-  static constexpr std::string thread_name_ = "tradercppuiBOOK";
+  static constexpr std::string THREAD_NAME_ = "tradercppuiBOOK";
   // Constructor: takes a label string
   OrderBookBox(IScreen& screen,
                moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,

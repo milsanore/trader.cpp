@@ -15,7 +15,7 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
   using Callback = std::function<void(std::vector<std::string>)>;
 
  public:
-  static constexpr std::string thread_name_ = "tradercppuiLOG";
+  static constexpr std::string THREAD_NAME_ = "tradercppuiLOG";
 
   explicit LogFileWatcher(std::string directory, std::string filename)
       : directory_(directory), filename_(filename) {
@@ -37,9 +37,9 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
 
   void start() {
     worker_ = std::jthread{[this](const std::stop_token& stoken) {
-      utils::Threading::set_thread_name(thread_name_);
-      spdlog::info("starting watching log file on background thread, name [{}]",
-                   thread_name_);
+      utils::Threading::set_thread_name(THREAD_NAME_);
+      spdlog::info("starting watching log file on background thread, name [{}], id [{}]",
+                   THREAD_NAME_, utils::Threading::get_os_thread_id());
       watcher_.watch();
     }};
   }

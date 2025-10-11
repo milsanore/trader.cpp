@@ -20,13 +20,13 @@ Config Config::from_env() {
   const std::string fixConfig = utils::Env::get_env_or_throw("FIX_CONFIG_PATH");
   const std::string instStr = utils::Env::get_env_or_throw("SYMBOLS");
 
-  spdlog::info("fetched environment variable, key [API_KEY], value [{}]",
+  spdlog::info("fetched environment variable. key [API_KEY], value [{}]",
                apiKey.substr(0, 3) + "..." + apiKey.substr(apiKey.length() - 3));
-  spdlog::info("fetched environment variable, key [PRIVATE_KEY_PATH], value [{}]",
+  spdlog::info("fetched environment variable. key [PRIVATE_KEY_PATH], value [{}]",
                privateKey);
-  spdlog::info("fetched environment variable, key [FIX_CONFIG_PATH], value [{}]",
+  spdlog::info("fetched environment variable. key [FIX_CONFIG_PATH], value [{}]",
                fixConfig);
-  spdlog::info("fetched environment variable, key [SYMBOLS], value [{}]", instStr);
+  spdlog::info("fetched environment variable. key [SYMBOLS], value [{}]", instStr);
 
   std::vector<std::string> symbols;
   for (auto inst : std::views::split(instStr, ',')) {

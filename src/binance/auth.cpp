@@ -38,6 +38,8 @@ std::string Auth::sign_payload(const std::string& payload) {
 }
 
 std::vector<unsigned char> Auth::get_seed_from_pem() const {
+  std::lock_guard lock(mutex_);
+
   // fopen is unsafe, wrap in RAII
   const auto file_closer = [](gsl::owner<FILE*> fp) {
     if (fp) {

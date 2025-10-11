@@ -4,14 +4,14 @@
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 
 #include <cmath>
-#include <map>
 #include <string>
 
+#include "absl/container/btree_map.h"
 #include "core/bid_ask.h"
 
 TEST(OrderBook, to_vector) {
-  std::map<double, double, std::greater<>> bids = {{95, 10}, {94, 9}};
-  std::map<double, double> asks = {
+  absl::btree_map<double, double, std::greater<>> bids = {{95, 10}, {94, 9}};
+  absl::btree_map<double, double> asks = {
       {96, 11},
       {97, 12},
       {98, 13},
@@ -31,10 +31,10 @@ TEST(OrderBook, to_vector) {
 }
 
 TEST(OrderBook, constructors) {
-  std::map<double, double, std::greater<>> bids = {
+  absl::btree_map<double, double, std::greater<>> bids = {
       {95, 10},
   };
-  std::map<double, double> asks = {
+  absl::btree_map<double, double> asks = {
       {96, 11},
   };
   core::OrderBook o1{bids, asks};
@@ -73,10 +73,10 @@ TEST(OrderBook, apply_snapshot) {
 }
 
 TEST(OrderBook, apply_increment) {
-  std::map<double, double, std::greater<>> bids = {
+  absl::btree_map<double, double, std::greater<>> bids = {
       {95, 10},
   };
-  std::map<double, double> asks = {
+  absl::btree_map<double, double> asks = {
       {96, 11},
       {97, 12},
   };

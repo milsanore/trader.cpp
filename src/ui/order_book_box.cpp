@@ -36,8 +36,9 @@ OrderBookBox::OrderBookBox(
   // default behaviour
   if (!worker_task_) {
     worker_task_ = {[this](const std::stop_token& stoken) {
-      utils::Threading::set_thread_name(thread_name_);
-      spdlog::info("starting polling order queue on background thread");
+      utils::Threading::set_thread_name(THREAD_NAME_);
+      spdlog::info("starting polling order queue on thread, name [{}], id [{}]",
+                   THREAD_NAME_, utils::Threading::get_os_thread_id());
       poll_queue(stoken);
     }};
   }
@@ -170,10 +171,10 @@ void OrderBookBox::poll_queue(const std::stop_token& stoken) {
   }
   // TODO(mils): log error
   catch (const std::exception& e) {
-    spdlog::error("error in orderbook worker thread, error [{}]", e.what());
+    spdlog::error("error in orderbook worker thread. error [{}]", e.what());
     thread_exception = std::current_exception();
   } catch (...) {
-    spdlog::error("error in orderbook worker thread, unknown error");
+    spdlog::error("error in orderbook worker thread. unknown error");
     thread_exception = std::current_exception();
   }
 }
