@@ -20,12 +20,12 @@ enum class MessageHandlingMode : uint16_t {
   FIELD_ID = 25035,
 };
 
-int to_int(const MessageHandlingMode m) {
-  return static_cast<int>(m);
+uint16_t to_int(const MessageHandlingMode m) {
+  return static_cast<uint16_t>(m);
 }
 
 std::string to_string(const MessageHandlingMode m) {
-  return std::to_string(static_cast<int>(m));
+  return std::to_string(static_cast<uint16_t>(m));
 }
 
 }  // namespace binance

@@ -30,7 +30,7 @@ struct Config {
   /// @brief fast runtime lookup
   /// @param symbol
   /// @return
-  static constexpr int get_tick_size(std::string_view symbol) {
+  static constexpr uint16_t get_tick_size(std::string_view symbol) {
     switch (fnv1a_hash(symbol)) {
       case fnv1a_hash("BTCUSDT"):
         return 1;
@@ -45,7 +45,7 @@ struct Config {
   }
 
   /// @brief 1 == top level, otherwise 5000 is Binance's maximum depth
-  static constexpr int MAX_DEPTH = 5000;
+  static constexpr uint16_t MAX_DEPTH = 100;
 };
 
 }  // namespace binance

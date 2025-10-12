@@ -14,6 +14,7 @@ endif()
 
 # Find packages from Conan
 find_package(absl REQUIRED)
+find_package(Boost REQUIRED)
 find_package(concurrentqueue REQUIRED)
 find_package(efsw REQUIRED)
 find_package(ftxui REQUIRED)
@@ -45,6 +46,7 @@ endif()
 # Link dependencies to the library (so both exe and tests get them)
 target_link_libraries(traderlib PUBLIC
     abseil::abseil
+    boost::boost
     concurrentqueue::concurrentqueue
     efsw::efsw
     ftxui::ftxui

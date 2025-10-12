@@ -1,5 +1,7 @@
 #pragma once
 
+#include <quickfix/fix44/Message.h>
+
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <memory>
@@ -17,12 +19,12 @@ class OrderBookBox {
   // Constructor: takes a label string
   OrderBookBox(IScreen& screen,
                moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
-               const int MAX_DEPTH,
+               const uint16_t MAX_DEPTH,
                core::OrderBook ob = core::OrderBook{},
                std::function<void(std::stop_token)> task = {});
   // Return the FTXUI component to plug into layout
   ftxui::Component get_component();
-  /// if any exceptions occurred
+  // if any exceptions occurred in the worker thread
   std::exception_ptr thread_exception;
   // start order processing worker thread
   void start();
@@ -33,6 +35,7 @@ class OrderBookBox {
   /// this boolean evaluates this condition.
   const bool IS_BOOK_CLEAR_NEEDED_;
 
+  // ui
   IScreen& screen_;
   core::OrderBook core_book_;
   ftxui::Component component_;

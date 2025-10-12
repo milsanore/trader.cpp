@@ -1,14 +1,15 @@
 [requires]
+abseil/20250814.0
+boost/1.88.0
+concurrentqueue/1.0.4
+efsw/1.4.1
+ftxui/6.0.2
+ms-gsl/4.2.0
+gtest/1.17.0
+openssl/3.5.2
 quickfix/1.15.1
 libsodium/1.0.20
-openssl/3.5.2
-ftxui/6.0.2
-concurrentqueue/1.0.4
 spdlog/1.15.3
-gtest/1.17.0
-ms-gsl/4.2.0
-efsw/1.4.1
-abseil/20250814.0
 
 [generators]
 CMakeToolchain

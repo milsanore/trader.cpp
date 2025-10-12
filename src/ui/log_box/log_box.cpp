@@ -10,8 +10,8 @@
 #include <thread>
 
 #include "../../utils/env.h"
+#include "../../utils/threading.h"
 #include "../app/iscreen.h"
-#include "./../../utils/threading.h"
 #include "ilog_watcher.h"
 #include "spdlog/spdlog.h"
 

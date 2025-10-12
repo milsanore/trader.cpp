@@ -36,22 +36,30 @@ namespace ui {
 App::App(moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& order_queue,
          moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue,
          std::unique_ptr<IScreen> screen,
-         std::unique_ptr<OrderBookBox> book,
-         std::unique_ptr<LogBox> logs)
+         std::unique_ptr<OrderBookBox> book_box,
+         std::unique_ptr<LogBox> log_box,
+         std::unique_ptr<TradeBox> trade_box)
     : screen_(std::move(screen)),
-      book_box_(std::move(book)),
-      log_box_(std::move(logs)) {};
+      book_box_(std::move(book_box)),
+      log_box_(std::move(log_box)),
+      trade_box_(std::move(trade_box)) {};
 
 // static function
 App App::from_env(
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& order_queue,
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue,
-    const int MAX_DEPTH) {
+    const uint16_t MAX_DEPTH) {
+  //
   std::unique_ptr<IScreen> screen = std::make_unique<FtxuiScreen>();
-  auto book = std::make_unique<OrderBookBox>(*screen, order_queue, MAX_DEPTH);
+
+  auto book_box = std::make_unique<OrderBookBox>(*screen, order_queue, MAX_DEPTH);
+
   auto log_box = LogBox::from_env(*screen);
-  return App(order_queue, trade_queue, std::move(screen), std::move(book),
-             std::move(log_box));
+
+  auto trade_box = std::make_unique<TradeBox>(*screen, trade_queue);
+
+  return App(order_queue, trade_queue, std::move(screen), std::move(book_box),
+             std::move(log_box), std::move(trade_box));
 }
 
 // main thread
@@ -62,13 +70,13 @@ void App::start() {
   // start worker threads
   book_box_->start();
   log_box_->start();
-  // trades_.start();
+  trade_box_->start();
 
   // start the main UI loop,
   // Arrange in 2×2 grid via containers
   auto row1 =
       Horizontal({Vertical({book_box_->get_component() | flex}) | size(WIDTH, EQUAL, 70),
-                  Vertical({trade_box_.get_component() | flex}) | flex});
+                  Vertical({trade_box_->get_component() | flex}) | flex});
   auto row2 =
       Horizontal({Vertical({wallet_box_.get_component() | flex}) | size(WIDTH, EQUAL, 50),
                   Vertical({log_box_->get_component() | flex}) | flex});

@@ -12,10 +12,9 @@ CheckLatency=N
 ORDER_TIMEOUT=30000
 UseDataDictionary=Y
 SocketConnectHost=127.0.0.1
-SocketConnectPort=5001
 FileStorePath=qf_files
 FileLogPath=qf_logs
-FileLogHeartbeats=Y
+FileLogHeartbeats=N
 FileLogMessages=Y
 FileLogEvent=Y
 
@@ -25,6 +24,7 @@ SenderCompId=TRDR1
 TargetCompId=SPOT
 SessionQualifier=PX
 DataDictionary=binance/spot-fix-md.xml
+SocketConnectPort=5001
 
 [SESSION]
 BeginString=FIX.4.4
@@ -32,10 +32,12 @@ SenderCompId=TRDR2
 TargetCompId=SPOT
 SessionQualifier=TX
 DataDictionary=binance/spot-fix-md.xml
+SocketConnectPort=5002
 
-[SESSION]
-BeginString=FIX.4.4
-SenderCompId=TRDR3
-TargetCompId=SPOT
-SessionQualifier=OX
-DataDictionary=binance/spot-fix-oe.xml
+; [SESSION]
+; BeginString=FIX.4.4
+; SenderCompId=TRDR3
+; TargetCompId=SPOT
+; SessionQualifier=OX
+; DataDictionary=binance/spot-fix-oe.xml
+; SocketConnectPort=5003

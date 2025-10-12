@@ -4,7 +4,7 @@
 
 namespace core {
 
-/// @brief Binance config parameters, fetched from env
+/// @brief basic bid/ask level
 struct BidAsk {
  public:
   BidAsk(double bidsz = NAN, double bidpx = NAN, double askpx = NAN, double asksz = NAN)

@@ -19,11 +19,13 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
  public:
   FixApp(const std::vector<std::string>& symbols,
          std::unique_ptr<IAuth> auth,
-         const int MAX_DEPTH);
+         const uint16_t MAX_DEPTH);
   ~FixApp() override = default;
 
   /// @brief
-  void subscribe_to_depth(const FIX::SessionID& session_id) const;
+  void subscribe_to_prices(const FIX::SessionID& session_id) const;
+  /// @brief
+  void subscribe_to_trades(const FIX::SessionID& session_id) const;
 
   /// @brief queue of market messages from Binance
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> order_queue_;
@@ -41,7 +43,7 @@ class FixApp final : public FIX::Application, public FIX::MessageCracker {
   static constexpr std::string ORDER_SESSION_QUALIFIER_ = "OX";
   const std::vector<std::string>& symbols_;
   const std::unique_ptr<IAuth> auth_;
-  const int MAX_DEPTH_;
+  const uint16_t MAX_DEPTH_;
 
   void onCreate(const FIX::SessionID&) override;
   void onLogon(const FIX::SessionID&) override;

@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "./../utils/threading.h"
+#include "../utils/threading.h"
 #include "auth.h"
 #include "config.h"
 #include "fix_app.h"

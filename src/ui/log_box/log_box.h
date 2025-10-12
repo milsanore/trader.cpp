@@ -32,7 +32,7 @@ class LogBox {
 
   // log ring-buffer
   std::deque<std::string> log_ring_;
-  static constexpr int MAX_LINES_ = 100;
+  static constexpr uint16_t MAX_LINES_ = 100;
   std::mutex log_ring_mutex_;
 
   // log-file watcher

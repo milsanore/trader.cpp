@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-#include "./../utils/threading.h"
+#include "../utils/threading.h"
 #include "message_handling_mode.h"
 #include "spdlog/spdlog.h"
 
@@ -24,7 +24,7 @@ namespace binance {
 
 FixApp::FixApp(const std::vector<std::string>& symbols,
                std::unique_ptr<IAuth> auth,
-               const int MAX_DEPTH)
+               const uint16_t MAX_DEPTH)
     : symbols_(symbols), auth_(std::move(auth)), MAX_DEPTH_(MAX_DEPTH) {
   // TODO(mils): I think this is a singleton
   utils::Threading::set_thread_name(THREAD_NAME_);
@@ -32,7 +32,7 @@ FixApp::FixApp(const std::vector<std::string>& symbols,
                utils::Threading::get_os_thread_id());
 }
 
-void FixApp::subscribe_to_depth(const FIX::SessionID& session_id) const {
+void FixApp::subscribe_to_prices(const FIX::SessionID& session_id) const {
   spdlog::info("subscribing to depth. qualifier [{}], id [{}]",
                session_id.getSessionQualifier(), session_id.toString());
 
@@ -72,6 +72,36 @@ void FixApp::subscribe_to_depth(const FIX::SessionID& session_id) const {
   FIX::Session::sendToTarget(md_req, session_id);
 }
 
+void FixApp::subscribe_to_trades(const FIX::SessionID& session_id) const {
+  spdlog::info("subscribing to trades. qualifier [{}], id [{}]",
+               session_id.getSessionQualifier(), session_id.toString());
+
+  FIX44::MarketDataRequest md_req;
+
+  // Generate a unique request ID for this session's request
+  const std::string req_id = "MDReq-" + std::to_string(std::time(nullptr));
+  md_req.set(FIX::MDReqID(req_id));
+
+  // Set subscription type (1 = Subscribe)
+  md_req.set(
+      FIX::SubscriptionRequestType(FIX::SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES));
+
+  // Add TRADE entry type (2)
+  FIX44::MarketDataRequest::NoMDEntryTypes e_types;
+  e_types.set(FIX::MDEntryType(FIX::MDEntryType_TRADE));
+  md_req.addGroup(e_types);
+
+  // Add symbols
+  for (const auto& instrument : symbols_) {
+    FIX44::MarketDataRequest::NoRelatedSym group;
+    group.set(FIX::Symbol(instrument));
+    md_req.addGroup(group);
+  }
+
+  // Send the request to the corresponding market data session
+  FIX::Session::sendToTarget(md_req, session_id);
+}
+
 // PRIVATE
 
 /// @brief Better FIX message logging: replaces SOH with '|'
@@ -97,9 +127,9 @@ void FixApp::onLogon(const FIX::SessionID& sessionId) {
   // auth_->clear_keys();
 
   if (sessionId.getSessionQualifier() == PRICE_SESSION_QUALIFIER_) {
-    subscribe_to_depth(sessionId);
+    subscribe_to_prices(sessionId);
   } else if (sessionId.getSessionQualifier() == TRADE_SESSION_QUALIFIER_) {
-    // subscribe to market trades
+    subscribe_to_trades(sessionId);
   } else if (sessionId.getSessionQualifier() == ORDER_SESSION_QUALIFIER_) {
     // do nothing for order session
   } else {
@@ -177,11 +207,19 @@ void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m,
 }
 void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m,
                        const FIX::SessionID& sessionID) {
-  order_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
+  if (sessionID.getSessionQualifier() == PRICE_SESSION_QUALIFIER_) {
+    order_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
+  } else if (sessionID.getSessionQualifier() == TRADE_SESSION_QUALIFIER_) {
+    trade_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
+  } else {
+    spdlog::error(
+        "ivalid session for market data incremental refresh, qualifier [{}], id [{}]",
+        sessionID.getSessionQualifier(), sessionID.toString());
+  }
 }
 void FixApp::onMessage(const FIX44::ExecutionReport& message, const FIX::SessionID&) {
   spdlog::info("execution report");
-
+  /*
   try {
     // Extract the ClOrdID
     FIX::ClOrdID clOrdID;
@@ -209,6 +247,7 @@ void FixApp::onMessage(const FIX44::ExecutionReport& message, const FIX::Session
     throw std::runtime_error(
         std::format("error processing execution report: [{}]", std::string(e.what())));
   }
+  */
 }
 // error catch-all
 void onMessage(const FIX::Message& msg, const FIX::SessionID&) {
