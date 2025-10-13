@@ -7,7 +7,10 @@ namespace core {
 /// @brief basic bid/ask level
 struct BidAsk {
  public:
-  BidAsk(double bidsz = NAN, double bidpx = NAN, double askpx = NAN, double asksz = NAN)
+  explicit BidAsk(double bidsz = NAN,
+                  double bidpx = NAN,
+                  double askpx = NAN,
+                  double asksz = NAN)
       : bid_sz(bidsz), bid_px(bidpx), ask_px(askpx), ask_sz(asksz) {}
 
   double bid_sz = NAN;
@@ -21,7 +24,7 @@ struct BidAsk {
   }
 
  private:
-  inline bool eq(const double a, const double b) const {
+  static bool eq(const double a, const double b) {
     if (std::isnan(a) && std::isnan(b)) {
       return true;
     }

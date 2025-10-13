@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-#include "../../utils/env.h"
 #include "../log_box/log_box.h"
 #include "../order_book_box.h"
 #include "../trade_box.h"
@@ -33,9 +32,7 @@ namespace ui {
 
 ///////////////////////////////////////
 
-App::App(moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& order_queue,
-         moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue,
-         std::unique_ptr<IScreen> screen,
+App::App(std::unique_ptr<IScreen> screen,
          std::unique_ptr<OrderBookBox> book_box,
          std::unique_ptr<LogBox> log_box,
          std::unique_ptr<TradeBox> trade_box)
@@ -58,15 +55,12 @@ App App::from_env(
 
   auto trade_box = std::make_unique<TradeBox>(*screen, trade_queue);
 
-  return App(order_queue, trade_queue, std::move(screen), std::move(book_box),
-             std::move(log_box), std::move(trade_box));
+  return App(std::move(screen), std::move(book_box), std::move(log_box),
+             std::move(trade_box));
 }
 
 // main thread
 void App::start() {
-  // TODO(mils): why does the order of these two items affect the rendered
-  // result?
-
   // start worker threads
   book_box_->start();
   log_box_->start();
@@ -74,13 +68,13 @@ void App::start() {
 
   // start the main UI loop,
   // Arrange in 2×2 grid via containers
-  auto row1 =
-      Horizontal({Vertical({book_box_->get_component() | flex}) | size(WIDTH, EQUAL, 70),
+  const auto row1 =
+      Horizontal({Vertical({book_box_->get_component() | flex}) | size(WIDTH, EQUAL, 60),
                   Vertical({trade_box_->get_component() | flex}) | flex});
-  auto row2 =
+  const auto row2 =
       Horizontal({Vertical({wallet_box_.get_component() | flex}) | size(WIDTH, EQUAL, 50),
                   Vertical({log_box_->get_component() | flex}) | flex});
-  auto root = Vertical({row1 | size(HEIGHT, EQUAL, 20), row2 | flex});
+  const auto root = Vertical({row1 | size(HEIGHT, EQUAL, 20), row2 | flex});
   screen_->loop(root);
 }
 

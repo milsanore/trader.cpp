@@ -3,6 +3,7 @@
 #include <deque>
 #include <fstream>
 #include <ftxui/component/component.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <mutex>
 #include <vector>
 
@@ -21,7 +22,7 @@ class LogBox {
   /// if any exceptions occurred
   std::exception_ptr thread_exception;
   // start log watcher
-  void start();
+  void start() const;
 
  private:
   // UI
@@ -29,6 +30,10 @@ class LogBox {
   ftxui::Component component_;
   float scroll_x = 0.1;
   float scroll_y = 1;
+  /// @brief the columns in the trade box table, and their widths
+  const std::array<std::pair<std::string, uint8_t>, 4> columns_ = {
+      {{"Time", 26}, {"Level", 7}, {"Thread", 7}, {"Message", 7}}};
+  ftxui::Elements header_;
 
   // log ring-buffer
   std::deque<std::string> log_ring_;

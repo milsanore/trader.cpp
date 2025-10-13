@@ -57,11 +57,12 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 
 ## Functional
 - ✅ create a FIX connection to Binance
-  - separate price/trade/order sessions
+  - ✅ separate price/trade/order sessions
   - server maintenance, News <B> messages
   - per-session execution reports / Response Mode
   - track message limits
   - OrderMassCancelRequest on error
+  - quickfix database vs fix8 equivalent
 - ✅ subscribe to price updates
 - create a basic trading signal (e.g. standard deviations)
 - use a precise number type for money
@@ -81,16 +82,16 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - ✅ UI
   - ✅ publish messages to thread-safe queue
   - ✅ consume messages from thread-safe queue on a worker thread
+  - double-buffering
+  - FPS limit
   - interrupt/ctrl+c signal
-  - 60fps limit
 - ✅ logging
     - ✅ fast
     - ✅ compiled out 'debug' logging for release builds
-    - output thread name
+    - thread name in logs
     - rolling
     - structured
     - basic schema (severity, correlationId)
-    - thread context in logs
 - code quality
   - ✅ clang-format
     - ✅ configure editor to auto-format

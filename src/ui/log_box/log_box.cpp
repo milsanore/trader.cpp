@@ -1,17 +1,14 @@
 #include "log_box.h"
 
-#include <efsw/efsw.hpp>
 #include <format>
-#include <fstream>
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <iostream>
 #include <mutex>
-#include <thread>
 
 #include "../../utils/env.h"
-#include "../../utils/threading.h"
 #include "../app/iscreen.h"
+#include "../helpers.h"
 #include "ilog_watcher.h"
 #include "spdlog/spdlog.h"
 
@@ -34,6 +31,12 @@ namespace ui {
 
 LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogWatcher> watcher)
     : screen_(screen), log_watcher_(std::move(watcher)) {
+  // initialize table header
+  for (const auto& column : columns_) {
+    header_.push_back(ftxui::text(Helpers::Pad(column.first, column.second)) |
+                      ftxui::bold);
+  }
+
   SliderOption<float> option_x;
   option_x.value = &scroll_x;
   option_x.min = 0.f;
@@ -54,23 +57,27 @@ LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogWatcher> watcher)
   option_y.color_inactive = Color::YellowLight;
   auto scrollbar_y = Slider(option_y);
 
+  // Static header (always visible)
+  auto header_renderer = Renderer([this] { return vbox({hbox(header_)}); });
+
   auto content = Renderer([this](bool focused) {
     std::deque<std::string> buffer_copy;
     {
       std::lock_guard<std::mutex> lock(log_ring_mutex_);
       buffer_copy = log_ring_;  // safe copy
     }
-
     Elements lines;
     for (const auto& line : buffer_copy) {
       lines.push_back(text(line));
     }
 
     return vbox(std::move(lines)) | (focused ? bold : dim) |
-           focusPositionRelative(scroll_x, scroll_y) | frame | flex | border;
+           focusPositionRelative(scroll_x, scroll_y) | frame | flex;
   });
 
-  component_ = ftxui::Container::Vertical({
+  // Combine content and scrollbar horizontally
+  // auto scroll_area = ftxui::Container::Horizontal({content, scrollbar_y}) | flex;
+  auto scroll_area = ftxui::Container::Vertical({
       ftxui::Container::Horizontal({
           content,
           scrollbar_y,
@@ -80,6 +87,9 @@ LogBox::LogBox(IScreen& screen, std::unique_ptr<ILogWatcher> watcher)
           Renderer([] { return text(L"x"); }),
       }),
   });
+
+  // Full component: static header + scrollable content
+  component_ = ftxui::Container::Vertical({header_renderer, scroll_area}) | border;
 }
 
 // static function
@@ -111,7 +121,7 @@ Component LogBox::get_component() {
   return component_;
 }
 
-void LogBox::start() {
+void LogBox::start() const {
   log_watcher_->start();
 }
 

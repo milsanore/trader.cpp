@@ -31,8 +31,8 @@ TEST(App, start) {
       *screen, trade_queue,
       [](const std::stop_token& stoken) { spdlog::info("mock task"); });
 
-  ui::App app = ui::App(order_queue, trade_queue, std::move(screen), std::move(book_box),
-                        std::move(log_box), std::move(trade_box));
+  auto app = ui::App(std::move(screen), std::move(book_box), std::move(log_box),
+                     std::move(trade_box));
   app.start();
 
   // publish update

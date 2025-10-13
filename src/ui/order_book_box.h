@@ -41,6 +41,9 @@ class OrderBookBox {
   ftxui::Component component_;
   float scroll_x = 0;
   float scroll_y = 0;
+  const std::array<std::pair<std::string, uint8_t>, 4> columns_ = {
+      {{"Bid Sz", 11}, {"Bid", 16}, {"Ask", 16}, {"Ask Sz", 11}}};
+  ftxui::Elements header_;
 
   // thread
   std::jthread worker_;

@@ -8,7 +8,7 @@
 
 class FakeScreen : public ui::IScreen {
  public:
-  void loop(ftxui::Component renderer) override {
+  void loop(const ftxui::Component renderer) override {
     loop_called = true;
     last_renderer = renderer;
 

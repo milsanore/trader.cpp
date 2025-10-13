@@ -4,7 +4,6 @@
 #include <quickfix/fix44/Message.h>
 
 #include <boost/circular_buffer.hpp>
-#include <deque>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <mutex>
@@ -35,25 +34,32 @@ class TradeBox {
   void start();
 
  private:
-  // ui
+  // ui stuff
   IScreen& screen_;
   ftxui::Component component_;
   float scroll_x = 0;
   float scroll_y = 1;
   ftxui::Element to_table();
+  /// @brief the columns in the trade box table, and their widths
+  const std::array<std::pair<std::string, uint8_t>, 5> columns_ = {
+      {{"Time", 17}, {"Side", 6}, {"Price", 16}, {"Size", 11}, {"ID", 25}}};
+  ftxui::Elements header_;
 
-  // trade ring-buffer
+  // trade ring-buffer stuff
   static constexpr u_int16_t MAX_LINES_ = 100;
   boost::circular_buffer<core::Trade> trade_ring_;
   std::mutex trade_ring_mutex_;
 
-  // thread
-  std::jthread worker_;
-  std::function<void(std::stop_token)> worker_task_;
+  // worker thread stuff
   // queue of order messages from FIX thread
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue_;
-  /// @brief poll queue for any new FIX messages, update trade view
+  std::jthread worker_;
+  std::function<void(std::stop_token)> worker_task_;
+  /// @brief poll queue for any new FIX messages, trigger UI render.
+  /// runs on worker thread ( @ref ui::TradeBox::THREAD_NAME_ )
   void poll_queue(const std::stop_token& stoken);
+  /// @brief add new trades to ring buffer
+  /// runs on worker thread ( @ref ui::TradeBox::THREAD_NAME_ )
   void on_trade(const FIX44::MarketDataIncrementalRefresh& msg);
 };
 

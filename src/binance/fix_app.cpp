@@ -168,8 +168,9 @@ void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
     msg.setField(FIX::Username(auth_->get_api_key()));
     msg.setField(FIX::RawData(signature));
     msg.setField(FIX::RawDataLength(static_cast<FIX::LENGTH>(signature.size())));
-    msg.setField(FIX::StringField(to_int(MessageHandlingMode::FIELD_ID),
-                                  to_string(MessageHandlingMode::SEQUENTIAL)));
+    msg.setField(FIX::StringField(
+        MessageHandlingMode::FIELD_ID,
+        MessageHandlingMode::to_string(MessageHandlingMode::Mode::SEQUENTIAL)));
   } else {
     spdlog::info(
         "toAdmin.   session qualifier [{}], session id [{}], type [{}], message [{}]",

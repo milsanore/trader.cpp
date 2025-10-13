@@ -33,9 +33,9 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
     }
   }
 
-  void set_callback(Callback cb) { cb_ = std::move(cb); }
+  void set_callback(Callback cb) override { cb_ = std::move(cb); }
 
-  void start() {
+  void start() override {
     worker_ = std::jthread{[this](const std::stop_token& stoken) {
       utils::Threading::set_thread_name(THREAD_NAME_);
       spdlog::info("starting watching log file on background thread, name [{}], id [{}]",

@@ -18,13 +18,10 @@ namespace ui {
 
 class App {
  public:
-  explicit App(
-      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& order_queue,
-      moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue,
-      std::unique_ptr<IScreen> screen,
-      std::unique_ptr<OrderBookBox> book_box,
-      std::unique_ptr<LogBox> log_box,
-      std::unique_ptr<TradeBox> trade_box);
+  explicit App(std::unique_ptr<IScreen> screen,
+               std::unique_ptr<OrderBookBox> book_box,
+               std::unique_ptr<LogBox> log_box,
+               std::unique_ptr<TradeBox> trade_box);
   /// @brief start UI workers
   void start();
   /// if any exceptions occurred

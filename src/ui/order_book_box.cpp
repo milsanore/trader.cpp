@@ -24,6 +24,7 @@ using ftxui::frame;
 using ftxui::Renderer;
 using ftxui::SliderOption;
 using ftxui::text;
+using ftxui::vbox;
 
 namespace ui {
 
@@ -35,9 +36,9 @@ OrderBookBox::OrderBookBox(
     std::function<void(std::stop_token)> task)
     : IS_BOOK_CLEAR_NEEDED_(MAX_DEPTH == 1),
       screen_(screen),
-      queue_(queue),
       core_book_(std::move(ob)),
-      worker_task_(std::move(task)) {
+      worker_task_(std::move(task)),
+      queue_(queue) {
   // default behaviour
   if (!worker_task_) {
     worker_task_ = {[this](const std::stop_token& stoken) {
@@ -46,6 +47,12 @@ OrderBookBox::OrderBookBox(
                    THREAD_NAME_, utils::Threading::get_os_thread_id());
       poll_queue(stoken);
     }};
+  }
+
+  // initialize table header
+  for (const auto& column : columns_) {
+    header_.push_back(ftxui::text(Helpers::Pad(column.first, column.second)) |
+                      ftxui::bold);
   }
 
   SliderOption<float> option_y;
@@ -58,12 +65,20 @@ OrderBookBox::OrderBookBox(
   option_y.color_inactive = Color::YellowLight;
   auto scrollbar_y = Slider(option_y);
 
+  // Static header (always visible)
+  auto header_renderer = Renderer([this] { return vbox({hbox(header_)}); });
+
+  // Scrollable trade rows
   auto content = Renderer([this](bool focused) {
     return to_table() | (focused ? bold : dim) | focusPositionRelative(0, scroll_y) |
-           frame | flex | border;
+           frame | flex;
   });
 
-  component_ = ftxui::Container::Horizontal({content, scrollbar_y}) | flex;
+  // Combine content and scrollbar horizontally
+  auto scroll_area = ftxui::Container::Horizontal({content, scrollbar_y}) | flex;
+
+  // Full component: static header + scrollable content
+  component_ = ftxui::Container::Vertical({header_renderer, scroll_area}) | border;
 }
 
 void OrderBookBox::start() {
@@ -80,28 +95,15 @@ Component OrderBookBox::get_component() {
 /// @return the FTXUI element that the UI will render
 ftxui::Element OrderBookBox::to_table() {
   ftxui::Elements table;
-
-  // ─────────── Header Row ───────────
-  const std::vector<std::string> column_names = {"Bid Sz", "Bid", "Ask", "Ask Sz"};
-  constexpr uint8_t num_columns = 4;
-  constexpr uint8_t column_width = 15;
-  ftxui::Elements header;
-  for (uint8_t i = 0; i < num_columns; ++i) {
-    header.push_back(ftxui::text(Helpers::Pad(column_names[i], column_width)) |
-                     ftxui::bold);
-  }
-  table.push_back(ftxui::vbox({hbox(std::move(header)), ftxui::separator()}));
-
-  // ─────────── Data Rows ───────────
   const std::vector<core::BidAsk> book = core_book_.to_vector();
   const size_t row_count = book.size();
   for (size_t i = 0; i < row_count; ++i) {
     ftxui::Elements ui_row;
     const core::BidAsk& book_row = book[i];
-    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.bid_sz, column_width)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.bid_px, column_width)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.ask_px, column_width)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.ask_sz, column_width)));
+    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.bid_sz, columns_[0].second)));
+    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.bid_px, columns_[1].second)));
+    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.ask_px, columns_[2].second)));
+    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.ask_sz, columns_[3].second)));
     table.push_back(hbox(std::move(ui_row)));
   }
 

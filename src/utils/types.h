@@ -34,8 +34,8 @@ class Types {
   static std::string unmangle(const char* mangled_string) {
 #if defined(__GNUG__)
     int status = 0;
-    malloc_ptr demangled(abi::__cxa_demangle(mangled_string, nullptr, nullptr, &status),
-                         std::free);
+    const malloc_ptr demangled(
+        abi::__cxa_demangle(mangled_string, nullptr, nullptr, &status), std::free);
     return (status == 0 && demangled) ? demangled.get() : mangled_string;
 #else
     // On MSVC or other compilers, just return the mangled name

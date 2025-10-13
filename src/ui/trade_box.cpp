@@ -25,6 +25,7 @@ using ftxui::frame;
 using ftxui::Renderer;
 using ftxui::SliderOption;
 using ftxui::text;
+using ftxui::vbox;
 
 namespace ui {
 
@@ -32,7 +33,7 @@ TradeBox::TradeBox(
     IScreen& screen,
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
     std::function<void(std::stop_token)> task)
-    : screen_(screen), queue_(queue), worker_task_(task), trade_ring_(MAX_LINES_) {
+    : screen_(screen), trade_ring_(MAX_LINES_), queue_(queue), worker_task_(task) {
   // default behaviour
   if (!worker_task_) {
     worker_task_ = {[this](const std::stop_token& stoken) {
@@ -41,6 +42,12 @@ TradeBox::TradeBox(
                    THREAD_NAME_, utils::Threading::get_os_thread_id());
       poll_queue(stoken);
     }};
+  }
+
+  // initialize table header
+  for (const auto& column : columns_) {
+    header_.push_back(ftxui::text(Helpers::Pad(column.first, column.second)) |
+                      ftxui::bold);
   }
 
   SliderOption<float> option_y;
@@ -53,12 +60,20 @@ TradeBox::TradeBox(
   option_y.color_inactive = Color::YellowLight;
   auto scrollbar_y = Slider(option_y);
 
+  // Static header (always visible)
+  auto header_renderer = Renderer([this] { return vbox({hbox(header_)}); });
+
+  // Scrollable trade rows
   auto content = Renderer([this](bool focused) {
     return to_table() | (focused ? bold : dim) | focusPositionRelative(0, scroll_y) |
-           frame | flex | border;
+           frame | flex;
   });
 
-  component_ = ftxui::Container::Horizontal({content, scrollbar_y}) | flex;
+  // Combine content and scrollbar horizontally
+  auto scroll_area = ftxui::Container::Horizontal({content, scrollbar_y}) | flex;
+
+  // Full component: static header + scrollable content
+  component_ = ftxui::Container::Vertical({header_renderer, scroll_area}) | border;
 }
 
 void TradeBox::start() {
@@ -80,37 +95,23 @@ ftxui::Element TradeBox::to_table() {
 
   ftxui::Elements table;
 
-  // ─────────── Header Row ───────────
-  // TODO(mils): hoist
-  const std::array<std::pair<std::string, uint8_t>, 5> columns = {
-      {{"Time", 25}, {"Side", 7}, {"Price", 20}, {"Size", 15}, {"Id", 25}}};
-  const uint8_t num_columns = columns.size();
-
-  ftxui::Elements header;
-  for (uint8_t i = 0; i < num_columns; ++i) {
-    header.push_back(ftxui::text(Helpers::Pad(columns[i].first, columns[i].second)) |
-                     ftxui::bold);
-  }
-  table.push_back(ftxui::vbox({hbox(std::move(header)), ftxui::separator()}));
-
   // ─────────── Data Rows ───────────
   const size_t buffer_size = buffer_copy.size();
   for (size_t i = 0; i < buffer_size; ++i) {
     ftxui::Elements ui_row;
     const core::Trade& trade = buffer_copy[i];
     std::string side = trade.side == '1' ? "buy" : "sell";
-    ui_row.push_back(ftxui::text(Helpers::Pad(trade.time, columns[0].second)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(side, columns[1].second)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(trade.px, columns[2].second)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(trade.sz, columns[3].second)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(trade.id, columns[4].second)));
+    ui_row.push_back(ftxui::text(Helpers::Pad(trade.time, columns_[0].second)));
+    ui_row.push_back(ftxui::text(Helpers::Pad(side, columns_[1].second)));
+    ui_row.push_back(ftxui::text(Helpers::Pad(trade.px, columns_[2].second)));
+    ui_row.push_back(ftxui::text(Helpers::Pad(trade.sz, columns_[3].second)));
+    ui_row.push_back(ftxui::text(Helpers::Pad(trade.id, columns_[4].second)));
     table.push_back(hbox(std::move(ui_row)));
   }
 
   return vbox(table);
 }
 
-// worker thread
 void TradeBox::poll_queue(const std::stop_token& stoken) {
   try {
     /// Adaptive backoff strategy for spin+sleep polling
@@ -173,23 +174,29 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
   msg.get(entries);
   const int num_entries = entries.getValue();
 
-  std::string symbol;
   FIX44::MarketDataIncrementalRefresh::NoMDEntries group;
-  // TODO: can these be made static?
-  FIX::MDUpdateAction action;
+  std::string symbol;
   FIX::MDEntryPx e_px;
   FIX::MDEntrySize e_sz;
+  double price, size;
   FIX::MDEntryType e_type;
   FIX::TransactTime time;
   FIX::TradeID trade_id;
+  std::string trade_id_str;
   uint64_t trade_id_uint;
   // Binance's "side" field ("AggressorSide") is a custom field, not part of the FIX spec
-  const int AGGRESSOR_TAG = 2446;
+  constexpr int AGGRESSOR_TAG = 2446;
   FIX::CharField side_field(AGGRESSOR_TAG);
-
-  double price, size;
   char side;
+  //
+  std::string raw_time;
+  std::string time_only;
   for (int i = 1; i <= num_entries; i++) {
+    trade_id_str.clear();
+    raw_time.clear();
+    time_only.clear();
+    trade_id_uint = 0;
+
     msg.getGroup(i, group);
 
     // Update symbol if present or first group
@@ -210,23 +217,30 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
       continue;
     }
 
-    group.get(action);
     group.get(e_type);
-    price = group.get(e_px).getValue();
-    size = group.get(e_sz).getValue();
-    group.getField(trade_id);
-    trade_id_uint = 0;
-    auto result = std::from_chars(trade_id.getValue().data(),
-                                  trade_id.getValue().data() + trade_id.getValue().size(),
-                                  trade_id_uint);
-
     switch (e_type.getValue()) {
       case FIX::MDEntryType_TRADE: {
         if (group.isSetField(AGGRESSOR_TAG)) {
           group.getField(side_field);
           side = side_field.getValue();
-          trade_ring_.push_back({time.getString(), side, price, size, trade_id_uint});
+          price = group.get(e_px).getValue();
+          size = group.get(e_sz).getValue();
+          group.getField(trade_id);
+          trade_id_str = trade_id.getValue();
+          std::string timeOnly = "";
+          if (group.isSetField(FIX::FIELD::TransactTime)) {
+            FIX::TransactTime transactTime;
+            group.getField(transactTime);
+            raw_time = transactTime.getString();
+            time_only = raw_time.substr(raw_time.find('-') + 1);
+          }
+          std::from_chars(trade_id_str.data(), trade_id_str.data() + trade_id_str.size(),
+                          trade_id_uint);
+
+          trade_ring_.push_back({time_only, side, price, size, trade_id_uint});
           screen_.post_event(ftxui::Event::Custom);
+        } else {
+          spdlog::error("trade with no side. message [{}]", msg.toString());
         }
       } break;
       default:

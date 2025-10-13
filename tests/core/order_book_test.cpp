@@ -10,38 +10,39 @@
 #include "core/bid_ask.h"
 
 TEST(OrderBook, to_vector) {
-  absl::btree_map<double, double, std::greater<>> bids = {{95, 10}, {94, 9}};
-  absl::btree_map<double, double> asks = {
+  const absl::btree_map<double, double, std::greater<>> bids = {{95, 10}, {94, 9}};
+  const absl::btree_map<double, double> asks = {
       {96, 11},
       {97, 12},
       {98, 13},
   };
   core::OrderBook x{bids, asks};
-  std::vector<core::BidAsk> ob_vec = x.to_vector();
+  const std::vector<core::BidAsk> ob_vec = x.to_vector();
 
-  std::vector check = {
+  const std::vector check = {
       core::BidAsk{10, 95, 96, 11},
       core::BidAsk{9, 94, 97, 12},
       core::BidAsk{NAN, NAN, 98, 13},
   };
   ASSERT_EQ(ob_vec, check);
 
-  std::vector bad_check = {core::BidAsk{10, 95, 96, 11}, core::BidAsk{9, 94, 97, 12}};
+  const std::vector bad_check = {core::BidAsk{10, 95, 96, 11},
+                                 core::BidAsk{9, 94, 97, 12}};
   ASSERT_NE(ob_vec, bad_check);
 }
 
 TEST(OrderBook, constructors) {
-  absl::btree_map<double, double, std::greater<>> bids = {
+  const absl::btree_map<double, double, std::greater<>> bids = {
       {95, 10},
   };
-  absl::btree_map<double, double> asks = {
+  const absl::btree_map<double, double> asks = {
       {96, 11},
   };
   core::OrderBook o1{bids, asks};
   // test move-constructor operator
   core::OrderBook moved1 = std::move(o1);
 
-  std::vector<core::BidAsk> check = {{10, 95, 96, 11}};
+  const std::vector check = {core::BidAsk(10, 95, 96, 11)};
   ASSERT_EQ(moved1.to_vector(), check);
 
   // // test move-assignment operator
@@ -68,7 +69,7 @@ TEST(OrderBook, apply_snapshot) {
 
   core::OrderBook book{};
   book.apply_snapshot(msg);
-  std::vector<core::BidAsk> check = {{10, 95, 96, 11}};
+  const std::vector check = {core::BidAsk(10, 95, 96, 11)};
   ASSERT_EQ(book.to_vector(), check);
 }
 
@@ -102,6 +103,6 @@ TEST(OrderBook, apply_increment) {
   constexpr bool IS_BOOK_CLEAR_NEEDED_ = false;
   book.apply_increment(msg, IS_BOOK_CLEAR_NEEDED_);
   std::vector<core::BidAsk> vec = book.to_vector();
-  std::vector<core::BidAsk> check = {{100, 95, 96, 11}};
+  std::vector check = {core::BidAsk(100, 95, 96, 11)};
   ASSERT_EQ(vec, check);
 }

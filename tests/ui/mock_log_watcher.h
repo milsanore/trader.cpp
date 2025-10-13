@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -13,9 +14,9 @@ class MockLogWatcher : public ILogWatcher {
  public:
   explicit MockLogWatcher() {}
 
-  void set_callback(Callback cb) {}
+  void set_callback(Callback cb) override {}
 
-  void start() {};
+  void start() override {};
 };
 
 }  // namespace ui
