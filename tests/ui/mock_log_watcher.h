@@ -14,7 +14,7 @@ class MockLogWatcher : public ILogWatcher {
  public:
   explicit MockLogWatcher() {}
 
-  void set_callback(Callback cb) override {}
+  void set_callback([[maybe_unused]] Callback cb) override {}
 
   void start() override {};
 };

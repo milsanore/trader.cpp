@@ -2,6 +2,7 @@
 
 #include <quickfix/fix44/Message.h>
 
+#include <cstdint>
 #include <memory>
 #include <thread>
 

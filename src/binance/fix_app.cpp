@@ -1,6 +1,7 @@
 #include "fix_app.h"
 
 #include <quickfix/FixValues.h>
+#include <quickfix/Session.h>
 #include <quickfix/fix44/ExecutionReport.h>
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include <quickfix/fix44/MarketDataRequest.h>
@@ -9,6 +10,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <format>
 #include <memory>
 #include <string>
@@ -199,11 +201,11 @@ void FixApp::fromAdmin(const FIX::Message& msg,
 };
 void FixApp::fromApp(const FIX::Message& msg,
                      const FIX::SessionID& sessionId) noexcept(false) {
-  FIX::MessageCracker::crack(msg, sessionId);
+  FIX44::MessageCracker::crack(msg, sessionId);
 }
 
 void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m,
-                       const FIX::SessionID& sessionID) {
+                       [[maybe_unused]] const FIX::SessionID& sessionID) {
   order_queue_.enqueue(std::make_shared<const FIX44::MarketDataSnapshotFullRefresh>(m));
 }
 void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m,
@@ -218,7 +220,8 @@ void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m,
         sessionID.getSessionQualifier(), sessionID.toString());
   }
 }
-void FixApp::onMessage(const FIX44::ExecutionReport& message, const FIX::SessionID&) {
+void FixApp::onMessage([[maybe_unused]] const FIX44::ExecutionReport& message,
+                       [[maybe_unused]] const FIX::SessionID&) {
   spdlog::info("execution report");
   /*
   try {

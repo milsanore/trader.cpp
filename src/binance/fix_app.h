@@ -1,10 +1,11 @@
 #pragma once
 
 #include <quickfix/Application.h>
-#include <quickfix/MessageCracker.h>
 #include <quickfix/SessionID.h>
 #include <quickfix/fix44/Message.h>
+#include <quickfix/fix44/MessageCracker.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -15,12 +16,16 @@
 namespace binance {
 
 /// @brief Binance FIX App - Manages FIX connectivity to Binance
-class FixApp final : public FIX::Application, public FIX::MessageCracker {
+class FixApp final : public FIX::Application, public FIX44::MessageCracker {
  public:
   FixApp(const std::vector<std::string>& symbols,
          std::unique_ptr<IAuth> auth,
          const uint16_t MAX_DEPTH);
   ~FixApp() override = default;
+
+  // Use the FIX44::MessageCracker to pull in the relevant overloads. This resolves the
+  // ambiguity caused by multiple base classes having the same function name.
+  using FIX44::MessageCracker::onMessage;
 
   /// @brief
   void subscribe_to_prices(const FIX::SessionID& session_id) const;

@@ -1,13 +1,16 @@
 #include "order_book.h"
 
+#include "../binance/config.h"
+#include "../binance/symbol.h"
+#include "../utils/double.h"
 #include "absl/container/btree_map.h"
 #include "bid_ask.h"
 #include "spdlog/spdlog.h"
 
 namespace core {
 
-OrderBook::OrderBook(absl::btree_map<double, double, std::greater<>> bid_map,
-                     absl::btree_map<double, double> ask_map)
+OrderBook::OrderBook(absl::btree_map<uint64_t, uint64_t, std::greater<>> bid_map,
+                     absl::btree_map<uint64_t, uint64_t> ask_map)
     : bid_map_(std::move(bid_map)), ask_map_(std::move(ask_map)) {}
 
 // move constructor
@@ -63,31 +66,41 @@ void OrderBook::apply_snapshot(const FIX44::MarketDataSnapshotFullRefresh& msg) 
   msg.get(symbol);
   spdlog::info("MD snapshot message. symbol [{}]", symbol.getString());
 
-  if (std::string s = symbol.getValue(); s != "BTCUSDT") {
-    spdlog::error("wrong symbol, skipping snapshot. value [{}]", s);
+  binance::SymbolEnum sym = binance::Symbol::from_str(symbol.getValue());
+  if (sym != binance::SymbolEnum::BTCUSDT) {
+    spdlog::error("wrong symbol, skipping snapshot. value [{}]",
+                  binance::Symbol::to_str(sym));
     return;
   }
 
   bid_map_.clear();
   ask_map_.clear();
+
   FIX::NoMDEntries entries;
   msg.get(entries);
   const int num_entries = entries.getValue();
+  FIX44::MarketDataSnapshotFullRefresh::NoMDEntries group;
+  FIX::MDEntryType e_tp;
+  FIX::MDEntryPx e_px;
+  FIX::MDEntrySize e_sz;
   for (int i = 1; i <= num_entries; i++) {
-    FIX44::MarketDataSnapshotFullRefresh::NoMDEntries group;
     msg.getGroup(i, group);
-    FIX::MDEntryType entry_type;
-    FIX::MDEntryPx px;
-    FIX::MDEntrySize sz;
-    group.get(entry_type);
-    group.get(px);
-    group.get(sz);
-    if (entry_type == FIX::MDEntryType_BID) {
-      bid_map_[px.getValue()] = sz.getValue();
-    } else if (entry_type == FIX::MDEntryType_OFFER) {
-      ask_map_[px.getValue()] = sz.getValue();
+    group.get(e_tp);
+    group.get(e_px);
+    group.get(e_sz);
+
+    uint64_t px = utils::Double::toUint64(e_px.getValue(),
+                                          binance::Config::get_price_ticks_per_unit(sym));
+
+    uint64_t sz = utils::Double::toUint64(e_sz.getValue(),
+                                          binance::Config::get_size_ticks_per_unit(sym));
+
+    if (e_tp == FIX::MDEntryType_BID) {
+      bid_map_[px] = sz;
+    } else if (e_tp == FIX::MDEntryType_OFFER) {
+      ask_map_[px] = sz;
     } else {
-      spdlog::error("unknown bid/offer type [{}]", entry_type.getString());
+      spdlog::error("unknown bid/offer type [{}]", e_tp.getString());
     }
   }
 }
@@ -99,72 +112,74 @@ void OrderBook::apply_increment(const FIX44::MarketDataIncrementalRefresh& msg,
   msg.get(entries);
   const int num_entries = entries.getValue();
 
-  static auto handle_price_level_update =
-      [](auto& bid_ask_map, FIX::MDUpdateAction action, double price,
-         const FIX44::MarketDataIncrementalRefresh::NoMDEntries& size_group,
-         bool is_book_clear_needed) {
-        FIX::MDEntrySize sz;
-        switch (action.getValue()) {
-          case FIX::MDUpdateAction_NEW:
-            bid_ask_map[price] = size_group.get(sz).getValue();
-            break;
-          case FIX::MDUpdateAction_CHANGE:
-            if (is_book_clear_needed) {
-              bid_ask_map.clear();
-            }
-            bid_ask_map[price] = size_group.get(sz).getValue();
-            break;
-          case FIX::MDUpdateAction_DELETE:
-            bid_ask_map.erase(price);
-            break;
-          default:
-            spdlog::error("unknown price action. value [{}]", action.getValue());
-        }
-      };
-
-  std::string symbol;
   FIX44::MarketDataIncrementalRefresh::NoMDEntries group;
-  FIX::MDEntryType entry_type;
+  FIX::Symbol fsym;
+  std::optional<binance::SymbolEnum> symbol;
+  FIX::MDEntryType e_tp;
   FIX::MDUpdateAction action;
-  FIX::MDEntryPx px;
-  double price, size;
   for (int i = 1; i <= num_entries; i++) {
     msg.getGroup(i, group);
 
     // Update symbol if present or first group
     if (i == 1 || group.isSetField(FIX::FIELD::Symbol)) {
-      FIX::Symbol fsym;
       group.get(fsym);
-      std::string s = fsym.getValue();
-      if (s.empty()) {
-        throw std::runtime_error(
-            std::format("missing symbol on market data increment. i [{}]", i));
-      }
-      symbol = s;
+      symbol = binance::Symbol::from_str(fsym.getValue());
     }
-
+    if (!symbol) {
+      spdlog::error("missing symbol, skipping price increment. value [{}]");
+      continue;
+    }
     // debug
-    if (symbol.empty() || symbol != "BTCUSDT") {
-      spdlog::error("wrong symbol, skipping increment. value [{}]", symbol);
+    if (symbol != binance::SymbolEnum::BTCUSDT) {
+      spdlog::error("wrong symbol, skipping price increment. value [{}]",
+                    binance::Symbol::to_str(symbol.value()));
       continue;
     }
 
+    group.get(e_tp);
     group.get(action);
-    group.get(entry_type);
-    price = group.get(px).getValue();
-
-    switch (entry_type.getValue()) {
+    switch (e_tp.getValue()) {
       case FIX::MDEntryType_BID:
-        handle_price_level_update(bid_map_, action, price, group, is_book_clear_needed);
+        handle_price_level_update(bid_map_, symbol.value(), action, group,
+                                  is_book_clear_needed);
         break;
       case FIX::MDEntryType_OFFER:
-        handle_price_level_update(ask_map_, action, price, group, is_book_clear_needed);
+        handle_price_level_update(ask_map_, symbol.value(), action, group,
+                                  is_book_clear_needed);
         break;
       default:
-        spdlog::error("unknown bid/offer FIX::MDEntryType. value [{}]",
-                      entry_type.getValue());
+        spdlog::error("unknown bid/offer FIX::MDEntryType. value [{}]", e_tp.getValue());
     }
   }
 }
+
+void OrderBook::handle_price_level_update(
+    auto& bid_ask_map,
+    binance::SymbolEnum symbol,
+    FIX::MDUpdateAction action,
+    const FIX44::MarketDataIncrementalRefresh::NoMDEntries& group,
+    bool is_book_clear_needed) {
+  uint64_t px = utils::Double::toUint64(
+      group.get(e_px_).getValue(), binance::Config::get_price_ticks_per_unit(symbol));
+  //
+  switch (action.getValue()) {
+    case FIX::MDUpdateAction_DELETE:
+      bid_ask_map.erase(px);
+      break;
+    case FIX::MDUpdateAction_CHANGE: {
+      if (is_book_clear_needed) {
+        bid_ask_map.clear();
+      }
+      [[fallthrough]];
+    }
+    case FIX::MDUpdateAction_NEW: {
+      uint64_t sz = utils::Double::toUint64(
+          group.get(e_sz_).getValue(), binance::Config::get_size_ticks_per_unit(symbol));
+      bid_ask_map[px] = sz;
+    } break;
+    default:
+      spdlog::error("unknown price action. value [{}]", action.getValue());
+  }
+};
 
 }  // namespace core

@@ -2,6 +2,7 @@
 
 #include <quickfix/fix44/Message.h>
 
+#include <cstdint>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <memory>
@@ -39,10 +40,9 @@ class OrderBookBox {
   IScreen& screen_;
   core::OrderBook core_book_;
   ftxui::Component component_;
-  float scroll_x = 0;
   float scroll_y = 0;
   const std::array<std::pair<std::string, uint8_t>, 4> columns_ = {
-      {{"Bid Sz", 11}, {"Bid", 16}, {"Ask", 16}, {"Ask Sz", 11}}};
+      {{"Bid Sz", 10}, {"Bid", 13}, {"Ask", 13}, {"Ask Sz", 10}}};
   ftxui::Elements header_;
 
   // thread

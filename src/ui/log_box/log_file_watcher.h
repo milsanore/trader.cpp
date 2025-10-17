@@ -36,7 +36,7 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
   void set_callback(Callback cb) override { cb_ = std::move(cb); }
 
   void start() override {
-    worker_ = std::jthread{[this](const std::stop_token& stoken) {
+    worker_ = std::jthread{[this]([[maybe_unused]] const std::stop_token& stoken) {
       utils::Threading::set_thread_name(THREAD_NAME_);
       spdlog::info("starting watching log file on background thread, name [{}], id [{}]",
                    THREAD_NAME_, utils::Threading::get_os_thread_id());
@@ -46,11 +46,11 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
 
  private:
   // efsw override
-  void handleFileAction(efsw::WatchID watchid,
-                        const std::string& dir,
+  void handleFileAction([[maybe_unused]] efsw::WatchID watchid,
+                        [[maybe_unused]] const std::string& dir,
                         const std::string& filename,
                         efsw::Action action,
-                        std::string oldFilename = "") override {
+                        [[maybe_unused]] std::string oldFilename = "") override {
     if (filename != filename_) {
       return;
     }
@@ -67,6 +67,8 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
         }
         cb_(std::move(lines));
       } break;
+      // case efsw::Actions::Delete: {
+      // } break;
       default:
         break;
     }

@@ -2,7 +2,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=milsanore_trader.cpp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=milsanore_trader.cpp)
 [![codecov](https://codecov.io/github/milsanore/trader.cpp/graph/badge.svg?token=C787ZTXBQC)](https://codecov.io/github/milsanore/trader.cpp)
 
-<img src="docs/app.png" alt="stonks" width="750" />
+<img src="docs/app.gif" alt="trader.cpp" width="800" />
 <!-- <img src="docs/stonks.png" alt="stonks" width="250" /> -->
 
 # trader.cpp
@@ -82,6 +82,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - ✅ UI
   - ✅ publish messages to thread-safe queue
   - ✅ consume messages from thread-safe queue on a worker thread
+  - ✅ pretty print values
   - double-buffering
   - FPS limit
   - interrupt/ctrl+c signal
@@ -127,6 +128,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - UI snapshot testing
   - ✅ coverage gutters
 - performance
+  - ✅ store prices and sizes as integrals (ticks as `uint64_t`) for performance
   - release compile flags
   - profiling (valgrind/cachegrind)
   - gperftools
