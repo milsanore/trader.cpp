@@ -14,7 +14,7 @@ using ftxui::vbox;
 namespace ui {
 
 WalletBox::WalletBox() {
-  component_ = Renderer([this](bool focused) {
+  component_ = Renderer([](bool focused) {
     auto body = text(focused ? "Focused" : "Not Focused");
     return vbox(body) | border | (focused ? bold : dim);
   });

@@ -37,12 +37,11 @@ class TradeBox {
   // ui stuff
   IScreen& screen_;
   ftxui::Component component_;
-  float scroll_x = 0;
   float scroll_y = 1;
   ftxui::Element to_table();
   /// @brief the columns in the trade box table, and their widths
   const std::array<std::pair<std::string, uint8_t>, 5> columns_ = {
-      {{"Time", 17}, {"Side", 6}, {"Price", 16}, {"Size", 11}, {"ID", 25}}};
+      {{"Time", 17}, {"Side", 6}, {"Price", 13}, {"Size", 10}, {"ID", 13}}};
   ftxui::Elements header_;
 
   // trade ring-buffer stuff

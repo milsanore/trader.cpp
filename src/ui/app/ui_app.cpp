@@ -3,6 +3,7 @@
 #include <quickfix/fix44/Message.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -68,13 +69,13 @@ void App::start() {
 
   // start the main UI loop,
   // Arrange in 2×2 grid via containers
-  const auto row1 =
-      Horizontal({Vertical({book_box_->get_component() | flex}) | size(WIDTH, EQUAL, 60),
+  const ftxui::Component row1 =
+      Horizontal({Vertical({book_box_->get_component() | flex}) | flex,
                   Vertical({trade_box_->get_component() | flex}) | flex});
-  const auto row2 =
-      Horizontal({Vertical({wallet_box_.get_component() | flex}) | size(WIDTH, EQUAL, 50),
+  const ftxui::Component row2 =
+      Horizontal({Vertical({wallet_box_.get_component() | flex}) | flex,
                   Vertical({log_box_->get_component() | flex}) | flex});
-  const auto root = Vertical({row1 | size(HEIGHT, EQUAL, 20), row2 | flex});
+  const ftxui::Component root = Vertical({row1 | size(HEIGHT, EQUAL, 20), row2 | flex});
   screen_->loop(root);
 }
 

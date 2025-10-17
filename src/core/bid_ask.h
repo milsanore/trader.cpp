@@ -7,29 +7,24 @@ namespace core {
 /// @brief basic bid/ask level
 struct BidAsk {
  public:
-  explicit BidAsk(double bidsz = NAN,
-                  double bidpx = NAN,
-                  double askpx = NAN,
-                  double asksz = NAN)
+  BidAsk() {};
+  explicit BidAsk(u_int64_t bidsz, u_int64_t bidpx, u_int64_t askpx, u_int64_t asksz)
       : bid_sz(bidsz), bid_px(bidpx), ask_px(askpx), ask_sz(asksz) {}
 
-  double bid_sz = NAN;
-  double bid_px = NAN;
-  double ask_px = NAN;
-  double ask_sz = NAN;
+  // NB: using UINT64_MAX as a sentinel value.
+  // maybe it's smarter to use UINT64_MAX-1 as a sentinel,
+  // in order to catch overflow prices in the market?
+  static constexpr u_int64_t SENTINEL_ = UINT64_MAX;
+
+  u_int64_t bid_sz = SENTINEL_;
+  u_int64_t bid_px = SENTINEL_;
+  u_int64_t ask_px = SENTINEL_;
+  u_int64_t ask_sz = SENTINEL_;
 
   bool operator==(const BidAsk& other) const {
-    return eq(bid_sz, other.bid_sz) && eq(bid_px, other.bid_px) &&
-           eq(ask_sz, other.ask_sz) && eq(ask_px, other.ask_px);
+    return bid_sz == other.bid_sz && bid_px == other.bid_px && ask_sz == other.ask_sz &&
+           ask_px == other.ask_px;
   }
-
- private:
-  static bool eq(const double a, const double b) {
-    if (std::isnan(a) && std::isnan(b)) {
-      return true;
-    }
-    return a == b;
-  };
 };
 
 }  // namespace core

@@ -37,13 +37,8 @@ init-build-container:
 ## build-debug: 🔨 compile (debug)
 .PHONY: build-debug
 build-debug:
+	cmake --preset debug
 	cmake --build --preset=debug
-
-## build-diagnostic: 🩺 compile (diagnostic)
-.PHONY: build-diagnostic
-build-diagnostic:
-	cmake --preset diagnostic
-	cmake --build --preset=diagnostic
 
 ## build-release: 🏎️ compile (prod)
 .PHONY: build-release
@@ -71,13 +66,8 @@ tidy:
 ## run-debug: 🏃‍♂️  run the app (debug) (don't forget `withenv`)
 .PHONY: run-debug
 run-debug:
-	build/Debug/tradercpp
-
-## run-diagnostic: 🩺 run the app (diagnostic) (don't forget `withenv`)
-.PHONY: run-diagnostic
-run-diagnostic:
 	ASAN_OPTIONS=detect_leaks=1:leak_check_at_exit=1:fast_unwind_on_malloc=0 \
-	build/Diagnostic/tradercpp
+	build/Debug/tradercpp
 
 ## run-release: 🏎️  run the app (prod)
 .PHONY: run-release

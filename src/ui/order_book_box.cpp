@@ -4,9 +4,13 @@
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 #include <quickfix/fix44/Message.h>
 
+#include <cstdint>
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 
+#include "../binance/config.h"
+#include "../binance/symbol.h"
+#include "../utils/double.h"
 #include "../utils/threading.h"
 #include "app/iscreen.h"
 #include "helpers.h"
@@ -25,6 +29,8 @@ using ftxui::Renderer;
 using ftxui::SliderOption;
 using ftxui::text;
 using ftxui::vbox;
+
+using utils::Double;
 
 namespace ui {
 
@@ -97,13 +103,28 @@ ftxui::Element OrderBookBox::to_table() {
   ftxui::Elements table;
   const std::vector<core::BidAsk> book = core_book_.to_vector();
   const size_t row_count = book.size();
+  double bid_sz, bid_px, ask_px, ask_sz;
   for (size_t i = 0; i < row_count; ++i) {
     ftxui::Elements ui_row;
     const core::BidAsk& book_row = book[i];
-    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.bid_sz, columns_[0].second)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.bid_px, columns_[1].second)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.ask_px, columns_[2].second)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(book_row.ask_sz, columns_[3].second)));
+
+    bid_sz = static_cast<double>(book_row.bid_sz) /
+             binance::Config::get_size_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
+    bid_px = static_cast<double>(book_row.bid_px) /
+             binance::Config::get_price_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
+    ask_px = static_cast<double>(book_row.ask_px) /
+             binance::Config::get_price_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
+    ask_sz = static_cast<double>(book_row.ask_sz) /
+             binance::Config::get_size_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
+
+    ui_row.push_back(
+        ftxui::text(Helpers::Pad(utils::Double::trim(bid_sz), columns_[0].second)));
+    ui_row.push_back(
+        ftxui::text(Helpers::Pad(Double::pretty(bid_px), columns_[1].second)));
+    ui_row.push_back(
+        ftxui::text(Helpers::Pad(Double::pretty(ask_px), columns_[2].second)));
+    ui_row.push_back(
+        ftxui::text(Helpers::Pad(utils::Double::trim(ask_sz), columns_[3].second)));
     table.push_back(hbox(std::move(ui_row)));
   }
 
@@ -122,7 +143,7 @@ void OrderBookBox::poll_queue(const std::stop_token& stoken) {
     uint16_t sleep_time_us = INITIAL_SLEEP_US;
     auto adaptive_backoff = [&spin_count, &sleep_time_us]() {
       constexpr uint8_t MIN_SPINS = 10;
-      constexpr uint16_t MAX_SLEEP_US = 1000;
+      constexpr uint16_t MAX_SLEEP_US = 1'000;
       if (spin_count < MIN_SPINS) {
         ++spin_count;
         std::this_thread::yield();

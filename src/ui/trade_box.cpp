@@ -3,11 +3,16 @@
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include <quickfix/fix44/Message.h>
 
+#include <cstdint>
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <mutex>
 
+#include "../binance/config.h"
+#include "../binance/side.h"
+#include "../binance/symbol.h"
 #include "../core/trade.h"
+#include "../utils/double.h"
 #include "../utils/threading.h"
 #include "concurrentqueue.h"
 #include "helpers.h"
@@ -97,14 +102,21 @@ ftxui::Element TradeBox::to_table() {
 
   // ─────────── Data Rows ───────────
   const size_t buffer_size = buffer_copy.size();
+  double trade_sz, trade_px;
   for (size_t i = 0; i < buffer_size; ++i) {
     ftxui::Elements ui_row;
     const core::Trade& trade = buffer_copy[i];
-    std::string side = trade.side == '1' ? "buy" : "sell";
+    std::string side = binance::Side::to_str(trade.side);
+    trade_sz = static_cast<double>(trade.sz) /
+               binance::Config::get_size_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
+    trade_px = static_cast<double>(trade.px) /
+               binance::Config::get_price_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
     ui_row.push_back(ftxui::text(Helpers::Pad(trade.time, columns_[0].second)));
     ui_row.push_back(ftxui::text(Helpers::Pad(side, columns_[1].second)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(trade.px, columns_[2].second)));
-    ui_row.push_back(ftxui::text(Helpers::Pad(trade.sz, columns_[3].second)));
+    ui_row.push_back(
+        ftxui::text(Helpers::Pad(utils::Double::pretty(trade_px), columns_[2].second)));
+    ui_row.push_back(
+        ftxui::text(Helpers::Pad(utils::Double::trim(trade_sz), columns_[3].second)));
     ui_row.push_back(ftxui::text(Helpers::Pad(trade.id, columns_[4].second)));
     table.push_back(hbox(std::move(ui_row)));
   }
@@ -123,7 +135,7 @@ void TradeBox::poll_queue(const std::stop_token& stoken) {
     uint16_t sleep_time_us = INITIAL_SLEEP_US;
     auto adaptive_backoff = [&spin_count, &sleep_time_us]() {
       constexpr uint8_t MIN_SPINS = 10;
-      constexpr uint16_t MAX_SLEEP_US = 1000;
+      constexpr uint16_t MAX_SLEEP_US = 1'000;
       if (spin_count < MIN_SPINS) {
         ++spin_count;
         std::this_thread::yield();
@@ -175,10 +187,11 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
   const int num_entries = entries.getValue();
 
   FIX44::MarketDataIncrementalRefresh::NoMDEntries group;
-  std::string symbol;
+  FIX::Symbol fsym;
+  std::optional<binance::SymbolEnum> symbol;
   FIX::MDEntryPx e_px;
   FIX::MDEntrySize e_sz;
-  double price, size;
+  uint64_t price, size;
   FIX::MDEntryType e_type;
   FIX::TransactTime time;
   FIX::TradeID trade_id;
@@ -187,7 +200,7 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
   // Binance's "side" field ("AggressorSide") is a custom field, not part of the FIX spec
   constexpr int AGGRESSOR_TAG = 2446;
   FIX::CharField side_field(AGGRESSOR_TAG);
-  char side;
+  binance::SideEnum side{};
   //
   std::string raw_time;
   std::string time_only;
@@ -201,19 +214,17 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
 
     // Update symbol if present or first group
     if (i == 1 || group.isSetField(FIX::FIELD::Symbol)) {
-      FIX::Symbol fsym;
       group.get(fsym);
-      std::string s = fsym.getValue();
-      if (s.empty()) {
-        throw std::runtime_error(
-            std::format("missing symbol on market data increment. i [{}]", i));
-      }
-      symbol = s;
+      symbol = binance::Symbol::from_str(fsym.getValue());
     }
-
+    if (!symbol) {
+      spdlog::error("missing symbol, skipping trade entry. value [{}]");
+      continue;
+    }
     // debug
-    if (symbol.empty() || symbol != "BTCUSDT") {
-      spdlog::error("wrong symbol, skipping increment. value [{}]", symbol);
+    if (symbol != binance::SymbolEnum::BTCUSDT) {
+      spdlog::error("wrong symbol, skipping increment. value [{}]",
+                    binance::Symbol::to_str(symbol.value()));
       continue;
     }
 
@@ -222,9 +233,13 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
       case FIX::MDEntryType_TRADE: {
         if (group.isSetField(AGGRESSOR_TAG)) {
           group.getField(side_field);
-          side = side_field.getValue();
-          price = group.get(e_px).getValue();
-          size = group.get(e_sz).getValue();
+          side = binance::Side::from_str(side_field.getValue());
+          price = utils::Double::toUint64(
+              group.get(e_px).getValue(),
+              binance::Config::get_price_ticks_per_unit(symbol.value()));
+          size = utils::Double::toUint64(
+              group.get(e_sz).getValue(),
+              binance::Config::get_size_ticks_per_unit(symbol.value()));
           group.getField(trade_id);
           trade_id_str = trade_id.getValue();
           std::string timeOnly = "";

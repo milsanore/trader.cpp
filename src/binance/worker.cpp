@@ -30,7 +30,7 @@ Worker::Worker(std::unique_ptr<FixApp> app,
       worker_task_(task) {
   // default behaviour
   if (!task) {
-    worker_task_ = {[this](const std::stop_token& stoken) {
+    worker_task_ = {[this]([[maybe_unused]] const std::stop_token& stoken) {
       utils::Threading::set_thread_name(THREAD_NAME_);
       spdlog::info("starting FIX wrapper thread. name [{}], id [{}]", THREAD_NAME_,
                    utils::Threading::get_os_thread_id());

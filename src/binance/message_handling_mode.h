@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 namespace binance {
@@ -18,7 +19,7 @@ struct MessageHandlingMode {
     SEQUENTIAL = 2,
   };
 
-  static constexpr uint16_t FIELD_ID = 25035;
+  static constexpr uint16_t FIELD_ID = 25'035;
 
   static constexpr uint16_t to_int(Mode m) noexcept { return static_cast<uint16_t>(m); }
 

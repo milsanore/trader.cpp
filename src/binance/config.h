@@ -1,24 +1,20 @@
 #pragma once
 
+#include <cmath>
 #include <cstdint>
 #include <format>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
+
+#include "../utils/double.h"
+#include "symbol.h"
 
 namespace binance {
 
 /// @brief Binance config parameters, fetched from env
 struct Config {
- private:
-  static constexpr uint32_t fnv1a_hash(std::string_view str) {
-    uint32_t hash = 2166136261u;
-    for (char c : str) {
-      hash = (hash ^ c) * 16777619u;
-    }
-    return hash;
-  }
-
  public:
   // TODO: MAKE UNIQUE POINTERS
   std::string api_key, private_key_path;
@@ -27,21 +23,37 @@ struct Config {
   //
   static Config from_env();
 
-  /// @brief fast runtime lookup
-  /// @param symbol
-  /// @return
-  static constexpr uint16_t get_tick_size(std::string_view symbol) {
-    switch (fnv1a_hash(symbol)) {
-      case fnv1a_hash("BTCUSDT"):
-        return 1;
-      case fnv1a_hash("ETHUSDT"):
-        return 1;
-      case fnv1a_hash("DOGEUSDT"):
-        return 1;
-      default:
-        throw std::runtime_error(
-            std::format("cannot find tick size, symbol [{}]", symbol));
+  /// @brief convert a market price to a tick representation, for performance and
+  /// correctness
+  static uint64_t price_to_ticks(const double price, const binance::SymbolEnum symbol) {
+    return utils::Double::toUint64(price,
+                                   binance::Config::get_price_ticks_per_unit(symbol));
+  }
+
+  /// @brief retrieves the equivalent of `1 / tick_size` for prices
+  static constexpr uint64_t get_price_ticks_per_unit(const SymbolEnum s) {
+    switch (s) {
+      case SymbolEnum::BTCUSDT:
+        return 100u;
+      case SymbolEnum::ETHUSDT:
+        return 100u;
     }
+    throw std::runtime_error(
+        std::format("cannot get price tick. NB: this should never throw. symbol [{}]",
+                    Symbol::to_str(s)));
+  }
+
+  /// @brief retrieves the equivalent of `1 / tick_size` for volumes
+  static constexpr uint64_t get_size_ticks_per_unit(const SymbolEnum s) {
+    switch (s) {
+      case SymbolEnum::BTCUSDT:
+        return 100'000u;
+      case SymbolEnum::ETHUSDT:
+        return 10'000u;
+    }
+    throw std::runtime_error(
+        std::format("cannot get size tick. NB: this should never throw. symbol [{}]",
+                    Symbol::to_str(s)));
   }
 
   /// @brief 1 == top level, otherwise 5000 is Binance's maximum depth

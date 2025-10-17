@@ -39,15 +39,15 @@ class Worker final {
       const;
 
  private:
-  // thread
-  std::jthread worker_;
-  std::function<void(std::stop_token)> worker_task_;
   // FIX
   std::unique_ptr<FixApp> app_;
   std::unique_ptr<FIX::FileStoreFactory> store_;
   FIX::SessionSettings settings_;
   std::unique_ptr<FIX::FileLogFactory> log_;
   std::unique_ptr<FIX::SocketInitiator> initiator_;
+  // thread
+  std::jthread worker_;
+  std::function<void(std::stop_token)> worker_task_;
 };
 
 }  // namespace binance
