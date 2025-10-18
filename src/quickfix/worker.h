@@ -9,11 +9,11 @@
 #include <memory>
 #include <thread>
 
+#include "../binance/config.h"
 #include "concurrentqueue.h"
-#include "config.h"
 #include "fix_app.h"
 
-namespace binance {
+namespace quickfix {
 
 /// @brief Binance DI container
 class Worker final {
@@ -28,7 +28,7 @@ class Worker final {
   /// @brief factory for concrete Binance instances, using config
   /// @param conf Binance configuration parameters
   /// @return
-  static Worker from_conf(Config& conf);
+  static Worker from_conf(binance::Config& conf);
   /// @brief start worker thread, connect to Binance, subscribe to updates, push
   /// updates onto queue. under the hood the {FixApp} is actioned
   void start();
@@ -50,4 +50,4 @@ class Worker final {
   std::function<void(std::stop_token)> worker_task_;
 };
 
-}  // namespace binance
+}  // namespace quickfix

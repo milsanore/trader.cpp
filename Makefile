@@ -73,3 +73,8 @@ run-debug:
 .PHONY: run-release
 run-release:
 	build/Release/tradercpp
+
+## fix8-rebuild: 🏦 rebuild fix8 classes
+.PHONY: fix8-rebuild
+fix8-rebuild:
+	f8c -n binance -p fix8 -o third_party/fix8 -c client binance/spot-fix-md.xml

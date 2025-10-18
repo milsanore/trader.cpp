@@ -16,16 +16,17 @@
 #include <string>
 #include <vector>
 
+#include "../binance/iauth.h"
+#include "../binance/message_handling_mode.h"
 #include "../utils/threading.h"
-#include "message_handling_mode.h"
 #include "spdlog/spdlog.h"
 
-namespace binance {
+namespace quickfix {
 
 // PUBLIC
 
 FixApp::FixApp(const std::vector<std::string>& symbols,
-               std::unique_ptr<IAuth> auth,
+               std::unique_ptr<binance::IAuth> auth,
                const uint16_t MAX_DEPTH)
     : symbols_(symbols), auth_(std::move(auth)), MAX_DEPTH_(MAX_DEPTH) {
   // TODO(mils): I think this is a singleton
@@ -170,9 +171,9 @@ void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
     msg.setField(FIX::Username(auth_->get_api_key()));
     msg.setField(FIX::RawData(signature));
     msg.setField(FIX::RawDataLength(static_cast<FIX::LENGTH>(signature.size())));
-    msg.setField(FIX::StringField(
-        MessageHandlingMode::FIELD_ID,
-        MessageHandlingMode::to_string(MessageHandlingMode::Mode::SEQUENTIAL)));
+    msg.setField(FIX::StringField(binance::MessageHandlingMode::FIELD_ID,
+                                  binance::MessageHandlingMode::to_string(
+                                      binance::MessageHandlingMode::Mode::SEQUENTIAL)));
   } else {
     spdlog::info(
         "toAdmin.   session qualifier [{}], session id [{}], type [{}], message [{}]",
@@ -259,4 +260,4 @@ void onMessage(const FIX::Message& msg, const FIX::SessionID&) {
                 replace_soh(msg.toString()));
 }
 
-}  // namespace binance
+}  // namespace quickfix

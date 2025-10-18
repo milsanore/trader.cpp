@@ -1,7 +1,8 @@
 #include <string>
 
 #include "binance/config.h"
-#include "binance/worker.h"
+#include "fix8/includes.h"
+#include "quickfix/worker.h"
 #include "spdlog/cfg/env.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
@@ -24,17 +25,17 @@ int main() {
 
   // Binance market data connectivity
   auto b_conf = binance::Config::from_env();
-  auto b_worker = binance::Worker::from_conf(b_conf);
-  b_worker.start();
+  auto qf_worker = quickfix::Worker::from_conf(b_conf);
+  qf_worker.start();
 
   // ui app (reads from Binance's queues)
-  auto ui = ui::App::from_env(b_worker.get_order_queue(), b_worker.get_trade_queue(),
+  auto ui = ui::App::from_env(qf_worker.get_order_queue(), qf_worker.get_trade_queue(),
                               b_conf.MAX_DEPTH);
   ui.start();
 
   if (ui.thread_exception) {
     std::rethrow_exception(ui.thread_exception);
   }
-  b_worker.stop();
+  qf_worker.stop();
   spdlog::info("goodbye");
 }

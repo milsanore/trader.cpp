@@ -1,15 +1,16 @@
 [requires]
-abseil/20250814.0
-boost/1.88.0
-concurrentqueue/1.0.4
-efsw/1.4.1
-ftxui/6.0.2
-ms-gsl/4.2.0
-gtest/1.17.0
-openssl/3.5.2
-quickfix/1.15.1
-libsodium/1.0.20
-spdlog/1.15.3
+abseil/20250814.0  # fast collection for order book 
+boost/1.88.0 
+concurrentqueue/1.0.4  # fast FIX message handling
+efsw/1.4.1  # file watcher, for log view
+ftxui/6.0.2  # UI
+ms-gsl/4.2.0  # c++ guidelines
+gtest/1.17.0  # unit tests
+openssl/3.5.2  # ssl
+quickfix/1.15.1  # FIX library
+libsodium/1.0.20  # encryption for Binance auth
+spdlog/1.15.3  # logging
+poco/1.14.2  # fix8 dependency
 
 [generators]
 CMakeToolchain

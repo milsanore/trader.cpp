@@ -8,13 +8,14 @@
 
 #include <memory>
 
+#include "../binance/auth.h"
+#include "../binance/config.h"
+#include "../binance/iauth.h"
 #include "../utils/threading.h"
-#include "auth.h"
-#include "config.h"
 #include "fix_app.h"
 #include "spdlog/spdlog.h"
 
-namespace binance {
+namespace quickfix {
 
 Worker::Worker(std::unique_ptr<FixApp> app,
                std::unique_ptr<FIX::FileStoreFactory> store,
@@ -44,9 +45,9 @@ Worker::Worker(std::unique_ptr<FixApp> app,
 }
 
 // static member function
-Worker Worker::from_conf(Config& conf) {
-  std::unique_ptr<IAuth> auth =
-      std::make_unique<Auth>(conf.api_key, conf.private_key_path);
+Worker Worker::from_conf(binance::Config& conf) {
+  std::unique_ptr<binance::IAuth> auth =
+      std::make_unique<binance::Auth>(conf.api_key, conf.private_key_path);
   auto app = std::make_unique<FixApp>(conf.symbols, std::move(auth), conf.MAX_DEPTH);
   auto settings = FIX::SessionSettings{conf.fix_config_path};
   auto store = std::make_unique<FIX::FileStoreFactory>(settings);
@@ -93,4 +94,4 @@ Worker::get_trade_queue() const {
   return app_->trade_queue_;
 }
 
-}  // namespace binance
+}  // namespace quickfix

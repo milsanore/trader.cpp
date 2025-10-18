@@ -10,16 +10,16 @@
 #include <string>
 #include <vector>
 
+#include "../binance/iauth.h"
 #include "concurrentqueue.h"
-#include "iauth.h"
 
-namespace binance {
+namespace quickfix {
 
 /// @brief Binance FIX App - Manages FIX connectivity to Binance
 class FixApp final : public FIX::Application, public FIX44::MessageCracker {
  public:
   FixApp(const std::vector<std::string>& symbols,
-         std::unique_ptr<IAuth> auth,
+         std::unique_ptr<binance::IAuth> auth,
          const uint16_t MAX_DEPTH);
   ~FixApp() override = default;
 
@@ -47,7 +47,7 @@ class FixApp final : public FIX::Application, public FIX44::MessageCracker {
   static constexpr std::string TRADE_SESSION_QUALIFIER_ = "TX";
   static constexpr std::string ORDER_SESSION_QUALIFIER_ = "OX";
   const std::vector<std::string>& symbols_;
-  const std::unique_ptr<IAuth> auth_;
+  const std::unique_ptr<binance::IAuth> auth_;
   const uint16_t MAX_DEPTH_;
 
   void onCreate(const FIX::SessionID&) override;
@@ -66,4 +66,4 @@ class FixApp final : public FIX::Application, public FIX44::MessageCracker {
   void onMessage(const FIX44::ExecutionReport&, const FIX::SessionID&) override;
 };
 
-}  // namespace binance
+}  // namespace quickfix
