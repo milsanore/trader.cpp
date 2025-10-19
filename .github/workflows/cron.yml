@@ -10,7 +10,7 @@ jobs:
   format:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/milsanore/tradercppbuild:v1.5
+      image: ghcr.io/milsanore/tradercppbuild:v1.6
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
     needs: format
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/milsanore/tradercppbuild:v1.5
+      image: ghcr.io/milsanore/tradercppbuild:v1.6
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -46,6 +46,7 @@ jobs:
           cmake --preset=debug
           cmake --build --preset=debug
           ctest --preset=debug
+          # `lcov` FOR CODECOV
           lcov --gcov-tool gcov \
             --capture \
             --directory . \
@@ -53,6 +54,8 @@ jobs:
             --rc geninfo_unexecuted_blocks=1 \
             --ignore-errors mismatch
           lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
+          # `gcovr` FOR SONARQUBE
+          gcovr -r . --exclude 'tests/*' --cobertura-pretty -o sonar-coverage.xml
       - name: clang-tidy (delta)
         run: hooks/check_clang_tidy.sh
       - name: Upload coverage to Codecov
@@ -67,5 +70,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.javascript.lcov.reportPaths=lcov_filtered.info
+            -Dsonar.cfamily.coverage.reportPaths=sonar-coverage.xml
+            -Dsonar.sources=src
+            -Dsonar.projectBaseDir=.
         continue-on-error: true

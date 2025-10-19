@@ -25,19 +25,30 @@ init:
 	rm -rf build && mkdir build
 	python3 -m venv .venv
 	source .venv/bin/activate && \
-		pip install conan && \
+		pip install gcovr conan && \
 		conan install . --build=missing -s build_type=Debug
 	cmake --preset=debug
 
-## init-build-container: 🚢 create the docker container for building the app (hosted on dockerhub)
-.PHONY: init-build-container
-init-build-container:
-	docker build -f Dockerfile_build -t milss/tradercppbuild:latest .
+## build-container: 🚢 create the docker container for building the app (hosted on dockerhub and ghcr)
+.PHONY: build-container
+build-container:
+	IMAGE_VERSION=
+	@if [ -z "$(IMAGE_VERSION)" ]; then \
+		echo "Error: IMAGE_VERSION is not set"; \
+		echo "(you can set it on the command line like so: \`make build-container IMAGE_VERSION=1.6\`)"; \
+		exit 1; \
+	fi
+	docker build -f Dockerfile_build -t milss/tradercppbuild:latest -t milss/tradercppbuild:v$(IMAGE_VERSION) .
+
+## docker: 🚢 create an app docker image
+.PHONY: docker
+docker:
+	docker build .
 
 ## build-debug: 🔨 compile (debug)
 .PHONY: build-debug
 build-debug:
-	cmake --preset debug
+	echo "assuming `make init` has already been run.";
 	cmake --build --preset=debug
 
 ## build-release: 🏎️ compile (prod)
@@ -55,6 +66,8 @@ test:
 	cmake --build --preset=debug
 	ctest --preset=debug
 	lcov --gcov-tool gcov --capture --directory . --output-file lcov.info
+	source .venv/bin/activate && \
+		gcovr -r . --exclude 'tests/*' --cobertura-pretty -o sonar-coverage.xml
 
 ## tidy: 🧹 tidy things up before committing code
 .PHONY: tidy
