@@ -39,4 +39,4 @@ jobs:
         with:
             files: build/Release/tradercpp
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.PAT_RELEASE_20261020 }}
