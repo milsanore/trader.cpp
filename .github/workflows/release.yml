@@ -13,30 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Restore Conan cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.conan2
-          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}-Release
-
-      - name: Install conan dependencies
-        run: |
-          set -e
-          rm -rf build
-          conan profile detect --force
-          conan install . --build=missing -s build_type=Release
-
-      - name: Build
-        run: |
-          set -e
-          cmake --preset=release
-          cmake --build --preset=release
-          chmod +x build/Release/tradercpp
-
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
-            files: build/Release/tradercpp
-        env:
-            GITHUB_TOKEN: ${{ secrets.PAT_RELEASE_20261020 }}
+          files: conanfile.txt
+          token: ${{ secrets.PAT_RELEASE_20261020 }}
