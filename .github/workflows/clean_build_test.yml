@@ -40,9 +40,6 @@ jobs:
         with:
           path: ~/.conan2
           key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}-Debug
-          restore-keys: |
-            ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}-
-            ${{ runner.os }}-conan-
 
       - name: Install conan dependencies
         run: |
