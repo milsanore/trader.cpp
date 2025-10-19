@@ -3,6 +3,7 @@ name: Release
 on:
   release:
     types: [published]  # Triggers when a release is published
+  workflow_dispatch:     # Allows manual run from GitHub UI
 
 jobs:
   build_release:
