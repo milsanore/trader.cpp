@@ -48,7 +48,6 @@ docker:
 ## build-debug: 🔨 compile (debug)
 .PHONY: build-debug
 build-debug:
-	echo "assuming `make init` has already been run.";
 	cmake --build --preset=debug
 
 ## build-release: 🏎️ compile (prod)
@@ -67,7 +66,7 @@ test:
 	ctest --preset=debug
 	lcov --gcov-tool gcov --capture --directory . --output-file lcov.info
 	source .venv/bin/activate && \
-		gcovr -r . --exclude 'tests/*' --cobertura-pretty -o sonar-coverage.xml
+		gcovr -r . --exclude 'tests/*' --sonarqube -o sonar-coverage.xml
 
 ## tidy: 🧹 tidy things up before committing code
 .PHONY: tidy

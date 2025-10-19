@@ -56,7 +56,7 @@ jobs:
             --ignore-errors mismatch
           lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
           # `gcovr` FOR SONARQUBE
-          gcovr -r . --exclude 'tests/*' --cobertura-pretty -o sonar-coverage.xml
+          gcovr -r . --exclude 'tests/*' --sonarqube -o sonar-coverage.xml
       - name: Configure git safe directory
         run: git config --global --add safe.directory $(pwd)
       - name: clang-tidy (delta)

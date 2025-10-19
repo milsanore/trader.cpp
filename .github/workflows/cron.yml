@@ -55,7 +55,7 @@ jobs:
             --ignore-errors mismatch
           lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
           # `gcovr` FOR SONARQUBE
-          gcovr -r . --exclude 'tests/*' --cobertura-pretty -o sonar-coverage.xml
+          gcovr -r . --exclude 'tests/*' --sonarqube -o sonar-coverage.xml
       - name: clang-tidy (delta)
         run: hooks/check_clang_tidy.sh
       - name: Upload coverage to Codecov
