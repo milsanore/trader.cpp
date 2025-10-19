@@ -70,7 +70,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.cfamily.coverage.reportPaths=sonar-coverage.xml
-            -Dsonar.sources=src
+            -Dsonar.coverageReportPaths=sonar-coverage.xml
             -Dsonar.projectBaseDir=.
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
         continue-on-error: true
