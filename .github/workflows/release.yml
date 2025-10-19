@@ -18,8 +18,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.conan2
-          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}
+          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}-Release
           restore-keys: |
+            ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}-
             ${{ runner.os }}-conan-
 
       - name: Install conan dependencies
