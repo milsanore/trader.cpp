@@ -1,0 +1,87 @@
+name: Reusable Build Workflow
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git reference to checkout'
+        required: false
+        type: string
+
+# workflow_dispatch: # Allows manual triggering
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/milsanore/tradercppbuild:v1.6
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # if commit ref not set, revert to github-set commit
+          ref: ${{ inputs.ref || github.ref }}
+      - name: clang-format
+        run: hooks/check_clang_format.sh
+
+  build_and_test:
+    needs: format
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/milsanore/tradercppbuild:v1.6
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore Conan cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}
+          restore-keys: |
+            ${{ runner.os }}-conan-
+      - name: Install conan dependencies
+        run: |
+          set -e
+          rm -rf build
+          conan profile detect --force
+          conan install . --build=missing -s build_type=Debug
+      - name: Build
+        run: |
+          set -e
+          cmake --preset=debug
+          cmake --build --preset=debug
+          ctest --preset=debug
+      - name: Test
+        run: |
+          set -e
+          # `lcov` FOR CODECOV
+          lcov --gcov-tool gcov \
+            --capture \
+            --directory . \
+            --output-file lcov.info \
+            --rc geninfo_unexecuted_blocks=1 \
+            --ignore-errors mismatch
+          lcov --remove lcov.info '/home/*' '/usr/*' 'tests/*' --output-file lcov_filtered.info
+          # `gcovr` FOR SONARQUBE
+          gcovr -r . --exclude 'tests/*' --sonarqube -o sonar-coverage.xml
+      - name: clang-tidy (delta)
+        run: hooks/check_clang_tidy.sh
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov_filtered.info
+        continue-on-error: true
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.coverageReportPaths=sonar-coverage.xml
+            -Dsonar.projectBaseDir=.
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+        continue-on-error: true

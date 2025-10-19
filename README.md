@@ -3,10 +3,12 @@
 [![codecov](https://codecov.io/github/milsanore/trader.cpp/graph/badge.svg?token=C787ZTXBQC)](https://codecov.io/github/milsanore/trader.cpp)
 
 <img src="docs/app.gif" alt="trader.cpp" width="800" />
-<!-- <img src="docs/stonks.png" alt="stonks" width="250" /> -->
+<br/>
+<br/>
 
 # trader.cpp
-a proof-of-concept, showcasing some c++ coding combined with some fintech concepts
+Small trading UI connected to Binance over their FIX API.<br/>
+A proof-of-concept, showcasing some modern c++ and some fintech concepts.
 
 ## Run Requirements
 - a Binance account, with an Ed25519 token that has FIX read permissions enabled 
@@ -27,7 +29,9 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
 - `lcov`
 
 ## Build and Run
-(NB: this app uses `make` as a task runner, but it's not essential)
+NB: this app uses `make` as a recipe book, but it's not essential:
+<img src="docs/make-menu.png" alt="trader.cpp" width="800" />
+
 1. copy `.env.example` to `.env`, and set your public/private keys
 2. run an SSL tunnel (e.g. `stunnel binance/stunnel_prod.conf`)
 3. `make init`
@@ -74,6 +78,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - update balance for in-flight orders (reconcile asynchronously)
 
 ## Non-functional
+- ✅ QuickFIX
 - ✅ basic cpp app to start with
 - ✅ makefile and build chain
 - ✅ package management
@@ -108,7 +113,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - ✅ integrated into build pipeline
   - ✅ badges
   - ✅ sonarcloud integrated into build pipeline
-  - sonarcloud coverage
+  - ✅ sonarcloud coverage
 - diagnostics
   - ✅ ASan
   - UBSan
@@ -118,7 +123,7 @@ a proof-of-concept, showcasing some c++ coding combined with some fintech concep
   - ✅ custom docker build image with all dependencies (hosted on GHCR for faster pipelines)
   - ✅ cron
     - ✅ comprehensive clang-tidy & clang-format checks
-    - sonarcloud
+    - ✅ sonarcloud
   - ccache or precomiled headers
   - local github action runner (`act`)
   - containerised integration tests / dind
