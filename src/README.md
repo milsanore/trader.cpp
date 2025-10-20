@@ -1,14 +1,25 @@
 # NOTES
-- c++ namespace names map to the first level of subdirectories in src/
+- namespaces map to the first level of subdirectories in src/
 
 # SUBFOLDERS
-- binance
-    - FIX connectivity to the Binance exchange
-- core
-    - core trading engine functionality
-    - e.g. the order book
-- ui
-    - a basic terminal ui written using the c++ `ftxui` library (similar to ncurses)
 
-## UTILS
-- os-specific stuff
+## binance
+- Classes that faciliate connectivity to the Binance crypto exchange using the FIX protocol and the c++ "QuickFIX" library
+- Pushes updates to two concurrent queues, that downstream consumers can use:
+    1. order updates (prices/volumes)
+    2. trade updates
+- NB: Binance uses a custom authentication mechanism
+
+## core
+- core trading engine functionality
+- e.g. the order book
+- some coupling to the binance namespace (symbol, side, and multiplier values).
+- TODO(mils): move out.
+
+## ui
+- a basic terminal ui written using the c++ `ftxui` library (similar to ncurses)
+- work done predominantly on background threads
+
+## utils
+- helpers
+- non-portable (OS-specific) stuff

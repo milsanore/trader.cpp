@@ -3,7 +3,7 @@ name: Release
 on:
   release:
     types: [published]  # Triggers when a release is published
-  workflow_dispatch:     # Allows manual run from GitHub UI
+  workflow_dispatch:  # Allows manual run from GitHub UI
 
 jobs:
   build_release:
@@ -25,7 +25,7 @@ jobs:
           set -e
           rm -rf build
           conan profile detect --force
-          conan install . --build=missing -s build_type=Release
+          conan install . --lockfile=conan.lock --build=missing -s build_type=Release
 
       - name: Build
         run: |

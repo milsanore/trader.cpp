@@ -13,7 +13,7 @@ help: Makefile
 	@echo " Choose a command to run:"
 	@sed -n 's/^##//p' $< | column -t -s ':' | sed -e 's/^/ /'
 
-## withenv: 😭 `make` executes every line as a new shell. this is a workaround => `make withenv RECIPE=init`
+## withenv: 😭 run `make` with envars from `.env`. like so `make withenv RECIPE=init`
 .PHONY: withenv
 withenv:
 	test -e .env || cp .env.example .env
@@ -26,35 +26,26 @@ init:
 	python3 -m venv .venv
 	source .venv/bin/activate && \
 		pip install gcovr conan && \
-		conan install . --build=missing -s build_type=Debug
+		conan install . --lockfile=conan.lock --build=missing -s build_type=Debug
 	cmake --preset=debug
 
-## build-container: 🚢 create the docker container for building the app (hosted on dockerhub and ghcr)
-.PHONY: build-container
-build-container:
-	IMAGE_VERSION=
-	@if [ -z "$(IMAGE_VERSION)" ]; then \
-		echo "Error: IMAGE_VERSION is not set"; \
-		echo "(you can set it on the command line like so: \`make build-container IMAGE_VERSION=1.6\`)"; \
-		exit 1; \
-	fi
-	docker build -f Dockerfile_build -t milss/tradercppbuild:latest -t milss/tradercppbuild:v$(IMAGE_VERSION) .
-
-## docker: 🚢 create an app docker image
-.PHONY: docker
-docker:
-	docker build .
+## lock-conan: 📦 run after installing conan dependencies
+.PHONY: lock-conan
+lock-conan:
+	conan lock create . --profile:host=default -s build_type=Debug --lockfile-out=conan.lock
+	conan lock create . --profile:host=default -s build_type=Release --lockfile=conan.lock --lockfile-out=conan.lock
 
 ## build-debug: 🔨 compile (debug)
 .PHONY: build-debug
 build-debug:
+	$(call pp,assuming `make init` has been called)
 	cmake --build --preset=debug
 
 ## build-release: 🏎️ compile (prod)
 .PHONY: build-release
 build-release:
 	source .venv/bin/activate && \
-		conan install . --build=missing -s build_type=Release
+		conan install . --lockfile=conan.lock --build=missing -s build_type=Release
 	cmake --preset=release
 	cmake --build --preset=release
 

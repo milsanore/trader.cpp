@@ -3,8 +3,7 @@ name: Daily
 on:
   schedule:
     - cron: '0 0 * * *'  # Runs every day at midnight UTC
-
-# workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:  # Allows manual run from GitHub UI
 
 jobs:
   call-reusable:

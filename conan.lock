@@ -1,0 +1,27 @@
+{
+    "version": "0.5",
+    "requires": [
+        "zlib/1.3.1#b8bc2603263cf7eccbd6e17e66b0ed76%1733936244.862",
+        "spdlog/1.15.3#3ca0e9e6b83af4d0151e26541d140c86%1748617970.519",
+        "quickfix/1.15.1#fe4ca02d3a021859ba9673f5d481f31d%1691409263.817",
+        "openssl/3.5.2#0c5a5e15ae569f45dff57adcf1770cf7%1754407017.477",
+        "ms-gsl/4.2.0#eb8e3068d01908f5c6fed255fc0d4098%1745345253.347",
+        "libsodium/1.0.20#d2baa92ed999abe295ff63e2ee25b4f3%1743063880.072",
+        "libbacktrace/cci.20210118#a7691bfccd8caaf66309df196790a5a1%1722218217.276",
+        "gtest/1.17.0#5224b3b3ff3b4ce1133cbdd27d53ee7d%1755784855.585",
+        "ftxui/6.0.2#1b49d899f377591328fd17df1b3fd98e%1744735500.697",
+        "fmt/11.2.0#579bb2cdf4a7607621beea4eb4651e0f%1746298708.362",
+        "efsw/1.4.1#a4dc44b2fa9fa5a55081e365b1301d4c%1731488680.092",
+        "concurrentqueue/1.0.4#1e48e1c712bcfd892087c9c622a51502%1687274728.048",
+        "bzip2/1.0.8#00b4a4658791c1f06914e087f0e792f5%1744702067.178",
+        "boost/1.88.0#6e3079d628a51513bfff72f3ee17668f%1759416413.7",
+        "abseil/20250814.0#4e0fdd34a888b97aca482e648fc27a3b%1758546438.307"
+    ],
+    "build_requires": [
+        "cmake/4.1.1#23ee27eac0192593228fe8ced4680627%1756413041.241",
+        "cmake/3.31.8#dde3bde00bb843687e55aea5afa0e220%1751628300.59",
+        "b2/5.3.3#107c15377719889654eb9a162a673975%1750340310.079"
+    ],
+    "python_requires": [],
+    "config_requires": []
+}

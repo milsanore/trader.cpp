@@ -46,7 +46,7 @@ jobs:
           set -e
           rm -rf build
           conan profile detect --force
-          conan install . --build=missing -s build_type=Debug
+          conan install . --lockfile=conan.lock --build=missing -s build_type=Debug
 
       - name: Build
         run: |

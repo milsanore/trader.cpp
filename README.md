@@ -3,16 +3,28 @@
 [![codecov](https://codecov.io/github/milsanore/trader.cpp/graph/badge.svg?token=C787ZTXBQC)](https://codecov.io/github/milsanore/trader.cpp)
 
 <img src="docs/app.gif" alt="trader.cpp" width="800" />
-<br/>
-<br/>
 
 # trader.cpp
 Small trading UI connected to Binance over their FIX API.<br/>
 A proof-of-concept, showcasing some modern c++ and some fintech concepts.
 
 ## Run Requirements
-- a Binance account, with an Ed25519 token that has FIX read permissions enabled 
+- linux (tested with debian-trixie)
 - `stunnel` for TLS encryption (or a local proxy)
+- a Binance account, and an Ed25519 token with FIX read permissions enabled
+
+## Run
+- start an SSL tunnel
+  - e.g. run `stunnel stunnel_prod.conf` (from the binance folder)
+- configure:
+  - copy `fixconfig` (from the binance folder)
+  - copy `spot-fix-md.xml` (from the binance folder) and edit references in fixconfig
+  - copy your binance private key pem and your public api key
+  - copy `.env.example` to `.env`, edit values, and source the file
+- run:
+  - download release
+  - `chmod u+x tradercpp`
+  - `./tradercpp`
 
 ## Build Requirements
 - C++20
@@ -78,6 +90,7 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - update balance for in-flight orders (reconcile asynchronously)
 
 ## Non-functional
+- ✅ package management (Conan 2 + lock file)
 - ✅ QuickFIX
 - ✅ basic cpp app to start with
 - ✅ makefile and build chain
@@ -121,17 +134,21 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - Valgrind
 - pipeline
   - ✅ custom docker build image with all dependencies (hosted on GHCR for faster pipelines)
+  - ✅ reusable pipeline components + Release pipeline
+  - https://github.com/googleapis/release-please 
   - ✅ cron
     - ✅ comprehensive clang-tidy & clang-format checks
     - ✅ sonarcloud
-  - ccache or precomiled headers
+  - ✅ cached dependencies
+  - containerised pipeline integration tests / dind
+  - https://github.com/googleapis/release-please
   - local github action runner (`act`)
-  - containerised integration tests / dind
+  - ccache or precomiled headers
 - testing
+  - ✅ coverage gutters
   - ✅ dependency injection
   - integration test with mocked Binance server
   - UI snapshot testing
-  - ✅ coverage gutters
 - performance
   - ✅ store prices and sizes as integrals (ticks as `uint64_t`) for performance
   - release compile flags

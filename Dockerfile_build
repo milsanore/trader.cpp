@@ -14,8 +14,12 @@
 #  - coverage (lcov, gcovr)
 #############################################
 
-
 FROM ubuntu:24.04 AS build_container
+
+LABEL org.opencontainers.image.title="tradercppbuild" \
+    org.opencontainers.image.description="Container for building the trader.cpp app" \
+    org.opencontainers.image.source="https://github.com/milsanore/trader.cpp" \
+    maintainer="https://github.com/milsanore"
 
 # Set noninteractive mode to avoid prompts during install
 ENV DEBIAN_FRONTEND=noninteractive
