@@ -8,6 +8,7 @@
 #include <ftxui/dom/elements.hpp>
 #include <mutex>
 
+#include "../binance/config.h"
 #include "../core/trade.h"
 #include "app/iscreen.h"
 #include "concurrentqueue.h"
@@ -24,6 +25,7 @@ class TradeBox {
  public:
   static constexpr std::string THREAD_NAME_ = "tradercppuiTX";
   TradeBox(IScreen& screen,
+           binance::Config& binance_config,
            moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
            std::function<void(std::stop_token)> task = {});
   // Return the FTXUI component to plug into layout
@@ -32,17 +34,19 @@ class TradeBox {
   std::exception_ptr thread_exception;
   // start trade processing worker thread
   void start();
+  //
+  ftxui::Element to_table();
 
  private:
   // ui stuff
   IScreen& screen_;
   ftxui::Component component_;
   float scroll_y = 1;
-  ftxui::Element to_table();
   /// @brief the columns in the trade box table, and their widths
   const std::array<std::pair<std::string, uint8_t>, 5> columns_ = {
       {{"Time", 17}, {"Side", 6}, {"Price", 13}, {"Size", 10}, {"ID", 13}}};
   ftxui::Elements header_;
+  binance::Config& binance_config_;
 
   // trade ring-buffer stuff
   static constexpr u_int16_t MAX_LINES_ = 100;

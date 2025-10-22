@@ -148,7 +148,7 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - ✅ coverage gutters
   - ✅ dependency injection
   - integration test with mocked Binance server
-  - UI snapshot testing
+  - FTXUI snapshot testing
 - performance
   - ✅ store prices and sizes as integrals (ticks as `uint64_t`) for performance
   - release compile flags

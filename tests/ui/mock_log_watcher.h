@@ -12,7 +12,7 @@ class MockLogWatcher : public ILogWatcher {
   using Callback = std::function<void(std::vector<std::string>)>;
 
  public:
-  explicit MockLogWatcher() {}
+  explicit MockLogWatcher() = default;
 
   void set_callback([[maybe_unused]] Callback cb) override {}
 

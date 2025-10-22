@@ -6,6 +6,7 @@
 #include <memory>
 #include <thread>
 
+#include "../../binance/config.h"
 #include "../log_box/log_box.h"
 #include "../order_book_box.h"
 #include "../trade_box.h"
@@ -30,7 +31,7 @@ class App {
   static App from_env(
       moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& order_queue,
       moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue,
-      const uint16_t MAX_DEPTH);
+      binance::Config& binance_config);
 
  private:
   std::unique_ptr<IScreen> screen_;

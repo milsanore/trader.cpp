@@ -50,7 +50,7 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
                         [[maybe_unused]] const std::string& dir,
                         const std::string& filename,
                         efsw::Action action,
-                        [[maybe_unused]] std::string oldFilename = "") override {
+                        [[maybe_unused]] std::string oldFilename) override {
     if (filename != filename_) {
       return;
     }

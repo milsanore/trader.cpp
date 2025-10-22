@@ -7,7 +7,7 @@ namespace core {
 /// @brief basic bid/ask level
 struct BidAsk {
  public:
-  BidAsk() {};
+  BidAsk() = default;
   explicit BidAsk(u_int64_t bidsz, u_int64_t bidpx, u_int64_t askpx, u_int64_t asksz)
       : bid_sz(bidsz), bid_px(bidpx), ask_px(askpx), ask_sz(asksz) {}
 

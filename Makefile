@@ -54,7 +54,7 @@ build-release:
 test:
 	cmake --preset debug
 	cmake --build --preset=debug
-	ctest --preset=debug
+	ctest -j$(shell nproc) --preset=debug
 	lcov --gcov-tool gcov --capture --directory . --output-file lcov.info
 	source .venv/bin/activate && \
 		gcovr -r . --exclude 'tests/*' --sonarqube -o sonar-coverage.xml
@@ -63,8 +63,7 @@ test:
 .PHONY: tidy
 tidy:
 	find src/ tests/ \( -name '*.cpp' -o -name '*.hpp' -o -name '*.c' -o -name '*.h' \) -exec clang-format -i {} +	
-	find tests/ -name '*.cpp' | xargs clang-tidy -p build/Debug --fix --format-style=.clang-format
-	find src/   -name '*.cpp' | xargs clang-tidy -p build/Debug --fix --format-style=.clang-format
+	hooks/check_clang_tidy.sh
 
 ## run-debug: 🏃‍♂️  run the app (debug) (don't forget `withenv`)
 .PHONY: run-debug
@@ -76,3 +75,21 @@ run-debug:
 .PHONY: run-release
 run-release:
 	build/Release/tradercpp
+
+# CONTAINERISATION RECIPES ----------------------------------------------------
+
+## build-container: 🚢 create the docker container for building the app (hosted on dockerhub and ghcr)
+.PHONY: build-container
+build-container:
+	IMAGE_VERSION=
+	@if [ -z "$(IMAGE_VERSION)" ]; then \
+		echo "Error: IMAGE_VERSION is not set"; \
+		echo "(you can set it on the command line like so: \`make build-container IMAGE_VERSION=1.7\`)"; \
+		exit 1; \
+	fi
+	docker build -f Dockerfile_build -t milss/tradercppbuild:latest -t milss/tradercppbuild:v$(IMAGE_VERSION) .
+
+## docker: 🚢 create an app docker image
+.PHONY: docker
+docker:
+	docker build .

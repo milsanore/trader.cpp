@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../binance/config.h"
 #include "../log_box/log_box.h"
 #include "../order_book_box.h"
 #include "../trade_box.h"
@@ -46,15 +47,16 @@ App::App(std::unique_ptr<IScreen> screen,
 App App::from_env(
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& order_queue,
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue,
-    const uint16_t MAX_DEPTH) {
+    binance::Config& binance_config) {
   //
   std::unique_ptr<IScreen> screen = std::make_unique<FtxuiScreen>();
 
-  auto book_box = std::make_unique<OrderBookBox>(*screen, order_queue, MAX_DEPTH);
+  auto book_box =
+      std::make_unique<OrderBookBox>(*screen, order_queue, binance_config.MAX_DEPTH);
 
   auto log_box = LogBox::from_env(*screen);
 
-  auto trade_box = std::make_unique<TradeBox>(*screen, trade_queue);
+  auto trade_box = std::make_unique<TradeBox>(*screen, binance_config, trade_queue);
 
   return App(std::move(screen), std::move(book_box), std::move(log_box),
              std::move(trade_box));

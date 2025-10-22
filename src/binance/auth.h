@@ -32,6 +32,10 @@ class Auth final : public IAuth {
 
   const std::string& get_api_key() const override;
 
+  /// Fetch a 32-byte Ed25519 seed from a private key PEM file (using OpenSSL)
+  /// @return 32-byte Ed25519 seed
+  std::vector<unsigned char> get_seed_from_pem() const;
+
   void clear_keys() override;
 
  private:
@@ -41,9 +45,6 @@ class Auth final : public IAuth {
 
   std::string& api_key_;
   std::string& private_pem_path_;
-  /// Fetch a 32-byte Ed25519 seed from a private key PEM file (using OpenSSL)
-  /// @return 32-byte Ed25519 seed
-  std::vector<unsigned char> get_seed_from_pem() const;
 };
 
 }  // namespace binance

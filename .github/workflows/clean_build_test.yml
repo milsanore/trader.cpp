@@ -11,29 +11,18 @@ on:
 # workflow_dispatch: # Allows manual triggering
 
 jobs:
-  format:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/milsanore/tradercppbuild:v1.6
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          # if commit ref not set, revert to github-set commit
-          ref: ${{ inputs.ref || github.ref }}
-      - name: clang-format
-        run: hooks/check_clang_format.sh
-
   build_and_test:
-    needs: format
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/milsanore/tradercppbuild:v1.6
+      image: ghcr.io/milsanore/tradercppbuild:v1.7
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: clang-format
+        run: hooks/check_clang_format.sh
 
       - name: Restore Conan cache
         uses: actions/cache@v4
@@ -53,11 +42,11 @@ jobs:
           set -e
           cmake --preset=debug
           cmake --build --preset=debug
-          ctest --preset=debug
 
       - name: Test
         run: |
           set -e
+          ctest -j$(nproc) --preset=debug
           # `lcov` FOR CODECOV
           lcov --gcov-tool gcov \
             --capture \

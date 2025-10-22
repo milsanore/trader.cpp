@@ -28,8 +28,8 @@ int main() {
   b_worker.start();
 
   // ui app (reads from Binance's queues)
-  auto ui = ui::App::from_env(b_worker.get_order_queue(), b_worker.get_trade_queue(),
-                              b_conf.MAX_DEPTH);
+  auto ui =
+      ui::App::from_env(b_worker.get_order_queue(), b_worker.get_trade_queue(), b_conf);
   ui.start();
 
   if (ui.thread_exception) {

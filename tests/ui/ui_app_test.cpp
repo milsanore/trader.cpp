@@ -1,3 +1,5 @@
+#include "ui/app/ui_app.h"
+
 #include <gtest/gtest.h>
 #include <quickfix/fix44/Message.h>
 
@@ -11,7 +13,6 @@
 #include "mock_log_watcher.h"
 #include "spdlog/spdlog.h"
 #include "ui/app/iscreen.h"
-#include "ui/app/ui_app.h"
 #include "ui/log_box/ilog_watcher.h"
 #include "ui/log_box/log_box.h"
 
@@ -27,8 +28,9 @@ TEST(App, start) {
 
   constexpr int MAX_DEPTH = 50;
   auto book_box = std::make_unique<ui::OrderBookBox>(*screen, order_queue, MAX_DEPTH);
+  auto bconf = binance::Config();
   auto trade_box = std::make_unique<ui::TradeBox>(
-      *screen, trade_queue,
+      *screen, bconf, trade_queue,
       []([[maybe_unused]] const std::stop_token& stoken) { spdlog::info("mock task"); });
 
   auto app = ui::App(std::move(screen), std::move(book_box), std::move(log_box),

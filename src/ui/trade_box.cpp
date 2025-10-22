@@ -36,9 +36,14 @@ namespace ui {
 
 TradeBox::TradeBox(
     IScreen& screen,
+    binance::Config& binance_config,
     moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
     std::function<void(std::stop_token)> task)
-    : screen_(screen), trade_ring_(MAX_LINES_), queue_(queue), worker_task_(task) {
+    : screen_(screen),
+      binance_config_(binance_config),
+      trade_ring_(MAX_LINES_),
+      queue_(queue),
+      worker_task_(task) {
   // default behaviour
   if (!worker_task_) {
     worker_task_ = {[this](const std::stop_token& stoken) {
@@ -108,9 +113,9 @@ ftxui::Element TradeBox::to_table() {
     const core::Trade& trade = buffer_copy[i];
     std::string side = binance::Side::to_str(trade.side);
     trade_sz = static_cast<double>(trade.sz) /
-               binance::Config::get_size_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
+               binance_config_.get_size_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
     trade_px = static_cast<double>(trade.px) /
-               binance::Config::get_price_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
+               binance_config_.get_price_ticks_per_unit(binance::SymbolEnum::BTCUSDT);
     ui_row.push_back(ftxui::text(Helpers::Pad(trade.time, columns_[0].second)));
     ui_row.push_back(ftxui::text(Helpers::Pad(side, columns_[1].second)));
     ui_row.push_back(
@@ -236,10 +241,10 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
           side = binance::Side::from_str(side_field.getValue());
           price = utils::Double::toUint64(
               group.get(e_px).getValue(),
-              binance::Config::get_price_ticks_per_unit(symbol.value()));
+              binance_config_.get_price_ticks_per_unit(symbol.value()));
           size = utils::Double::toUint64(
               group.get(e_sz).getValue(),
-              binance::Config::get_size_ticks_per_unit(symbol.value()));
+              binance_config_.get_size_ticks_per_unit(symbol.value()));
           group.getField(trade_id);
           trade_id_str = trade_id.getValue();
           std::string timeOnly = "";
