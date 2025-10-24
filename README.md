@@ -80,10 +80,10 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - OrderMassCancelRequest on error
   - quickfix database vs fix8 equivalent
 - ✅ subscribe to price updates
+- ✅ use a precise number type for money
 - create a basic trading signal (e.g. standard deviations)
-- use a precise number type for money
 - fire an order
-- test in the Binance test environment
+- ✅ test in the Binance test environment
 - momentum indicators
 - throughput indicators (messages/sec)
 - orders
@@ -151,12 +151,13 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - FTXUI snapshot testing
 - performance
   - ✅ store prices and sizes as integrals (ticks as `uint64_t`) for performance
+  - ✅ cache line alignment
   - release compile flags
   - profiling (valgrind/cachegrind)
-  - gperftools
   - profile-guided optimization (pgo)
   - load test with mocked FIX server
-  - tcmalloc / gperftools
+  - tcmalloc (Full/Minimal) / gperftools
+    - profiling tcmalloc
 - latency
   - sparse arrays & flat matrix
   - memory-mapped files

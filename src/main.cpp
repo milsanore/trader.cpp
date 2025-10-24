@@ -6,6 +6,7 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
 #include "ui/app/ui_app.h"
+#include "utils/env.h"
 #include "utils/threading.h"
 
 int main() {
@@ -19,8 +20,8 @@ int main() {
   // Set a global pattern without the logger name
   spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%t] %v");
   spdlog::flush_every(std::chrono::microseconds(100));
-
   spdlog::info("hello");
+  utils::Env::log_arch();
 
   // Binance market data connectivity
   auto b_conf = binance::Config::from_env();

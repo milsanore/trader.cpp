@@ -15,7 +15,7 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
   using Callback = std::function<void(std::vector<std::string>)>;
 
  public:
-  static constexpr std::string THREAD_NAME_ = "tradercppuiLOG";
+  static inline constexpr std::string THREAD_NAME_ = "tradercppuiLOG";
 
   explicit LogFileWatcher(std::string directory, std::string filename)
       : directory_(directory), filename_(filename) {

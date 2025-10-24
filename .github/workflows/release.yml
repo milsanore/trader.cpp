@@ -1,5 +1,7 @@
 name: Release
 
+# run the Release pipeline when a release is created, and attach artifacts
+
 on:
   release:
     types: [published]  # Triggers when a release is published

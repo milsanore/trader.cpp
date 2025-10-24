@@ -77,7 +77,7 @@ void App::start() {
   const ftxui::Component row2 =
       Horizontal({Vertical({wallet_box_.get_component() | flex}) | flex,
                   Vertical({log_box_->get_component() | flex}) | flex});
-  const ftxui::Component root = Vertical({row1 | size(HEIGHT, EQUAL, 20), row2 | flex});
+  const ftxui::Component root = Vertical({row1 | flex, row2 | size(HEIGHT, EQUAL, 6)});
   screen_->loop(root);
 }
 

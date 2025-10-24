@@ -1,0 +1,15 @@
+name: Build
+
+# run the vanilla build pipeline on commits to feature branches, or PRs on master
+
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches: [ master ]
+
+    
+jobs:
+  call-reusable:
+    uses: ./.github/workflows/reusable_build.yml

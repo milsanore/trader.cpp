@@ -1,9 +1,11 @@
 #pragma once
 
 #include <mutex>
+#include <new>
 #include <string>
 #include <vector>
 
+#include "../utils/env.h"
 #include "iauth.h"
 
 namespace binance {
@@ -41,7 +43,7 @@ class Auth final : public IAuth {
  private:
   // when authenticating with Binance, each session authenticates independently,
   // and in parallel. requires synchronisation because of file access.
-  mutable std::mutex mutex_;
+  alignas(utils::Env::CACHE_LINE_SIZE) mutable std::mutex mutex_;
 
   std::string& api_key_;
   std::string& private_pem_path_;

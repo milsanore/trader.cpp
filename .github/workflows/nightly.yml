@@ -1,4 +1,6 @@
-name: Daily
+name: Nightly
+
+# run the vanilla build pipeline every night on the master branch
 
 on:
   schedule:
@@ -7,6 +9,6 @@ on:
 
 jobs:
   call-reusable:
-    uses: ./.github/workflows/clean_build_test.yml
+    uses: ./.github/workflows/reusable_build.yml
     with:
       ref: ${{ 'master' }}

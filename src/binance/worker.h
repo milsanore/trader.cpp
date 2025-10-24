@@ -18,7 +18,7 @@ namespace binance {
 /// @brief Binance DI container
 class Worker final {
  public:
-  static constexpr std::string THREAD_NAME_ = "tradercppFIX1";
+  static inline constexpr std::string THREAD_NAME_ = "tradercppFIX1";
   Worker(std::unique_ptr<FixApp> app,
          std::unique_ptr<FIX::FileStoreFactory> store,
          FIX::SessionSettings settings,

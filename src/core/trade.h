@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "../binance/side.h"
+#include "../utils/env.h"
 
 using binance::Side;
 using binance::SideEnum;
@@ -10,20 +11,21 @@ using binance::SideEnum;
 namespace core {
 
 /// @brief Binance trade object
-struct Trade {
+struct alignas(utils::Env::CACHE_LINE_SIZE) Trade {
  public:
-  Trade(std::string time,
-        const SideEnum side,
-        const uint64_t px,
+  Trade(const uint64_t px,
         const uint64_t sz,
-        const uint64_t id)
-      : time(std::move(time)), side(side), px(px), sz(sz), id(id) {}
+        const uint64_t id,
+        const SideEnum side,
+        std::array<char, 16> time)
+      : px(px), sz(sz), id(id), side(side), time(time) {}
 
-  std::string time;
-  SideEnum side;
   uint64_t px;
   uint64_t sz;
   uint64_t id;
+  SideEnum side;
+  // 15 characters + newline, e.g. "07:17:50.031794"
+  std::array<char, 16> time;
 };
 
 }  // namespace core

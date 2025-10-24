@@ -4,8 +4,9 @@ boost/1.88.0
 concurrentqueue/1.0.4
 efsw/1.4.1
 ftxui/6.0.2
-ms-gsl/4.2.0
+gperftools/2.17.2
 gtest/1.17.0
+ms-gsl/4.2.0
 openssl/3.5.2
 quickfix/1.15.1
 libsodium/1.0.20

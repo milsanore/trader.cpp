@@ -14,7 +14,7 @@ struct Double {
   /// @param value The double to convert to an int.
   /// NB: the max integer represented by a double is 2^53 (i.e. less than 2^64).
   /// @param ticks_per_unit the multiplier to apply. typically 1/tick_size.
-  inline static uint64_t toUint64(const double value, const double ticks_per_unit) {
+  static inline uint64_t toUint64(const double value, const double ticks_per_unit) {
     const double scaled = value * ticks_per_unit;
     return static_cast<uint64_t>(scaled);
   }

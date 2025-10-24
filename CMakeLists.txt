@@ -34,6 +34,7 @@ find_package(Boost REQUIRED)
 find_package(concurrentqueue REQUIRED)
 find_package(efsw REQUIRED)
 find_package(ftxui REQUIRED)
+find_package(gperftools REQUIRED)
 find_package(Microsoft.GSL REQUIRED)
 find_package(GTest REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -47,6 +48,7 @@ target_link_libraries(traderlib PUBLIC
     concurrentqueue::concurrentqueue
     efsw::efsw
     ftxui::ftxui
+    gperftools::gperftools
     Microsoft.GSL::GSL
     OpenSSL::SSL
     OpenSSL::Crypto

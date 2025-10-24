@@ -2,10 +2,12 @@
 
 #include <cmath>
 
+#include "../utils/env.h"
+
 namespace core {
 
 /// @brief basic bid/ask level
-struct BidAsk {
+struct alignas(utils::Env::CACHE_LINE_SIZE) BidAsk {
  public:
   BidAsk() = default;
   explicit BidAsk(u_int64_t bidsz, u_int64_t bidpx, u_int64_t askpx, u_int64_t asksz)
@@ -14,7 +16,7 @@ struct BidAsk {
   // NB: using UINT64_MAX as a sentinel value.
   // maybe it's smarter to use UINT64_MAX-1 as a sentinel,
   // in order to catch overflow prices in the market?
-  static constexpr u_int64_t SENTINEL_ = UINT64_MAX;
+  static inline constexpr u_int64_t SENTINEL_ = UINT64_MAX;
 
   u_int64_t bid_sz = SENTINEL_;
   u_int64_t bid_px = SENTINEL_;

@@ -196,9 +196,9 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
   std::optional<binance::SymbolEnum> symbol;
   FIX::MDEntryPx e_px;
   FIX::MDEntrySize e_sz;
-  uint64_t price, size;
   FIX::MDEntryType e_type;
-  FIX::TransactTime time;
+  FIX::TransactTime e_time;
+  uint64_t price, size;
   FIX::TradeID trade_id;
   std::string trade_id_str;
   uint64_t trade_id_uint;
@@ -206,7 +206,6 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
   constexpr int AGGRESSOR_TAG = 2446;
   FIX::CharField side_field(AGGRESSOR_TAG);
   binance::SideEnum side{};
-  //
   std::string raw_time;
   std::string time_only;
   for (int i = 1; i <= num_entries; i++) {
@@ -237,27 +236,35 @@ void TradeBox::on_trade(const FIX44::MarketDataIncrementalRefresh& msg) {
     switch (e_type.getValue()) {
       case FIX::MDEntryType_TRADE: {
         if (group.isSetField(AGGRESSOR_TAG)) {
-          group.getField(side_field);
-          side = binance::Side::from_str(side_field.getValue());
           price = utils::Double::toUint64(
               group.get(e_px).getValue(),
               binance_config_.get_price_ticks_per_unit(symbol.value()));
+
           size = utils::Double::toUint64(
               group.get(e_sz).getValue(),
               binance_config_.get_size_ticks_per_unit(symbol.value()));
+
           group.getField(trade_id);
           trade_id_str = trade_id.getValue();
-          std::string timeOnly = "";
-          if (group.isSetField(FIX::FIELD::TransactTime)) {
-            FIX::TransactTime transactTime;
-            group.getField(transactTime);
-            raw_time = transactTime.getString();
-            time_only = raw_time.substr(raw_time.find('-') + 1);
-          }
           std::from_chars(trade_id_str.data(), trade_id_str.data() + trade_id_str.size(),
                           trade_id_uint);
 
-          trade_ring_.push_back({time_only, side, price, size, trade_id_uint});
+          group.getField(side_field);
+          side = binance::Side::from_str(side_field.getValue());
+
+          constexpr size_t TIME_STRLEN = 16;
+          std::array<char, TIME_STRLEN> tm_arr{};
+          if (group.isSetField(FIX::FIELD::TransactTime)) {
+            group.getField(e_time);
+            FIX::UtcTimeStamp tval = e_time.getValue();
+            std::snprintf(tm_arr.data(), tm_arr.size(), "%02u:%02u:%02u.%06u",
+                          std::min<unsigned>(tval.getHour(), 23),
+                          std::min<unsigned>(tval.getMinute(), 59),
+                          std::min<unsigned>(tval.getSecond(), 59),
+                          std::min<unsigned>(tval.getMicroecond(), 999999));
+          }
+
+          trade_ring_.push_back(core::Trade(price, size, trade_id_uint, side, tm_arr));
           screen_.post_event(ftxui::Event::Custom);
         } else {
           spdlog::error("trade with no side. message [{}]", msg.toString());

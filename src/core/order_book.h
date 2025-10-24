@@ -8,6 +8,7 @@
 #include <mutex>
 
 #include "../binance/symbol.h"
+#include "../utils/env.h"
 #include "absl/container/btree_map.h"
 #include "bid_ask.h"
 
@@ -37,14 +38,16 @@ class OrderBook {
  private:
   // mutex for reading/writing to bid/ask maps
   // NB: UI-bound, so performance is acceptable
-  mutable std::mutex mutex_;
+  alignas(utils::Env::CACHE_LINE_SIZE) mutable std::mutex mutex_;
   /// @brief sorted list of bids (descending), key=price, value=size
   absl::btree_map<uint64_t, uint64_t, std::greater<>> bid_map_;
   /// @brief sorted list of offers (ascending), key=price, value=size
   absl::btree_map<uint64_t, uint64_t> ask_map_;
-  //
-  FIX::MDEntryPx e_px_;
-  FIX::MDEntrySize e_sz_;
+  // Temporary variables can share a cache line
+  struct {
+    FIX::MDEntryPx e_px;
+    FIX::MDEntrySize e_sz;
+  } temp_vars_;
   inline void handle_price_level_update(
       auto& bid_ask_map,
       binance::SymbolEnum symbol,

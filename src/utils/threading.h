@@ -22,7 +22,7 @@ class Threading {
   /// in its default logging pattern (`%t`).
   /// @return A platform-specific thread identifier as an unsigned 64-bit integer.
   static uint64_t get_os_thread_id();
-  static constexpr uint64_t ERROR_THREAD_ID = 9999999;
+  static inline constexpr uint64_t ERROR_THREAD_ID = 9999999;
 };
 
 }  // namespace utils

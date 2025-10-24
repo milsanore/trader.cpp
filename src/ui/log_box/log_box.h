@@ -8,6 +8,7 @@
 #include <mutex>
 #include <vector>
 
+#include "../../utils/env.h"
 #include "../app/iscreen.h"
 #include "ilog_watcher.h"
 #include "log_file_watcher.h"
@@ -38,8 +39,8 @@ class LogBox {
 
   // log ring-buffer
   std::deque<std::string> log_ring_;
-  static constexpr uint16_t MAX_LINES_ = 100;
-  std::mutex log_ring_mutex_;
+  static inline constexpr uint16_t MAX_LINES_ = 100;
+  alignas(utils::Env::CACHE_LINE_SIZE) std::mutex log_ring_mutex_;
 
   // log-file watcher
   std::unique_ptr<ILogWatcher> log_watcher_;

@@ -159,8 +159,9 @@ void OrderBook::handle_price_level_update(
     FIX::MDUpdateAction action,
     const FIX44::MarketDataIncrementalRefresh::NoMDEntries& group,
     bool is_book_clear_needed) {
-  uint64_t px = utils::Double::toUint64(
-      group.get(e_px_).getValue(), binance::Config::get_price_ticks_per_unit(symbol));
+  uint64_t px =
+      utils::Double::toUint64(group.get(temp_vars_.e_px).getValue(),
+                              binance::Config::get_price_ticks_per_unit(symbol));
   //
   switch (action.getValue()) {
     case FIX::MDUpdateAction_DELETE:
@@ -173,8 +174,9 @@ void OrderBook::handle_price_level_update(
       [[fallthrough]];
     }
     case FIX::MDUpdateAction_NEW: {
-      uint64_t sz = utils::Double::toUint64(
-          group.get(e_sz_).getValue(), binance::Config::get_size_ticks_per_unit(symbol));
+      uint64_t sz =
+          utils::Double::toUint64(group.get(temp_vars_.e_sz).getValue(),
+                                  binance::Config::get_size_ticks_per_unit(symbol));
       bid_ask_map[px] = sz;
     } break;
     default:

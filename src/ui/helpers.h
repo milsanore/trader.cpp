@@ -27,6 +27,13 @@ class Helpers {
   static std::string Pad(const uint64_t input, const size_t width) {
     return Pad(std::to_string(input), width);
   }
+
+  // Helper to pad or truncate a std::array<char, 16> to a fixed width
+  static std::string Pad(const std::array<char, 16>& input, const size_t width) {
+    // Convert array to string (stop at null terminator if present)
+    std::string str(input.data());
+    return Pad(str, width);
+  }
 };
 
 }  // namespace ui

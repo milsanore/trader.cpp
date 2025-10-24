@@ -10,6 +10,7 @@
 
 #include "../binance/config.h"
 #include "../core/trade.h"
+#include "../utils/env.h"
 #include "app/iscreen.h"
 #include "concurrentqueue.h"
 
@@ -23,7 +24,7 @@ namespace ui {
 
 class TradeBox {
  public:
-  static constexpr std::string THREAD_NAME_ = "tradercppuiTX";
+  static inline constexpr std::string THREAD_NAME_ = "tradercppuiTX";
   TradeBox(IScreen& screen,
            binance::Config& binance_config,
            moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
@@ -49,9 +50,9 @@ class TradeBox {
   binance::Config& binance_config_;
 
   // trade ring-buffer stuff
-  static constexpr u_int16_t MAX_LINES_ = 100;
+  static inline constexpr u_int16_t MAX_LINES_ = 100;
   boost::circular_buffer<core::Trade> trade_ring_;
-  std::mutex trade_ring_mutex_;
+  alignas(utils::Env::CACHE_LINE_SIZE) std::mutex trade_ring_mutex_;
 
   // worker thread stuff
   // queue of order messages from FIX thread

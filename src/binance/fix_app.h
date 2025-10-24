@@ -42,10 +42,10 @@ class FixApp final : public FIX::Application, public FIX44::MessageCracker {
   // TODO: we will have one of these per instrument
 
  private:
-  static constexpr std::string THREAD_NAME_ = "tradercppFIX2";
-  static constexpr std::string PRICE_SESSION_QUALIFIER_ = "PX";
-  static constexpr std::string TRADE_SESSION_QUALIFIER_ = "TX";
-  static constexpr std::string ORDER_SESSION_QUALIFIER_ = "OX";
+  static inline constexpr std::string THREAD_NAME_ = "tradercppFIX2";
+  static inline constexpr std::string PRICE_SESSION_QUALIFIER_ = "PX";
+  static inline constexpr std::string TRADE_SESSION_QUALIFIER_ = "TX";
+  static inline constexpr std::string ORDER_SESSION_QUALIFIER_ = "OX";
   const std::vector<std::string>& symbols_;
   const std::unique_ptr<IAuth> auth_;
   const uint16_t MAX_DEPTH_;
