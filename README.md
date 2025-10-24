@@ -104,29 +104,20 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - double-buffering
   - FPS limit
   - interrupt/ctrl+c signal
-- ✅ logging
-    - ✅ fast
-    - ✅ compiled out 'debug' logging for release builds
-    - thread name in logs
-    - rolling
-    - structured
-    - basic schema (severity, correlationId)
 - code quality
   - ✅ clang-format
     - ✅ configure editor to auto-format
-    - ✅ fail commits if not formatted
-    - ✅ fail builds if not formatted
+    - ✅ fail commits if not formatted (via git hooks)
   - clang-tidy
     - ✅ all files tidied
     - ✅ configured clang-tidy => clang-format
-    - ✅ fail commits/merges if not tidy
-    - ✅ fail builds if not tidy
+    - ✅ fail commits/merges if not tidy (via git hooks)
     - ✅ `clang-tidy-diff.py` (alias 18)
-  - ✅ git hooks
-  - ✅ integrated into build pipeline
-  - ✅ badges
+    - ✅ parallelised (via `run-clang-tidy`)
+  - ✅ both integrated into build pipeline
   - ✅ sonarcloud integrated into build pipeline
-  - ✅ sonarcloud coverage
+  - ✅ sonarcloud and codecov coverage
+  - ✅ badges
 - diagnostics
   - ✅ ASan
   - UBSan
@@ -152,12 +143,12 @@ NB: this app uses `make` as a recipe book, but it's not essential:
 - performance
   - ✅ store prices and sizes as integrals (ticks as `uint64_t`) for performance
   - ✅ cache line alignment
+  - ✅ tcmalloc (Full) / gperftools
+    - profiling tcmalloc
   - release compile flags
   - profiling (valgrind/cachegrind)
   - profile-guided optimization (pgo)
   - load test with mocked FIX server
-  - tcmalloc (Full/Minimal) / gperftools
-    - profiling tcmalloc
 - latency
   - sparse arrays & flat matrix
   - memory-mapped files
@@ -167,6 +158,13 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - QuickFIX alternative (Fix8)
   - kernel space vs user space
   - RT OS
+- ✅ logging
+    - ✅ fast
+    - compiled out 'debug' logging for release builds
+    - thread name in logs
+    - rolling
+    - structured
+    - basic schema (severity, correlationId)
 - release process
   - versioning
     - master branch merge check for conventional commit message (e.g. regex)
