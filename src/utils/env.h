@@ -24,7 +24,7 @@ struct Env {
   };
 
   /// @brief log the architecutre in use
-  static void log_arch() {
+  static void log_current_architecture() {
     // detect architecture
 #if defined(__aarch64__) || defined(_M_ARM64)
     constexpr const char* ARCH = "ARM64";

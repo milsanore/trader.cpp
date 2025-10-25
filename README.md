@@ -1,4 +1,4 @@
-[![Build](https://github.com/milsanore/trader.cpp/actions/workflows/commits.yml/badge.svg)](https://github.com/milsanore/trader.cpp/actions/workflows/commits.yml)
+[![Nightly](https://github.com/milsanore/trader.cpp/actions/workflows/nightly.yml/badge.svg)](https://github.com/milsanore/trader.cpp/actions/workflows/nightly.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=milsanore_trader.cpp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=milsanore_trader.cpp)
 [![codecov](https://codecov.io/github/milsanore/trader.cpp/graph/badge.svg?token=C787ZTXBQC)](https://codecov.io/github/milsanore/trader.cpp)
 
@@ -177,6 +177,8 @@ NB: this app uses `make` as a recipe book, but it's not essential:
 - FIX
   - ✅ debug quickfix to confirm if it's running in it's own thread
   - switch to Fix8
+- security
+  - OpenSSF Scorecard
 - other
   - nix
   - decimal type
@@ -189,17 +191,25 @@ NB: this app uses `make` as a recipe book, but it's not essential:
 # Design
 ```mermaid
 sequenceDiagram
-    participant TM as Thread 1<br>(Main + UI)
-    participant TO as Thread 2<br>(UI Orderbook Worker)
-    participant TF as Thread 3<br>(FIX Worker)
-    participant TL as Thread 4<br>(UI Log Worker)
+    participant MAIN    as Main Thread
+    participant LOGS    as Log UI Thread
+    participant BOOK    as Orderbook Thread
+    participant TRADES  as Trade Thread
+    participant FIX     as FIX Thread
 
-    TF-->>TF: subscribe to Binance <br> + push to <queue>
-    TF->>TO: pull from <queue>
-    TO-->>TO: build UI
-    TO->>TM: request render
-    TL-->>TL: poll log file <br> + build UI
-    TL->>TM: request render
+    FIX-->>FIX: subscribe to Binance <br> + push to <queue>
+
+    FIX->>TRADES: pull from <queue>
+    TRADES-->>TRADES: build UI
+
+    FIX->>BOOK: pull from <queue>
+    BOOK-->>BOOK: build UI
+
+    LOGS-->>LOGS: poll log file <br> + build UI
+
+    TRADES->>MAIN: request render
+    BOOK->>MAIN: request render
+    LOGS->>MAIN: request render
 ```
 
 # Credits

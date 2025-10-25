@@ -10,9 +10,9 @@
 #include "utils/threading.h"
 
 int main() {
-  utils::Threading::set_thread_name("tradercppMAIN");
+  utils::Threading::set_thread_name("main");
 
-  // LOG CONFIG
+  // log config
   spdlog::cfg::load_env_levels("LOG_LEVEL");
   const char* log_path = std::getenv("LOG_PATH");
   const auto logger = spdlog::basic_logger_mt("basic_logger", log_path);
@@ -21,7 +21,7 @@ int main() {
   spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%t] %v");
   spdlog::flush_every(std::chrono::microseconds(100));
   spdlog::info("hello");
-  utils::Env::log_arch();
+  utils::Env::log_current_architecture();
 
   // Binance market data connectivity
   auto b_conf = binance::Config::from_env();

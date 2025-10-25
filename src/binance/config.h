@@ -58,6 +58,9 @@ struct Config {
 
   /// @brief 1 == top level, otherwise 5000 is Binance's maximum depth
   static constexpr uint16_t MAX_DEPTH = 100;
+
+  static constexpr uint8_t PX_SESSION_CPU_AFFINITY = 0;
+  static constexpr uint8_t TX_SESSION_CPU_AFFINITY = 1;
 };
 
 }  // namespace binance

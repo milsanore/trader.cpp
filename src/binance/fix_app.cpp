@@ -26,13 +26,14 @@ namespace binance {
 
 FixApp::FixApp(const std::vector<std::string>& symbols,
                std::unique_ptr<IAuth> auth,
-               const uint16_t MAX_DEPTH)
-    : symbols_(symbols), auth_(std::move(auth)), MAX_DEPTH_(MAX_DEPTH) {
-  // TODO(mils): I think this is a singleton
-  utils::Threading::set_thread_name(THREAD_NAME_);
-  spdlog::info("naming FIXs own thread, name [{}], id [{}]", THREAD_NAME_,
-               utils::Threading::get_os_thread_id());
-}
+               const uint16_t MAX_DEPTH,
+               const uint8_t PX_SESSION_CPU_AFFINITY,
+               const uint8_t TX_SESSION_CPU_AFFINITY)
+    : symbols_(symbols),
+      auth_(std::move(auth)),
+      MAX_DEPTH_(MAX_DEPTH),
+      PX_SESSION_CPU_AFFINITY_(PX_SESSION_CPU_AFFINITY),
+      TX_SESSION_CPU_AFFINITY_(TX_SESSION_CPU_AFFINITY) {}
 
 void FixApp::subscribe_to_prices(const FIX::SessionID& session_id) const {
   spdlog::info("subscribing to depth. qualifier [{}], id [{}]",
@@ -128,11 +129,18 @@ void FixApp::onLogon(const FIX::SessionID& sessionId) {
   // TODO: now need to wait for all sessions to be logged on before nullifying keys
   // auth_->clear_keys();
 
-  if (sessionId.getSessionQualifier() == PRICE_SESSION_QUALIFIER_) {
+  std::string thread_name = THREAD_NAME_ + "_" + sessionId.getSessionQualifier();
+  utils::Threading::set_thread_name(thread_name);
+  spdlog::info("naming FIX session thread, name [{}], id [{}]", thread_name,
+               utils::Threading::get_os_thread_id());
+
+  if (sessionId.getSessionQualifier() == PX_SESSION_QUALIFIER_) {
+    utils::Threading::set_current_thread_affinity(PX_SESSION_CPU_AFFINITY_);
     subscribe_to_prices(sessionId);
-  } else if (sessionId.getSessionQualifier() == TRADE_SESSION_QUALIFIER_) {
+  } else if (sessionId.getSessionQualifier() == TX_SESSION_QUALIFIER_) {
+    utils::Threading::set_current_thread_affinity(TX_SESSION_CPU_AFFINITY_);
     subscribe_to_trades(sessionId);
-  } else if (sessionId.getSessionQualifier() == ORDER_SESSION_QUALIFIER_) {
+  } else if (sessionId.getSessionQualifier() == OX_SESSION_QUALIFIER_) {
     // do nothing for order session
   } else {
     spdlog::error("unknown session, qualifier [{}], id [{}]",
@@ -210,9 +218,9 @@ void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m,
 }
 void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m,
                        const FIX::SessionID& sessionID) {
-  if (sessionID.getSessionQualifier() == PRICE_SESSION_QUALIFIER_) {
+  if (sessionID.getSessionQualifier() == PX_SESSION_QUALIFIER_) {
     order_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
-  } else if (sessionID.getSessionQualifier() == TRADE_SESSION_QUALIFIER_) {
+  } else if (sessionID.getSessionQualifier() == TX_SESSION_QUALIFIER_) {
     trade_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
   } else {
     spdlog::error(

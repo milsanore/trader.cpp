@@ -4,7 +4,7 @@
 #include <quickfix/FileStore.h>
 #include <quickfix/Session.h>
 #include <quickfix/SessionSettings.h>
-#include <quickfix/SocketInitiator.h>
+#include <quickfix/ThreadedSocketInitiator.h>
 
 #include <memory>
 
@@ -20,38 +20,25 @@ Worker::Worker(std::unique_ptr<FixApp> app,
                std::unique_ptr<FIX::FileStoreFactory> store,
                FIX::SessionSettings settings,
                std::unique_ptr<FIX::FileLogFactory> log,
-               std::unique_ptr<FIX::SocketInitiator> initiator,
-               const std::function<void(std::stop_token)>& task)
+               std::unique_ptr<FIX::ThreadedSocketInitiator> initiator)
     : app_(std::move(app)),
       store_(std::move(store)),
       settings_(std::move(settings)),
       log_(std::move(log)),
-      initiator_(std::move(initiator)),
-      worker_task_(task) {
-  // default behaviour
-  if (!task) {
-    worker_task_ = {[this]([[maybe_unused]] const std::stop_token& stoken) {
-      utils::Threading::set_thread_name(THREAD_NAME_);
-      spdlog::info("starting FIX wrapper thread. name [{}], id [{}]", THREAD_NAME_,
-                   utils::Threading::get_os_thread_id());
-      // NB: SocketInitiator::start() is a blocking call, so the stop_token
-      // cannot cancel the thread. NB: The `stop()` function has to forcibly
-      // stop it with `initiator_->stop()`.
-      initiator_->start();
-      spdlog::info("started FIX initiator");
-    }};
-  }
-}
+      initiator_(std::move(initiator)) {}
 
 // static member function
 Worker Worker::from_conf(Config& conf) {
   std::unique_ptr<IAuth> auth =
       std::make_unique<Auth>(conf.api_key, conf.private_key_path);
-  auto app = std::make_unique<FixApp>(conf.symbols, std::move(auth), conf.MAX_DEPTH);
+  auto app = std::make_unique<FixApp>(conf.symbols, std::move(auth), conf.MAX_DEPTH,
+                                      conf.PX_SESSION_CPU_AFFINITY,
+                                      conf.TX_SESSION_CPU_AFFINITY);
   auto settings = FIX::SessionSettings{conf.fix_config_path};
   auto store = std::make_unique<FIX::FileStoreFactory>(settings);
   auto log = std::make_unique<FIX::FileLogFactory>(settings);
-  auto initiator = std::make_unique<FIX::SocketInitiator>(*app, *store, settings, *log);
+  auto initiator =
+      std::make_unique<FIX::ThreadedSocketInitiator>(*app, *store, settings, *log);
 
   // hand over object ownership to the instance being created (by the static
   // function)
@@ -60,27 +47,13 @@ Worker Worker::from_conf(Config& conf) {
 }
 
 void Worker::start() {
-  try {
-    worker_ = std::jthread{worker_task_};
-  } catch (const std::exception& e) {
-    spdlog::error("error starting FIX. error [{}]", e.what());
-  } catch (...) {
-    spdlog::error("error starting FIX. unknown error");
-  }
+  initiator_->start();
+  spdlog::info("started FIX initiator");
 }
 
 void Worker::stop() {
-  try {
-    if (initiator_) {
-      initiator_->stop();  // TODO(mils): does this need a try/catch?
-    }
-    spdlog::info("stopped FIX initiator");
-  } catch (const std::exception& e) {
-    spdlog::error("error stopping FIX initiator. error [{}]", e.what());
-  } catch (...) {
-    spdlog::error("error stopping FIX initiator. unknown error");
-  }
-  worker_ = std::jthread{};
+  initiator_->stop();  // TODO(mils): does this need a try/catch?
+  spdlog::info("stopped FIX initiator");
 }
 
 moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>&

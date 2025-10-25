@@ -3,7 +3,7 @@
 #include <quickfix/FileLog.h>
 #include <quickfix/FileStore.h>
 #include <quickfix/SessionSettings.h>
-#include <quickfix/SocketInitiator.h>
+#include <quickfix/ThreadedSocketInitiator.h>
 #include <quickfix/fix44/Message.h>
 
 #include <memory>
@@ -18,13 +18,11 @@ namespace binance {
 /// @brief Binance DI container
 class Worker final {
  public:
-  static inline constexpr std::string THREAD_NAME_ = "tradercppFIX1";
   Worker(std::unique_ptr<FixApp> app,
          std::unique_ptr<FIX::FileStoreFactory> store,
          FIX::SessionSettings settings,
          std::unique_ptr<FIX::FileLogFactory> log,
-         std::unique_ptr<FIX::SocketInitiator> initiator,
-         const std::function<void(std::stop_token)>& task = {});
+         std::unique_ptr<FIX::ThreadedSocketInitiator> initiator);
   /// @brief factory for concrete Binance instances, using config
   /// @param conf Binance configuration parameters
   /// @return
@@ -44,10 +42,7 @@ class Worker final {
   std::unique_ptr<FIX::FileStoreFactory> store_;
   FIX::SessionSettings settings_;
   std::unique_ptr<FIX::FileLogFactory> log_;
-  std::unique_ptr<FIX::SocketInitiator> initiator_;
-  // thread
-  std::jthread worker_;
-  std::function<void(std::stop_token)> worker_task_;
+  std::unique_ptr<FIX::ThreadedSocketInitiator> initiator_;
 };
 
 }  // namespace binance

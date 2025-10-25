@@ -16,7 +16,7 @@ namespace ui {
 
 class OrderBookBox {
  public:
-  static inline constexpr std::string THREAD_NAME_ = "tradercppuiBOOK";
+  static inline constexpr std::string THREAD_NAME_ = "ui_orderbook";
   // Constructor: takes a label string
   OrderBookBox(IScreen& screen,
                moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,

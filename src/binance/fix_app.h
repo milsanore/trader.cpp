@@ -20,7 +20,9 @@ class FixApp final : public FIX::Application, public FIX44::MessageCracker {
  public:
   FixApp(const std::vector<std::string>& symbols,
          std::unique_ptr<IAuth> auth,
-         const uint16_t MAX_DEPTH);
+         const uint16_t MAX_DEPTH,
+         const uint8_t PX_SESSION_CPU_AFFINITY,
+         const uint8_t TX_SESSION_CPU_AFFINITY);
   ~FixApp() override = default;
 
   // Use the FIX44::MessageCracker to pull in the relevant overloads. This resolves the
@@ -42,13 +44,15 @@ class FixApp final : public FIX::Application, public FIX44::MessageCracker {
   // TODO: we will have one of these per instrument
 
  private:
-  static inline constexpr std::string THREAD_NAME_ = "tradercppFIX2";
-  static inline constexpr std::string PRICE_SESSION_QUALIFIER_ = "PX";
-  static inline constexpr std::string TRADE_SESSION_QUALIFIER_ = "TX";
-  static inline constexpr std::string ORDER_SESSION_QUALIFIER_ = "OX";
+  static inline constexpr std::string THREAD_NAME_ = "fix_session";
+  static inline constexpr std::string PX_SESSION_QUALIFIER_ = "PX";
+  static inline constexpr std::string TX_SESSION_QUALIFIER_ = "TX";
+  static inline constexpr std::string OX_SESSION_QUALIFIER_ = "OX";
   const std::vector<std::string>& symbols_;
   const std::unique_ptr<IAuth> auth_;
   const uint16_t MAX_DEPTH_;
+  const uint8_t PX_SESSION_CPU_AFFINITY_;
+  const uint8_t TX_SESSION_CPU_AFFINITY_;
 
   void onCreate(const FIX::SessionID&) override;
   void onLogon(const FIX::SessionID&) override;

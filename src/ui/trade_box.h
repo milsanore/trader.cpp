@@ -24,7 +24,7 @@ namespace ui {
 
 class TradeBox {
  public:
-  static inline constexpr std::string THREAD_NAME_ = "tradercppuiTX";
+  static inline constexpr std::string THREAD_NAME_ = "ui_tradebox";
   TradeBox(IScreen& screen,
            binance::Config& binance_config,
            moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
