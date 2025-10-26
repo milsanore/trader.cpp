@@ -140,7 +140,7 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - ✅ dependency injection
   - integration test with mocked Binance server
   - FTXUI snapshot testing
-- performance
+- performance / latency
   - ✅ store prices and sizes as integrals (ticks as `uint64_t`) for performance
   - ✅ cache line alignment
   - ✅ tcmalloc (Full) / gperftools
@@ -150,7 +150,8 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - profile-guided optimization (pgo)
   - load test with mocked FIX server
   - set process priority
-- latency
+  - NIC affinity
+  - QoS
   - sparse arrays & flat matrix
   - memory-mapped files
   - (analyse) find Binance's server location for a low-latency connection
