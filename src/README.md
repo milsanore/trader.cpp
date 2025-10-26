@@ -9,6 +9,7 @@
     1. order updates (prices/volumes)
     2. trade updates
 - NB: Binance uses a custom authentication mechanism
+- NB: the `Config` class is important
 
 ## core
 - core trading engine functionality
