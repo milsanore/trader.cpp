@@ -125,14 +125,14 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - Valgrind
 - pipeline
   - ✅ custom docker build image with all dependencies (hosted on GHCR for faster pipelines)
-  - ✅ reusable pipeline components + Release pipeline
-  - https://github.com/googleapis/release-please 
+  - ✅ reusable pipeline components
+  - ✅ release pipeline
   - ✅ cron
     - ✅ comprehensive clang-tidy & clang-format checks
     - ✅ sonarcloud
   - ✅ cached dependencies
+  - https://github.com/googleapis/release-please 
   - containerised pipeline integration tests / dind
-  - https://github.com/googleapis/release-please
   - local github action runner (`act`)
   - ccache or precomiled headers
 - testing
@@ -149,6 +149,7 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - profiling (valgrind/cachegrind)
   - profile-guided optimization (pgo)
   - load test with mocked FIX server
+  - set process priority
 - latency
   - sparse arrays & flat matrix
   - memory-mapped files
@@ -159,18 +160,18 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - kernel space vs user space
   - RT OS
 - ✅ logging
-    - ✅ fast
-    - compiled out 'debug' logging for release builds
-    - thread name in logs
-    - rolling
-    - structured
-    - basic schema (severity, correlationId)
-- release process
-  - versioning
-    - master branch merge check for conventional commit message (e.g. regex)
-    - maybe a merge git gook check
-    - automated semantic versioning
-    - github-changelog-generator
+  - ✅ fast
+  - error handling
+  - compiled out 'debug' logging for release builds
+  - thread name in logs
+  - rolling
+  - structured
+  - basic schema (severity, correlationId)
+- versioning
+  - master branch merge check for conventional commit message (e.g. regex)
+  - maybe a merge git gook check
+  - automated semantic versioning
+  - github-changelog-generator
 - observability
   - opentelemetry (asynchronous)
   - grafana+tempo via docker-compose
