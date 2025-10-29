@@ -1,8 +1,6 @@
 #include <csignal>
 #include <cstdlib>
 #include <exception>
-#include <iostream>
-#include <new>
 #include <string>
 
 #include "binance/config.h"

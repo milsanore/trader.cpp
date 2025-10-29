@@ -67,8 +67,9 @@ class LogFileWatcher : public ILogWatcher, public efsw::FileWatchListener {
         }
         cb_(std::move(lines));
       } break;
-      // case efsw::Actions::Delete: {
-      // } break;
+      case efsw::Actions::Add:
+      case efsw::Actions::Delete:
+      case efsw::Actions::Moved:
       default:
         break;
     }

@@ -8,10 +8,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 # === App Source Files ==========================
 
 # Collect source files
-file(GLOB_RECURSE ALL_SOURCES "src/*.cpp")
+file(GLOB_RECURSE APP_SOURCES "src/*.cpp")
 # Separate main.cpp from the rest of the sources
-list(FILTER ALL_SOURCES EXCLUDE REGEX ".*main\\.cpp$")
-set(SOURCES ${ALL_SOURCES})
+list(FILTER APP_SOURCES EXCLUDE REGEX ".*main\\.cpp$")
+
+# Third-party sources
+set(THIRD_PARTY_SOURCES
+    third_party/fix8/fix8_classes.cpp
+    third_party/fix8/fix8_traits.cpp
+    third_party/fix8/fix8_types.cpp
+)
+
+set(SOURCES ${APP_SOURCES} ${THIRD_PARTY_SOURCES})
 
 
 # === Create core logic library =================
@@ -19,6 +27,18 @@ set(SOURCES ${ALL_SOURCES})
 # This allows unit tests to run
 # Link dependencies to the *library* (so both exe and tests get them)
 add_library(traderlib STATIC ${SOURCES})
+
+# Treat third_party headers as SYSTEM to suppress header warnings
+target_include_directories(traderlib SYSTEM PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fix8
+)
+
+# Silence all warnings and disable warnings-as-errors for third_party sources only
+set_source_files_properties(
+    ${THIRD_PARTY_SOURCES}
+    PROPERTIES
+    COMPILE_OPTIONS "-w;-Wno-error"
+)
 
 
 # === Conan Setup ===============================

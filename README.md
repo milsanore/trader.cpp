@@ -150,16 +150,17 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - profile-guided optimization (pgo)
   - load test with mocked FIX server
   - set process priority
-  - NIC affinity
-  - QoS
   - sparse arrays & flat matrix
   - memory-mapped files
-  - (analyse) find Binance's server location for a low-latency connection
   - (analyse) how to quantify latency?
   - FIX SSL connectivity, to avoid stunnel latency overhead
   - QuickFIX alternative (Fix8)
   - kernel space vs user space
   - RT OS
+- networking:
+  - ✅ traffic QoS
+  - (analyse) find Binance's server location for a low-latency connection
+  - dedicated NIC queues
 - ✅ logging
   - ✅ fast
   - error handling

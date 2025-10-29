@@ -118,47 +118,52 @@ static std::string replace_soh(const std::string& input) {
   return output;
 }
 
-void FixApp::onCreate(const FIX::SessionID& sessionId) {
+void FixApp::onCreate(const FIX::SessionID& session_id) {
   spdlog::info("session created. qualifier [{}], id [{}]",
-               sessionId.getSessionQualifier(), sessionId.toString());
+               session_id.getSessionQualifier(), session_id.toString());
 };
-void FixApp::onLogon(const FIX::SessionID& sessionId) {
-  spdlog::info("Session logon, qualifier [{}], id [{}]", sessionId.getSessionQualifier(),
-               sessionId.toString());
+void FixApp::onLogon(const FIX::SessionID& session_id) {
+  spdlog::info("Session logon, qualifier [{}], id [{}]", session_id.getSessionQualifier(),
+               session_id.toString());
   // logon successful, nullify access keys
   // TODO: now need to wait for all sessions to be logged on before nullifying keys
-  // auth_->clear_keys();
+  auth_->clear_keys();
 
-  std::string thread_name = THREAD_NAME_ + "_" + sessionId.getSessionQualifier();
+  // sessions run on their own threads when using @ref FIX::ThreadedSocketInitiator .
+  // set thread names
+  std::string thread_name = THREAD_NAME_ + "_" + session_id.getSessionQualifier();
   utils::Threading::set_thread_name(thread_name);
   spdlog::info("naming FIX session thread, name [{}], id [{}]", thread_name,
                utils::Threading::get_os_thread_id());
 
-  if (sessionId.getSessionQualifier() == PX_SESSION_QUALIFIER_) {
+  // FIX::Session* session = FIX::Session::lookupSession(session_id);
+
+  //
+  if (session_id.getSessionQualifier() == PX_SESSION_QUALIFIER_) {
     utils::Threading::set_current_thread_affinity(PX_SESSION_CPU_AFFINITY_);
-    subscribe_to_prices(sessionId);
-  } else if (sessionId.getSessionQualifier() == TX_SESSION_QUALIFIER_) {
+    subscribe_to_prices(session_id);
+  } else if (session_id.getSessionQualifier() == TX_SESSION_QUALIFIER_) {
     utils::Threading::set_current_thread_affinity(TX_SESSION_CPU_AFFINITY_);
-    subscribe_to_trades(sessionId);
-  } else if (sessionId.getSessionQualifier() == OX_SESSION_QUALIFIER_) {
+    subscribe_to_trades(session_id);
+  } else if (session_id.getSessionQualifier() == OX_SESSION_QUALIFIER_) {
     // do nothing for order session
   } else {
     spdlog::error("unknown session, qualifier [{}], id [{}]",
-                  sessionId.getSessionQualifier(), sessionId.toString());
+                  session_id.getSessionQualifier(), session_id.toString());
   }
 };
-void FixApp::onLogout(const FIX::SessionID& sessionId) {
-  spdlog::info("session logout. qualifier [{}], id [{}]", sessionId.getSessionQualifier(),
-               sessionId.toString());
+void FixApp::onLogout(const FIX::SessionID& session_id) {
+  spdlog::info("session logout. qualifier [{}], id [{}]",
+               session_id.getSessionQualifier(), session_id.toString());
 };
 
-void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
+void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& session_id) {
   const FIX::Header& header = msg.getHeader();
   FIX::MsgType msg_type;
   header.getField(msg_type);
   if (msg_type.getString() == static_cast<const char*>(FIX::MsgType_Logon)) {
     spdlog::info("authenticating. session qualifier [{}], session id [{}]",
-                 sessionId.getSessionQualifier(), sessionId.toString());
+                 session_id.getSessionQualifier(), session_id.toString());
 
     // collect required fields
     const std::string sender = header.getField(FIX::FIELD::SenderCompID);
@@ -184,48 +189,48 @@ void FixApp::toAdmin(FIX::Message& msg, const FIX::SessionID& sessionId) {
   } else {
     spdlog::info(
         "toAdmin.   session qualifier [{}], session id [{}], type [{}], message [{}]",
-        sessionId.getSessionQualifier(), sessionId.toString(), msg_type.getString(),
+        session_id.getSessionQualifier(), session_id.toString(), msg_type.getString(),
         replace_soh(msg.toString()));
   }
 };
-void FixApp::toApp(FIX::Message& msg, const FIX::SessionID& sessionId) noexcept(false) {
+void FixApp::toApp(FIX::Message& msg, const FIX::SessionID& session_id) noexcept(false) {
   const FIX::Header& header = msg.getHeader();
   FIX::MsgType msg_type;
   header.getField(msg_type);
   spdlog::info("toApp. session qualifier [{}], session id [{}], type [{}], message [{}]",
-               sessionId.getSessionQualifier(), sessionId.toString(),
+               session_id.getSessionQualifier(), session_id.toString(),
                msg_type.getString(), replace_soh(msg.toString()));
 };
 
 void FixApp::fromAdmin(const FIX::Message& msg,
-                       const FIX::SessionID& sessionId) noexcept(false) {
+                       const FIX::SessionID& session_id) noexcept(false) {
   const FIX::Header& header = msg.getHeader();
   FIX::MsgType msg_type;
   header.getField(msg_type);
   spdlog::info(
       "fromAdmin. session qualifier [{}], session id [{}], type [{}], message [{}]",
-      sessionId.getSessionQualifier(), sessionId.toString(), msg_type.getString(),
+      session_id.getSessionQualifier(), session_id.toString(), msg_type.getString(),
       replace_soh(msg.toString()));
 };
 void FixApp::fromApp(const FIX::Message& msg,
-                     const FIX::SessionID& sessionId) noexcept(false) {
-  FIX44::MessageCracker::crack(msg, sessionId);
+                     const FIX::SessionID& session_id) noexcept(false) {
+  FIX44::MessageCracker::crack(msg, session_id);
 }
 
 void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m,
-                       [[maybe_unused]] const FIX::SessionID& sessionID) {
+                       [[maybe_unused]] const FIX::SessionID& session_id) {
   order_queue_.enqueue(std::make_shared<const FIX44::MarketDataSnapshotFullRefresh>(m));
 }
 void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m,
-                       const FIX::SessionID& sessionID) {
-  if (sessionID.getSessionQualifier() == PX_SESSION_QUALIFIER_) {
+                       const FIX::SessionID& session_id) {
+  if (session_id.getSessionQualifier() == PX_SESSION_QUALIFIER_) {
     order_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
-  } else if (sessionID.getSessionQualifier() == TX_SESSION_QUALIFIER_) {
+  } else if (session_id.getSessionQualifier() == TX_SESSION_QUALIFIER_) {
     trade_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
   } else {
     spdlog::error(
         "ivalid session for market data incremental refresh, qualifier [{}], id [{}]",
-        sessionID.getSessionQualifier(), sessionID.toString());
+        session_id.getSessionQualifier(), session_id.toString());
   }
 }
 void FixApp::onMessage([[maybe_unused]] const FIX44::ExecutionReport& message,
