@@ -56,8 +56,15 @@ class Crash {
     _exit(1);
   }
 
-  /// @brief Setup function
-  static void setup_crash_handlers() {
+  /// @brief Sets up global crash and exception handlers.
+  ///
+  /// Installs handlers for:
+  /// - Unhandled exceptions (`std::terminate`)
+  /// - Memory allocation failures (`std::bad_alloc`)
+  /// - Fatal signals (SIGSEGV, SIGABRT, SIGFPE, SIGILL, and SIGBUS on POSIX)
+  ///
+  /// @note Signals like SIGKILL and SIGSTOP cannot be caught.
+  static void configure_handlers() {
     // Catch unhandled exceptions
     std::set_terminate(handle_terminate);
     // Catch std::bad_alloc (new OOM)

@@ -27,7 +27,7 @@ class TradeBoxTest : public ::testing::Test {
   DummyScreen screen_;
   moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> queue_;
   std::unique_ptr<ui::TradeBox> trade_box_;
-  binance::Config config_;
+  binance::Config config_{"", "", "", std::vector<std::string>{}, 0, 0};
 
   void SetUp() override {
     trade_box_ = std::make_unique<ui::TradeBox>(screen_, config_, queue_);

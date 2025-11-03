@@ -1,9 +1,15 @@
 
 #include "threading.h"
 
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <cstring>
+#include <format>
 #include <iostream>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <thread>
@@ -27,30 +33,34 @@
 #include <processthreadsapi.h>
 #endif
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
 namespace utils {
 
 // static function
 void Threading::set_thread_name(const std::string& name) {
 #if defined(__linux__)
-  // Linux: Limit is 16 bytes including null terminator
+  // linux: limit is 16 bytes including null terminator
   pthread_setname_np(pthread_self(), name.substr(0, 15).c_str());
 
 #elif defined(__APPLE__)
-  // macOS: Only supports setting name from within the thread
+  // macos: only supports setting name from within the thread
   pthread_setname_np(name.substr(0, 63).c_str());  // 64 bytes max including null
 
 #elif defined(_WIN32)
-  // Windows 10 1607 and later
-  // Convert std::string to UTF-16 std::wstring
+  // windows 10 (1607 and later)
+  // convert std::string to UTF-16 std::wstring
   int size_needed = MultiByteToWideChar(CP_UTF8, 0, name.c_str(), -1, nullptr, 0);
   if (size_needed > 0) {
     std::wstring wname(size_needed, 0);
     MultiByteToWideChar(CP_UTF8, 0, name.c_str(), -1, &wname[0], size_needed);
 
-    // Set thread description
+    // set thread description
     HRESULT hr = SetThreadDescription(GetCurrentThread(), wname.c_str());
     if (FAILED(hr)) {
-      // Optional: handle error (e.g., log or assert)
+      // optional: handle error (e.g., log or assert)
     }
   }
 #endif
@@ -62,29 +72,29 @@ std::string Threading::get_thread_name() {
   char name[16] = {0};  // Linux max length for pthread_getname_np
   int rc = pthread_getname_np(pthread_self(), name, sizeof(name));
   if (rc != 0) {
-    spdlog::error("failed to get thread name. error [{}]",
-                  std::system_category().message(rc));
+    throw std::runtime_error(std::format("failed to get thread name on linux. error [{}]",
+                                         std::system_category().message(rc)));
     return {};
   }
   return std::string(name);
 
 #elif defined(__APPLE__)
-  char name[64] = {0};  // macOS max 64 including null terminator
+  char name[64] = {0};  // macos max 64 including null terminator
   int rc = pthread_getname_np(pthread_self(), name, sizeof(name));
   if (rc != 0) {
-    spdlog::error("failed to get thread name on macOS. error [{}]", rc);
-    return {};
+    throw std::runtime_error(
+        std::format("failed to get thread name on macos. error [{}]", rc));
   }
   return std::string(name);
 
 #elif defined(_WIN32)
-  // Windows 10 1607+ has GetThreadDescription
+  // Windows 10 1607+ has GetThreadDescription()
   PWSTR wname = nullptr;
   HRESULT hr = GetThreadDescription(GetCurrentThread(), &wname);
   if (FAILED(hr) || wname == nullptr) {
     return {};
   }
-  // Convert UTF-16 to UTF-8
+  // convert UTF-16 to UTF-8
   int size_needed =
       WideCharToMultiByte(CP_UTF8, 0, wname, -1, nullptr, 0, nullptr, nullptr);
   std::string name(size_needed, 0);
@@ -97,7 +107,8 @@ std::string Threading::get_thread_name() {
   return name;
 
 #else
-  return {};  // Unsupported platform
+  spdlog::error("cannot get thread name - unsupported platform");
+  return {};
 #endif
 }
 
@@ -105,19 +116,14 @@ std::string Threading::get_thread_name() {
 uint64_t Threading::get_os_thread_id() {
 #if defined(__linux__)
   return static_cast<uint64_t>(::syscall(SYS_gettid));
-
 #elif defined(__APPLE__)
   uint64_t tid;
   pthread_threadid_np(nullptr, &tid);
   return tid;
-
 #elif defined(_WIN32)
   return static_cast<uint64_t>(::GetCurrentThreadId());
-
 #else
-  spdlog::error("unsupported platform, cannot get thread id. returning [{}]",
-                ERROR_THREAD_ID);
-  return ERROR_THREAD_ID;
+  throw std::runtime_error("unsupported platform, cannot get thread id");
 #endif
 }
 
@@ -128,15 +134,13 @@ unsigned int Threading::get_cpu_count() {
   if (n > 0) {
     return static_cast<unsigned int>(n);
   }
-  // Fallback if sysconf fails
+  // fallback if sysconf fails
   unsigned int std_n = std::thread::hardware_concurrency();
   return std_n > 0 ? std_n : 1;
-
 #elif defined(_WIN32)
   SYSTEM_INFO sysinfo;
   GetSystemInfo(&sysinfo);
   return sysinfo.dwNumberOfProcessors;
-
 #else
   unsigned int std_n = std::thread::hardware_concurrency();
   return std_n > 0 ? std_n : 1;
@@ -144,7 +148,23 @@ unsigned int Threading::get_cpu_count() {
 }
 
 // static function
-bool Threading::set_native_thread_affinity(std::thread::native_handle_type handle,
+void Threading::set_thread_affinity(std::thread& t, unsigned int cpu_id) {
+  return set_native_thread_affinity(t.native_handle(), cpu_id);
+}
+
+// static function
+void Threading::set_thread_cpu(unsigned int cpu_id) {
+#if defined(__linux__) || defined(__APPLE__)
+  return set_native_thread_affinity(pthread_self(), cpu_id);
+#elif defined(_WIN32)
+  return set_native_thread_affinity(GetCurrentThread(), cpu_id);
+#else
+  throw std::runtime_error("thread affinity not supported on this platform");
+#endif
+}
+
+// static function
+void Threading::set_native_thread_affinity(std::thread::native_handle_type handle,
                                            unsigned int cpu_id) {
 #if defined(__linux__)
   cpu_set_t cpuset;
@@ -152,19 +172,18 @@ bool Threading::set_native_thread_affinity(std::thread::native_handle_type handl
   CPU_SET(cpu_id, &cpuset);
   unsigned int num_cpus = get_cpu_count();
   if (cpu_id >= num_cpus) {
-    spdlog::error("cpu_id exceeds available CPUs, cpu_id [{}] available [{}]", cpu_id,
-                  num_cpus);
-    return false;
+    throw std::runtime_error(std::format(
+        "cpu_id exceeds available CPUs, cpu_id [{}] available [{}]", cpu_id, num_cpus));
   }
   int rc = pthread_setaffinity_np(handle, sizeof(cpu_set_t), &cpuset);
   if (rc != 0) {
-    spdlog::error("linux: failed to set thread affinity. error [{}]",
-                  std::system_category().message(rc));
-    return false;
+    throw std::runtime_error(
+        std::format("linux: failed to set thread affinity. error [{}]",
+                    std::system_category().message(rc)));
   }
   spdlog::info("linux: successfully set thread affinity. thread_name [{}] cpu [{}]",
                get_thread_name(), cpu_id);
-  return true;
+  return;
 
 #elif defined(__APPLE__)
   thread_port_t mach_thread = pthread_mach_thread_np(handle);
@@ -173,46 +192,52 @@ bool Threading::set_native_thread_affinity(std::thread::native_handle_type handl
                                        reinterpret_cast<thread_policy_t>(&policy),
                                        THREAD_AFFINITY_POLICY_COUNT);
   if (kr != KERN_SUCCESS) {
-    spdlog::error("macOS: failed to set thread affinity. kern_return_t [{}]", kr);
-    return false;
+    throw std::runtime_error(
+        std::format("macos: failed to set thread affinity. kern_return_t [{}]", kr));
   }
-  spdlog::info("macOS: successfully set thread affinity. thread_name [{}] cpu [{}]",
+  spdlog::info("macos: successfully set thread affinity. thread_name [{}] cpu [{}]",
                get_thread_name(), cpu_id);
-  return true;
+  return;
 
 #elif defined(_WIN32)
   DWORD_PTR mask = static_cast<DWORD_PTR>(1) << cpu_id;
   DWORD_PTR result = SetThreadAffinityMask(handle, mask);
   if (result == 0) {
-    spdlog::error("windows: failed to set thread affinity. error [{}]", GetLastError());
-    return false;
+    throw std::runtime_error(std::format(
+        "windows: failed to set thread affinity. error [{}]", GetLastError()));
   }
   spdlog::info("windows: successfully set thread affinity. thread_name [{}] cpu [{}]",
                get_thread_name(), cpu_id);
-  return true;
+  return;
 
 #else
   (void)handle;
   (void)cpu_id;
-  spdlog::error("thread affinity not supported on this platform");
-  return false;
+  throw std::runtime_error("thread affinity not supported on this platform");
 #endif
 }
 
 // static function
-bool Threading::set_thread_affinity(std::thread& t, unsigned int cpu_id) {
-  return set_native_thread_affinity(t.native_handle(), cpu_id);
-}
-
-// static function
-bool Threading::set_current_thread_affinity(unsigned int cpu_id) {
-#if defined(__linux__) || defined(__APPLE__)
-  return set_native_thread_affinity(pthread_self(), cpu_id);
-#elif defined(_WIN32)
-  return set_native_thread_affinity(GetCurrentThread(), cpu_id);
+void Threading::set_thread_realtime() {
+#if defined(_WIN32) || defined(_WIN64)
+  HANDLE hThread = GetCurrentThread();
+  if (!SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL)) {
+    throw std::runtime_error("failed to set Windows thread priority");
+  }
 #else
-  spdlog::error("thread affinity not supported on this platform");
-  return false;
+  pthread_t thread = pthread_self();
+  struct sched_param param;
+  param.sched_priority = 99;
+  // Attempt SCHED_FIFO
+  int ret = pthread_setschedparam(thread, SCHED_FIFO, &param);
+  if (ret != 0) {
+    if (ret == EPERM) {
+      throw std::runtime_error("permission denied: need root to set real-time priority");
+    } else {
+      throw std::runtime_error(
+          std::format("Failed to set real-time scheduling, err [{}]", ret));
+    }
+  }
 #endif
 }
 

@@ -12,6 +12,7 @@ A proof-of-concept, showcasing some modern c++ and some fintech concepts.
 - linux (tested with debian-trixie)
 - `stunnel` for TLS encryption (or a local proxy)
 - a Binance account, and an Ed25519 token with FIX read permissions enabled
+- `sudo` permissions (for elevated process and thread priorities)
 
 ## Run
 - start an SSL tunnel
@@ -24,7 +25,7 @@ A proof-of-concept, showcasing some modern c++ and some fintech concepts.
 - run:
   - download release
   - `chmod u+x tradercpp`
-  - `./tradercpp`
+  - `sudo ./tradercpp`
 
 ## Build Requirements
 - C++20
@@ -48,7 +49,7 @@ NB: this app uses `make` as a recipe book, but it's not essential:
 2. run an SSL tunnel (e.g. `stunnel binance/stunnel_prod.conf`)
 3. `make init`
 4. `make build-debug`
-5. `make withenv RECIPE=run-debug`
+5. `sudo make withenv RECIPE=run-debug`
 
 ## Test
 `make test`
@@ -149,9 +150,26 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - profiling (valgrind/cachegrind)
   - profile-guided optimization (pgo)
   - load test with mocked FIX server
-  - set process priority
-  - NIC affinity
-  - QoS
+  - CPU
+    - ✅ process priority
+    - ✅ FIX-thread "realtime"
+    - ✅ FIX-thread CPU affinity
+    - Disable hyperthreading
+  - NIC
+    - wired, kernel-bypass NICs
+    - NIC IRQ affinity to same CPU as FIX
+    - hardware queue affinity
+    - QoS (mark packets)
+    - AF_XDP (+ Zero-copy mode)
+    - ~dedicated NIC + DPDK~
+  - OS
+    - vacate OS services / move IRQs for all system devices to the last CPU
+    - RTOS
+  - BIOS
+    - disable hyperthreading, turbo boost
+    - disable C-states deeper than C1 (C1E, C6, etc)
+    - set cpu governor to "performance"
+  - Memory locking
   - sparse arrays & flat matrix
   - memory-mapped files
   - (analyse) find Binance's server location for a low-latency connection
@@ -162,6 +180,7 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - RT OS
 - ✅ logging
   - ✅ fast
+  - add console target for fatal messages
   - error handling
   - compiled out 'debug' logging for release builds
   - thread name in logs

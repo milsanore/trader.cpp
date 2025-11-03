@@ -3,6 +3,7 @@
 
 namespace utils {
 
+/// @brief testing helpers
 class Testing {
  public:
   /// @brief Repeatedly evaluates a condition until it returns true or a timeout is

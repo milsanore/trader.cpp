@@ -27,13 +27,13 @@ namespace binance {
 FixApp::FixApp(const std::vector<std::string>& symbols,
                std::unique_ptr<IAuth> auth,
                const uint16_t MAX_DEPTH,
-               const uint8_t PX_SESSION_CPU_AFFINITY,
-               const uint8_t TX_SESSION_CPU_AFFINITY)
+               const uint8_t px_cpu,
+               const uint8_t tx_cpu)
     : symbols_(symbols),
       auth_(std::move(auth)),
       MAX_DEPTH_(MAX_DEPTH),
-      PX_SESSION_CPU_AFFINITY_(PX_SESSION_CPU_AFFINITY),
-      TX_SESSION_CPU_AFFINITY_(TX_SESSION_CPU_AFFINITY) {}
+      px_cpu_(px_cpu),
+      tx_cpu_(tx_cpu) {}
 
 void FixApp::subscribe_to_prices(const FIX::SessionID& session_id) const {
   spdlog::info("subscribing to depth. qualifier [{}], id [{}]",
@@ -135,10 +135,11 @@ void FixApp::onLogon(const FIX::SessionID& sessionId) {
                utils::Threading::get_os_thread_id());
 
   if (sessionId.getSessionQualifier() == PX_SESSION_QUALIFIER_) {
-    utils::Threading::set_current_thread_affinity(PX_SESSION_CPU_AFFINITY_);
+    utils::Threading::set_thread_cpu(px_cpu_);
+    utils::Threading::set_thread_realtime();
     subscribe_to_prices(sessionId);
   } else if (sessionId.getSessionQualifier() == TX_SESSION_QUALIFIER_) {
-    utils::Threading::set_current_thread_affinity(TX_SESSION_CPU_AFFINITY_);
+    utils::Threading::set_thread_cpu(tx_cpu_);
     subscribe_to_trades(sessionId);
   } else if (sessionId.getSessionQualifier() == OX_SESSION_QUALIFIER_) {
     // do nothing for order session

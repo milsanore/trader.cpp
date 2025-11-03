@@ -8,6 +8,7 @@
 
 namespace utils {
 
+/// @brief Double-precision manipulation functions
 struct Double {
  public:
   /// @brief Convert a double price to uint64 by multiplication and truncation

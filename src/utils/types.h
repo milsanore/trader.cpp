@@ -13,6 +13,7 @@
 
 namespace utils {
 
+/// @brief type helpers
 class Types {
   using malloc_ptr = std::unique_ptr<char, void (*)(void*)>;
 

@@ -49,7 +49,7 @@ build-release:
 	cmake --preset=release
 	cmake --build --preset=release
 
-## test: 🧪 run google-test
+## test: 🧪 run unit tests
 .PHONY: test
 test:
 	cmake --preset debug
@@ -74,6 +74,7 @@ run-debug:
 ## run-release: 🏎️  run the app (prod)
 .PHONY: run-release
 run-release:
+	$(call pp,starting app. dont forget to run `scripts/cpu_shield_start.sh`)
 	build/Release/tradercpp
 
 # CONTAINERISATION RECIPES ----------------------------------------------------

@@ -21,8 +21,8 @@ class FixApp final : public FIX::Application, public FIX44::MessageCracker {
   FixApp(const std::vector<std::string>& symbols,
          std::unique_ptr<IAuth> auth,
          const uint16_t MAX_DEPTH,
-         const uint8_t PX_SESSION_CPU_AFFINITY,
-         const uint8_t TX_SESSION_CPU_AFFINITY);
+         const uint8_t px_cpu,
+         const uint8_t tx_cpu);
   ~FixApp() override = default;
 
   // Use the FIX44::MessageCracker to pull in the relevant overloads. This resolves the
@@ -51,8 +51,8 @@ class FixApp final : public FIX::Application, public FIX44::MessageCracker {
   const std::vector<std::string>& symbols_;
   const std::unique_ptr<IAuth> auth_;
   const uint16_t MAX_DEPTH_;
-  const uint8_t PX_SESSION_CPU_AFFINITY_;
-  const uint8_t TX_SESSION_CPU_AFFINITY_;
+  const uint8_t px_cpu_;
+  const uint8_t tx_cpu_;
 
   void onCreate(const FIX::SessionID&) override;
   void onLogon(const FIX::SessionID&) override;

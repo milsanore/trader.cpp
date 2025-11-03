@@ -28,7 +28,7 @@ TEST(App, start) {
 
   constexpr int MAX_DEPTH = 50;
   auto book_box = std::make_unique<ui::OrderBookBox>(*screen, order_queue, MAX_DEPTH);
-  auto bconf = binance::Config();
+  binance::Config bconf{"", "", "", std::vector<std::string>{}, 0, 0};
   auto trade_box = std::make_unique<ui::TradeBox>(
       *screen, bconf, trade_queue,
       []([[maybe_unused]] const std::stop_token& stoken) { spdlog::info("mock task"); });

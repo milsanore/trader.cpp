@@ -8,6 +8,7 @@
 
 namespace utils {
 
+/// @brief OS environment helpers
 struct Env {
  public:
   /// @brief load a variable from the environment, if it's not available, panic
@@ -50,7 +51,7 @@ struct Env {
 #endif
 
     // log combined info
-    spdlog::info("Compiled for {} on {}", ARCH, OS);
+    spdlog::info("Compiled for [{}] on [{}]", ARCH, OS);
   }
 
   /// @brief Cache line size for the current architecture

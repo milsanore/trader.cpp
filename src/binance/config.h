@@ -1,5 +1,6 @@
 #pragma once
 
+#include <charconv>
 #include <cmath>
 #include <cstdint>
 #include <format>
@@ -16,11 +17,27 @@ namespace binance {
 /// @brief Binance config parameters, fetched from env
 struct Config {
  public:
-  // TODO: MAKE UNIQUE POINTERS
   std::string api_key, private_key_path;
   const std::string fix_config_path;
   const std::vector<std::string> symbols;
-  //
+  const uint8_t px_cpu;
+  const uint8_t tx_cpu;
+
+  // Constructor that initializes all const members
+  Config(std::string api,
+         std::string private_key,
+         std::string fix_config,
+         std::vector<std::string> syms,
+         uint8_t px,
+         uint8_t tx)
+      : api_key(std::move(api)),
+        private_key_path(std::move(private_key)),
+        fix_config_path(std::move(fix_config)),
+        symbols(std::move(syms)),
+        px_cpu(px),
+        tx_cpu(tx) {}
+
+  /// @brief load Binance configuration parameters from environment variables
   static Config from_env();
 
   /// @brief convert a market price to a tick representation, for performance and
@@ -58,9 +75,6 @@ struct Config {
 
   /// @brief 1 == top level, otherwise 5000 is Binance's maximum depth
   static constexpr uint16_t MAX_DEPTH = 100;
-
-  static constexpr uint8_t PX_SESSION_CPU_AFFINITY = 0;
-  static constexpr uint8_t TX_SESSION_CPU_AFFINITY = 1;
 };
 
 }  // namespace binance
