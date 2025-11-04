@@ -61,7 +61,6 @@ class Threading {
   static void set_thread_realtime();
 
  private:
-  static void set_thread_affinity(std::thread& t, unsigned int cpu_id);
   // platform-specific affinity for native thread handle
   static void set_native_thread_affinity(std::thread::native_handle_type handle,
                                          unsigned int cpu_id);

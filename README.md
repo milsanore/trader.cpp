@@ -156,15 +156,16 @@ NB: this app uses `make` as a recipe book, but it's not essential:
     - ✅ FIX-thread CPU affinity
     - Disable hyperthreading
   - NIC
+    - ✅ NIC IRQ affinity to same CPU as FIX
     - wired, kernel-bypass NICs
-    - NIC IRQ affinity to same CPU as FIX
     - hardware queue affinity
     - QoS (mark packets)
     - AF_XDP (+ Zero-copy mode)
     - ~dedicated NIC + DPDK~
   - OS
-    - vacate OS services / move IRQs for all system devices to the last CPU
-    - RTOS
+    - ✅ vacate OS services
+    - move IRQs for all system devices to other CPUs
+    - RTOS / PREEMPT_RT kernel
   - BIOS
     - disable hyperthreading, turbo boost
     - disable C-states deeper than C1 (C1E, C6, etc)

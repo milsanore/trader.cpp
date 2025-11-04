@@ -148,11 +148,6 @@ unsigned int Threading::get_cpu_count() {
 }
 
 // static function
-void Threading::set_thread_affinity(std::thread& t, unsigned int cpu_id) {
-  return set_native_thread_affinity(t.native_handle(), cpu_id);
-}
-
-// static function
 void Threading::set_thread_cpu(unsigned int cpu_id) {
 #if defined(__linux__) || defined(__APPLE__)
   return set_native_thread_affinity(pthread_self(), cpu_id);

@@ -74,7 +74,7 @@ run-debug:
 ## run-release: 🏎️  run the app (prod)
 .PHONY: run-release
 run-release:
-	$(call pp,starting app. dont forget to run `scripts/cpu_shield_start.sh`)
+	$(call pp,starting app. dont forget to run `scripts/cpu_shield_start.sh` and `scripts/irqs_move.sh`)
 	build/Release/tradercpp
 
 # CONTAINERISATION RECIPES ----------------------------------------------------
