@@ -14,7 +14,7 @@
         "isDefault": true
       },
       "problemMatcher": [],
-      "detail": "Builds the project using Conan and CMake Debug preset"
+      "detail": "Builds the project using Conan, and the CMake 'Debug' preset. does not `rm -rf` build"
     }
   ]
 }

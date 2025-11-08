@@ -26,26 +26,26 @@ init:
 	python3 -m venv .venv
 	source .venv/bin/activate && \
 		pip install gcovr conan && \
-		conan install . --lockfile=conan.lock --build=missing -s build_type=Debug
+		conan install . --lockfile=conan.lock --build=missing -s build_type=Debug && \
+		conan install . --lockfile=conan.lock --build=missing -s build_type=Release
 	cmake --preset=debug
 
-## lock-conan: 📦 run after installing conan dependencies
+## lock-conan: 📦 run after adding (but before installing) conan dependencies
 .PHONY: lock-conan
 lock-conan:
-	conan lock create . --profile:host=default -s build_type=Debug --lockfile-out=conan.lock
+	conan lock create . --profile:host=default -s build_type=Debug   --lockfile-out=conan.lock
 	conan lock create . --profile:host=default -s build_type=Release --lockfile=conan.lock --lockfile-out=conan.lock
 
 ## build-debug: 🔨 compile (debug)
 .PHONY: build-debug
 build-debug:
 	$(call pp,assuming `make init` has been called)
+	cmake --preset=debug
 	cmake --build --preset=debug
 
 ## build-release: 🏎️ compile (prod)
 .PHONY: build-release
 build-release:
-	source .venv/bin/activate && \
-		conan install . --lockfile=conan.lock --build=missing -s build_type=Release
 	cmake --preset=release
 	cmake --build --preset=release
 
@@ -59,10 +59,17 @@ test:
 	source .venv/bin/activate && \
 		gcovr -r . --exclude 'tests/*' --sonarqube -o sonar-coverage.xml
 
+## bench: ⏱️ build and run benchmarks
+.PHONY: bench
+bench:
+	$(call pp,assuming `make build-release` has been called)
+	cmake --build --preset release
+	build/Release/benchmarks/benchmarks --benchmark_report_aggregates_only=false
+
 ## tidy: 🧹 tidy things up before committing code
 .PHONY: tidy
 tidy:
-	find src/ tests/ \( -name '*.cpp' -o -name '*.hpp' -o -name '*.c' -o -name '*.h' \) -exec clang-format -i {} +	
+	find src/ tests/ benchmarks/ \( -name '*.cpp' -o -name '*.hpp' -o -name '*.c' -o -name '*.h' \) -exec clang-format -i {} +	
 	hooks/check_clang_tidy.sh
 
 ## run-debug: 🏃‍♂️  run the app (debug) (don't forget `withenv`)

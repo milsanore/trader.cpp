@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-echo ">> Checking for clang-tidy warnings..."
+echo ">> Checking for clang-tidy warnings in [ src/ tests/ benchmarks/ ]"
 
 CLANG_TIDY_BIN="run-clang-tidy-18"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,9 +21,9 @@ if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then
     exit 1
 fi
 
-# Run run-clang-tidy in parallel on src/ and tests/ directories
+# Run run-clang-tidy in parallel on src/ , tests/ , and benchmarks/ directories
 # no -fix flag to just report warnings/errors
-output=$($CLANG_TIDY_BIN -p "$BUILD_DIR" -j "$(nproc)" -header-filter='src/.*|tests/.*' src tests 2>&1) || true
+output=$($CLANG_TIDY_BIN -p "$BUILD_DIR" -j "$(nproc)" -header-filter='src/.*|tests/.*|benchmarks/.*' src tests benchmarks 2>&1) || true
 
 echo "$output"
 

@@ -1,3 +1,7 @@
+# file(GLOB_RECURSE TEST_SOURCES
+#     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+# )
+
 file(GLOB_RECURSE TEST_SOURCES
     binance/*_test.cpp
     core/*_test.cpp

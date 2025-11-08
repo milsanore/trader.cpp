@@ -8,12 +8,12 @@
 
 set -euo pipefail
 
-echo ">> Checking for clang-format issues in src/ and tests/..."
+echo ">> Checking for clang-format issues in [ src/ tests/ benchmarks/ ]"
 
 CLANG_FORMAT_BIN="clang-format"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-files=$(find "$SCRIPT_DIR"/../src/ "$SCRIPT_DIR"/../tests/ \( -name '*.cpp' -o -name '*.hpp' -o -name '*.c' -o -name '*.h' \) | sort)
+files=$(find "$SCRIPT_DIR"/../src/ "$SCRIPT_DIR"/../tests/ "$SCRIPT_DIR"/../benchmarks/ \( -name '*.cpp' -o -name '*.hpp' -o -name '*.c' -o -name '*.h' \) | sort)
 format_errors=0
 for file in $files; do
     if [ -f "$file" ]; then

@@ -23,13 +23,8 @@ add_library(traderlib STATIC ${SOURCES})
 
 # === Conan Setup ===============================
 
-# Conan-generated toolchain setup
-include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake OPTIONAL RESULT_VARIABLE _found_toolchain)
-if(_found_toolchain)
-    message(STATUS "Conan toolchain included")
-endif()
-
 find_package(absl REQUIRED)
+find_package(benchmark REQUIRED)
 find_package(Boost REQUIRED)
 find_package(concurrentqueue REQUIRED)
 find_package(efsw REQUIRED)
@@ -44,6 +39,7 @@ find_package(spdlog REQUIRED)
 
 target_link_libraries(traderlib PUBLIC
     abseil::abseil
+    benchmark::benchmark_main
     boost::boost
     concurrentqueue::concurrentqueue
     efsw::efsw
@@ -58,13 +54,18 @@ target_link_libraries(traderlib PUBLIC
 )
 
 
-# === Create main executable ====================
+# === Main executable ===========================
 
 add_executable(tradercpp "src/main.cpp")
 target_link_libraries(tradercpp PRIVATE traderlib)
 
 
-# === Enable `ctest` ============================
+# === Unit test executable ======================
 
 enable_testing()
 add_subdirectory(tests)
+
+
+# === Benchmark executable ======================
+
+add_subdirectory(benchmarks)

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fmt/core.h>
+
 #include <cmath>
 
 #include "../utils/env.h"
@@ -30,3 +32,17 @@ struct alignas(utils::Env::CACHE_LINE_SIZE) BidAsk {
 };
 
 }  // namespace core
+
+// BidAsk formatter functions
+namespace fmt {
+template <>
+struct formatter<core::BidAsk> {
+  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+  template <typename FormatContext>
+  auto format(const core::BidAsk& ba, FormatContext& ctx) const {
+    return format_to(ctx.out(), "{{bid_sz: {}, bid_px: {}, ask_px: {}, ask_sz: {}}}",
+                     ba.bid_sz, ba.bid_px, ba.ask_px, ba.ask_sz);
+  }
+};
+}  // namespace fmt

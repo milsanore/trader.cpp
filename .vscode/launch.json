@@ -39,8 +39,31 @@
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
-			"environment": [],
-			"envFile": "${workspaceFolder}/.env",
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				},
+				{
+					"description": "Set Disassembly Flavor to Intel",
+					"text": "-gdb-set disassembly-flavor intel",
+					"ignoreFailures": true
+				}
+			],
+			"preLaunchTask": "build",
+			"miDebuggerPath": "/usr/bin/gdb"
+		},
+		{
+			"name": "benchmark-debug",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/Debug/benchmarks/benchmarks",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
 			"externalConsole": false,
 			"MIMode": "gdb",
 			"setupCommands": [

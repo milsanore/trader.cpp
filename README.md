@@ -141,20 +141,27 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - ✅ dependency injection
   - integration test with mocked Binance server
   - FTXUI snapshot testing
+- benchmarking
+  - micro benchmarks
+  - load test with mocked FIX server
+  - profiling (valgrind/cachegrind)
+  - profile-guided optimization (pgo)
+  - profile tcmalloc
 - performance / latency
   - ✅ store prices and sizes as integrals (ticks as `uint64_t`) for performance
   - ✅ cache line alignment
   - ✅ tcmalloc (Full) / gperftools
-    - profiling tcmalloc
-  - release compile flags
-  - profiling (valgrind/cachegrind)
-  - profile-guided optimization (pgo)
-  - load test with mocked FIX server
   - CPU
     - ✅ process priority
     - ✅ FIX-thread "realtime"
     - ✅ FIX-thread CPU affinity
     - Disable hyperthreading
+  - OS
+    - ✅ vacate OS services
+    - ✅ move IRQs for all system devices to other CPUs
+    - RTOS / PREEMPT_RT kernel
+  - co-location
+    - ✅ find Binance's server location for a low-latency connection
   - NIC
     - ✅ NIC IRQ affinity to same CPU as FIX
     - wired, kernel-bypass NICs
@@ -162,27 +169,23 @@ NB: this app uses `make` as a recipe book, but it's not essential:
     - QoS (mark packets)
     - AF_XDP (+ Zero-copy mode)
     - ~dedicated NIC + DPDK~
-  - OS
-    - ✅ vacate OS services
-    - move IRQs for all system devices to other CPUs
-    - RTOS / PREEMPT_RT kernel
+  - FIX
+    - ✅ debug quickfix to confirm if it's running in it's own thread
+    - QuickFIX alternative (Fix8)
+      - otherwise => QuickFIX + SSL
+  - kernel space vs user space
+  - sparse arrays & flat matrix
+  - release compile flags
+  - memory-mapped files
+  - Memory locking
   - BIOS
     - disable hyperthreading, turbo boost
     - disable C-states deeper than C1 (C1E, C6, etc)
     - set cpu governor to "performance"
-  - Memory locking
-  - sparse arrays & flat matrix
-  - memory-mapped files
-  - (analyse) find Binance's server location for a low-latency connection
-  - (analyse) how to quantify latency?
-  - FIX SSL connectivity, to avoid stunnel latency overhead
-  - QuickFIX alternative (Fix8)
-  - kernel space vs user space
-  - RT OS
 - ✅ logging
   - ✅ fast
-  - add console target for fatal messages
-  - error handling
+  - ✅ error handling
+  - ✅ add console target for fatal messages
   - compiled out 'debug' logging for release builds
   - thread name in logs
   - rolling
@@ -196,9 +199,6 @@ NB: this app uses `make` as a recipe book, but it's not essential:
 - observability
   - opentelemetry (asynchronous)
   - grafana+tempo via docker-compose
-- FIX
-  - ✅ debug quickfix to confirm if it's running in it's own thread
-  - switch to Fix8
 - security
   - OpenSSF Scorecard
 - other
