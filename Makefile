@@ -69,8 +69,11 @@ test:
 bench:
 	$(call pp,assuming `make build-release` has been called)
 	cmake --build --preset release
-	build/Release/benchmarks/benchmarks --benchmark_report_aggregates_only=false
-# 	build/Release/benchmarks/benchmarks --benchmark_report_aggregates_only=false --benchmark_format=json > bench_results.json
+	build/Release/benchmarks/benchmarks \
+	--benchmark_out=bench_results.json \
+  	--benchmark_out_format=json \
+	--benchmark_report_aggregates_only=false
+
 
 ## tidy: 🧹 tidy things up before committing code
 .PHONY: tidy

@@ -10,11 +10,11 @@ logs/
 # ENVIRONMENT
 .env
 .env.*
-
 # COVERAGE
 lcov.info
 sonar-coverage.xml
-
+# BENCHMARK
+bench_results.json
 # TODO: Understand the auto-generation of this file
 CMakeUserPresets.json
 
