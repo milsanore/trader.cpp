@@ -15,7 +15,7 @@ SocketConnectHost=127.0.0.1
 FileStorePath=qf_files
 FileLogPath=qf_logs
 FileLogHeartbeats=N
-FileLogMessages=Y
+FileLogMessages=N
 FileLogEvent=Y
 
 [SESSION]

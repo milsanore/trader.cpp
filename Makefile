@@ -1,6 +1,11 @@
 #!make
 SHELL:=/bin/bash
 
+#################################################
+# A set of basic execution recipes (all PHONY).
+# Call `make` on the command line for documentation.
+#################################################
+
 # pp - pretty print function
 yellow := $(shell tput setaf 3)
 normal := $(shell tput sgr0)
@@ -65,6 +70,7 @@ bench:
 	$(call pp,assuming `make build-release` has been called)
 	cmake --build --preset release
 	build/Release/benchmarks/benchmarks --benchmark_report_aggregates_only=false
+# 	build/Release/benchmarks/benchmarks --benchmark_report_aggregates_only=false --benchmark_format=json > bench_results.json
 
 ## tidy: 🧹 tidy things up before committing code
 .PHONY: tidy

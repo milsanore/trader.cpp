@@ -1,0 +1,56 @@
+name: Nightly Benchmark
+
+# run a nightly performance benchmark report
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # Runs every day at 1:00 UTC
+  workflow_dispatch:  # Allows manual run from GitHub UI
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/milsanore/tradercppbuild:v1.7
+      # set resource limits for some consistency
+      options: --memory=7g --cpus=2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore Conan cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.*') }}-Release
+
+      - name: Install conan dependencies
+        run: |
+          set -e
+          rm -rf build
+          conan profile detect --force
+          conan install . --lockfile=conan.lock --build=missing -s build_type=Release
+
+      - name: Build
+        run: |
+          set -e
+          cmake --preset=release
+          cmake --build --preset=release
+
+      - name: Bench
+        run: |
+          set -e
+          build/Release/benchmarks/benchmarks --benchmark_report_aggregates_only=false --benchmark_format=json > bench_results.json
+
+      - name: Upload benchmarks to InfluxDB
+        env:
+          INFLUX_URL: "https://us-east-1-1.aws.cloud2.influxdata.com"
+          INFLUX_TOKEN: ${{ secrets.INFLUX_TOKEN }}
+          INFLUX_ORG: "tradercpp"
+          INFLUX_BUCKET: "benchmarks"
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          BENCH_SOURCE: github-actions
+        run: python3 scripts/upload_to_influx.py

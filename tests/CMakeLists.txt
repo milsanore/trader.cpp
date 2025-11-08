@@ -10,7 +10,7 @@ file(GLOB_RECURSE TEST_SOURCES
 )
 
 add_executable(unit_tests
-    test_main.cpp
+    main.cpp
     ${TEST_SOURCES}
 )
 

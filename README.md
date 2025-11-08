@@ -142,7 +142,7 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - integration test with mocked Binance server
   - FTXUI snapshot testing
 - benchmarking
-  - micro benchmarks
+  - ✅ micro benchmarks
   - load test with mocked FIX server
   - profiling (valgrind/cachegrind)
   - profile-guided optimization (pgo)
