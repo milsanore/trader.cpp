@@ -1,11 +1,10 @@
 #include "ui_app.h"
 
+#include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include <quickfix/fix44/Message.h>
 
 #include <algorithm>
-#include <cstdint>
 #include <ftxui/component/component.hpp>
-#include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <memory>
 #include <thread>
@@ -13,10 +12,11 @@
 #include <vector>
 
 #include "../../binance/config.h"
+#include "../../binance/market_message_variant.h"
 #include "../log_box/log_box.h"
 #include "../order_book_box.h"
 #include "../trade_box.h"
-#include "../wallet_box.h"
+#include "../traffic_box.h"
 #include "concurrentqueue.h"
 #include "ftxui_screen.h"
 #include "iscreen.h"
@@ -45,8 +45,8 @@ App::App(std::unique_ptr<IScreen> screen,
 
 // static function
 App App::from_env(
-    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& order_queue,
-    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& trade_queue,
+    moodycamel::ConcurrentQueue<binance::MarketMessageVariant>& order_queue,
+    moodycamel::ConcurrentQueue<FIX44::MarketDataIncrementalRefresh>& trade_queue,
     binance::Config& binance_config) {
   //
   std::unique_ptr<IScreen> screen = std::make_unique<FtxuiScreen>();
@@ -75,7 +75,7 @@ void App::start() {
       Horizontal({Vertical({book_box_->get_component() | flex}) | flex,
                   Vertical({trade_box_->get_component() | flex}) | flex});
   const ftxui::Component row2 =
-      Horizontal({Vertical({wallet_box_.get_component() | flex}) | flex,
+      Horizontal({Vertical({traffic_box_.get_component() | flex}) | flex,
                   Vertical({log_box_->get_component() | flex}) | flex});
   const ftxui::Component root = Vertical({row1 | flex, row2 | size(HEIGHT, EQUAL, 6)});
   screen_->loop(root);

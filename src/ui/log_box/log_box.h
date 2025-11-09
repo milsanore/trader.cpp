@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <deque>
 #include <fstream>
 #include <ftxui/component/component.hpp>

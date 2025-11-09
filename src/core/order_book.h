@@ -3,7 +3,6 @@
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 
-#include <cstdint>
 #include <functional>
 #include <mutex>
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cmath>
-
 #include "../binance/side.h"
 #include "../utils/env.h"
 

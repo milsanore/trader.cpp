@@ -59,7 +59,8 @@ build-release:
 test:
 	cmake --preset debug
 	cmake --build --preset=debug
-	ctest -j$(shell nproc) --preset=debug
+	ctest -j$(shell nproc) --preset=debug -LE BENCHMARK
+# 	coverage
 	lcov --gcov-tool gcov --capture --directory . --output-file lcov.info
 	source .venv/bin/activate && \
 		gcovr -r . --exclude 'tests/*' --sonarqube -o sonar-coverage.xml
@@ -73,7 +74,6 @@ bench:
 	--benchmark_out=bench_results.json \
   	--benchmark_out_format=json \
 	--benchmark_report_aggregates_only=false
-
 
 ## tidy: 🧹 tidy things up before committing code
 .PHONY: tidy

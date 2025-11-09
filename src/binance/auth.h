@@ -1,7 +1,6 @@
 #pragma once
 
 #include <mutex>
-#include <new>
 #include <string>
 #include <vector>
 

@@ -1,9 +1,5 @@
 #include <benchmark/benchmark.h>
-#include <fmt/ranges.h>
 
-#include <random>
-
-#include "core/bid_ask.h"
 #include "core/order_book.h"
 #include "spdlog/spdlog.h"
 
@@ -98,10 +94,10 @@ class PriceUpdateFixture : public benchmark::Fixture {
 };
 
 /// @brief deterministically populate the order book
-BENCHMARK_DEFINE_F(PriceUpdateFixture, BM_PriceUpdate)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PriceUpdateFixture, BENCH_PriceUpdate)(benchmark::State& state) {
   int i = 0;
   for (auto _ : state) {
-    book_->apply_increment(test_messages_[i], false);
+    book_->apply_increment(test_messages_[i++], false);
     if (i == MSG_COUNT - 1) {
       i = 0;
     }
@@ -111,4 +107,4 @@ BENCHMARK_DEFINE_F(PriceUpdateFixture, BM_PriceUpdate)(benchmark::State& state) 
       benchmark::Counter(state.iterations(), benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_REGISTER_F(PriceUpdateFixture, BM_PriceUpdate)->Iterations(500'000);
+BENCHMARK_REGISTER_F(PriceUpdateFixture, BENCH_PriceUpdate)->Iterations(500'000);

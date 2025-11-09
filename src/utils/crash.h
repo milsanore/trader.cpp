@@ -1,7 +1,6 @@
 #pragma once
 
 #include <csignal>
-#include <cstdlib>
 #include <exception>
 #include <new>
 

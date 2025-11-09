@@ -1,7 +1,6 @@
 #pragma once
 
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
-#include <quickfix/fix44/Message.h>
 
 #include <boost/circular_buffer.hpp>
 #include <ftxui/component/screen_interactive.hpp>
@@ -27,7 +26,7 @@ class TradeBox {
   static inline constexpr std::string THREAD_NAME_ = "ui_tradebox";
   TradeBox(IScreen& screen,
            binance::Config& binance_config,
-           moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
+           moodycamel::ConcurrentQueue<FIX44::MarketDataIncrementalRefresh>& queue,
            std::function<void(std::stop_token)> task = {});
   // Return the FTXUI component to plug into layout
   ftxui::Component get_component();
@@ -56,7 +55,7 @@ class TradeBox {
 
   // worker thread stuff
   // queue of order messages from FIX thread
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue_;
+  moodycamel::ConcurrentQueue<FIX44::MarketDataIncrementalRefresh>& queue_;
   std::jthread worker_;
   std::function<void(std::stop_token)> worker_task_;
   /// @brief poll queue for any new FIX messages, trigger UI render.

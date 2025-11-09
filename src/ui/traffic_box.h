@@ -9,9 +9,9 @@ step 2: sortable/searchable collection
 
 namespace ui {
 
-class WalletBox {
+class TrafficBox {
  public:
-  WalletBox();
+  TrafficBox();
 
   // Return the FTXUI component to plug into layout
   ftxui::Component get_component();

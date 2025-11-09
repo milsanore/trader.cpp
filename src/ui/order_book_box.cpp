@@ -4,11 +4,11 @@
 #include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 #include <quickfix/fix44/Message.h>
 
-#include <cstdint>
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 
 #include "../binance/config.h"
+#include "../binance/market_message_variant.h"
 #include "../binance/symbol.h"
 #include "../utils/double.h"
 #include "../utils/threading.h"
@@ -36,7 +36,7 @@ namespace ui {
 
 OrderBookBox::OrderBookBox(
     IScreen& screen,
-    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
+    moodycamel::ConcurrentQueue<binance::MarketMessageVariant>& queue,
     const uint16_t MAX_DEPTH,
     core::OrderBook ob,
     std::function<void(std::stop_token)> task)
@@ -154,7 +154,7 @@ void OrderBookBox::poll_queue(const std::stop_token& stoken) {
     };
 
     while (!stoken.stop_requested()) {
-      std::shared_ptr<const FIX44::Message> msg;
+      binance::MarketMessageVariant msg;
       while (!queue_.try_dequeue(msg)) {
         if (stoken.stop_requested()) {
           return;
@@ -162,22 +162,18 @@ void OrderBookBox::poll_queue(const std::stop_token& stoken) {
         adaptive_backoff();
       }
 
-      if (auto inc =
-              std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(msg)) {
-        // TODO (mils): wrap each update in a try/catch?
-        core_book_.apply_increment(*inc, IS_BOOK_CLEAR_NEEDED_);
-        screen_.post_event(ftxui::Event::Custom);
-      } else if (auto snap = std::dynamic_pointer_cast<
-                     const FIX44::MarketDataSnapshotFullRefresh>(msg)) {
-        // TODO (mils): wrap each update in a try/catch?
-        core_book_.apply_snapshot(*snap);
-        screen_.post_event(ftxui::Event::Custom);
-      } else {
-        spdlog::error(
-            "cannot parse order book update - unknown message type. message [{}]",
-            msg->toString());
-      }
+      std::visit(
+          [&](auto& m) {
+            using T = std::decay_t<decltype(m)>;
+            if constexpr (std::is_same_v<T, FIX44::MarketDataSnapshotFullRefresh>) {
+              core_book_.apply_snapshot(m);
+            } else if constexpr (std::is_same_v<T, FIX44::MarketDataIncrementalRefresh>) {
+              core_book_.apply_increment(m, IS_BOOK_CLEAR_NEEDED_);
+            }
+          },
+          msg);
 
+      screen_.post_event(ftxui::Event::Custom);
       // Reset backoff state
       spin_count = 0;
       sleep_time_us = INITIAL_SLEEP_US;

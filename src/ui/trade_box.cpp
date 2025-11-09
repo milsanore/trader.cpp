@@ -3,7 +3,6 @@
 #include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include <quickfix/fix44/Message.h>
 
-#include <cstdint>
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <mutex>
@@ -37,7 +36,7 @@ namespace ui {
 TradeBox::TradeBox(
     IScreen& screen,
     binance::Config& binance_config,
-    moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
+    moodycamel::ConcurrentQueue<FIX44::MarketDataIncrementalRefresh>& queue,
     std::function<void(std::stop_token)> task)
     : screen_(screen),
       binance_config_(binance_config),
@@ -151,7 +150,7 @@ void TradeBox::poll_queue(const std::stop_token& stoken) {
     };
 
     while (!stoken.stop_requested()) {
-      std::shared_ptr<const FIX44::Message> msg;
+      FIX44::MarketDataIncrementalRefresh msg;
       while (!queue_.try_dequeue(msg)) {
         if (stoken.stop_requested()) {
           return;
@@ -159,16 +158,8 @@ void TradeBox::poll_queue(const std::stop_token& stoken) {
         adaptive_backoff();
       }
 
-      if (auto inc =
-              std::dynamic_pointer_cast<const FIX44::MarketDataIncrementalRefresh>(msg)) {
-        // TODO (mils): wrap each update in a try/catch?
-        on_trade(*inc);
-        screen_.post_event(ftxui::Event::Custom);
-      } else {
-        spdlog::error(
-            "cannot parse trade view update - unknown message type. message [{}]",
-            msg->toString());
-      }
+      on_trade(msg);
+      screen_.post_event(ftxui::Event::Custom);
 
       // Reset backoff state
       spin_count = 0;

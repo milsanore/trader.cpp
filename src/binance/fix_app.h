@@ -2,16 +2,18 @@
 
 #include <quickfix/Application.h>
 #include <quickfix/SessionID.h>
+#include <quickfix/fix44/MarketDataIncrementalRefresh.h>
+#include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
 #include <quickfix/fix44/Message.h>
 #include <quickfix/fix44/MessageCracker.h>
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "concurrentqueue.h"
 #include "iauth.h"
+#include "market_message_variant.h"
 
 namespace binance {
 
@@ -35,9 +37,9 @@ class FixApp final : public FIX::Application, public FIX44::MessageCracker {
   void subscribe_to_trades(const FIX::SessionID& session_id) const;
 
   /// @brief queue of market messages from Binance
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> order_queue_;
+  moodycamel::ConcurrentQueue<MarketMessageVariant> order_queue_;
   /// @brief queue of trade messages from Binance
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> trade_queue_;
+  moodycamel::ConcurrentQueue<FIX44::MarketDataIncrementalRefresh> trade_queue_;
 
   // TODO: performance implication of a polymorphic queue
   // TODO: perhaps better to run two queues, or something else

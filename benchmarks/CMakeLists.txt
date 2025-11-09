@@ -16,3 +16,5 @@ target_link_libraries(benchmarks PRIVATE
 )
 
 add_test(NAME benchmarks COMMAND benchmarks)
+
+set_tests_properties(benchmarks PROPERTIES LABELS "BENCHMARK")

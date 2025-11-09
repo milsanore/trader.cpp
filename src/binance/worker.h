@@ -4,7 +4,7 @@
 #include <quickfix/FileStore.h>
 #include <quickfix/SessionSettings.h>
 #include <quickfix/ThreadedSocketInitiator.h>
-#include <quickfix/fix44/Message.h>
+#include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 
 #include <memory>
 #include <thread>
@@ -12,6 +12,7 @@
 #include "concurrentqueue.h"
 #include "config.h"
 #include "fix_app.h"
+#include "market_message_variant.h"
 
 namespace binance {
 
@@ -31,9 +32,8 @@ class Worker final {
   /// updates onto queue. under the hood the {FixApp} is actioned
   void start();
   void stop();
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& get_order_queue()
-      const;
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& get_trade_queue()
+  moodycamel::ConcurrentQueue<MarketMessageVariant>& get_order_queue() const;
+  moodycamel::ConcurrentQueue<FIX44::MarketDataIncrementalRefresh>& get_trade_queue()
       const;
 
  private:

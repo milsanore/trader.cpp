@@ -1,13 +1,10 @@
 #include <benchmark/benchmark.h>
 #include <fmt/ranges.h>
 
-#include <random>
-
-#include "core/bid_ask.h"
 #include "core/order_book.h"
 #include "spdlog/spdlog.h"
 
-/// @brief the order book is composed of two asymetrically-sorted collections,
+/// @brief the order book is composed of two asymmetrically-sorted collections,
 /// this test is for one of those collections,
 /// (the bid side in this case, because of the additional complexity of a DESC sort)
 class BookSideFixture : public benchmark::Fixture {
@@ -21,7 +18,7 @@ class BookSideFixture : public benchmark::Fixture {
   }
 
   void TearDown([[maybe_unused]] const benchmark::State& state) override {
-    spdlog::info("Levels: [{}]", bids_);
+    // spdlog::info("Levels: [{}]", bids_);
   }
 
   absl::btree_map<uint64_t, uint64_t, std::greater<>> bids_;
@@ -30,7 +27,7 @@ class BookSideFixture : public benchmark::Fixture {
 };
 
 /// @brief deterministically populate the order book
-BENCHMARK_DEFINE_F(BookSideFixture, BM_BookUpdate)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(BookSideFixture, BENCH_BookUpdate)(benchmark::State& state) {
   int i = 0;
   for (auto _ : state) {
     bids_[i] = MID_PRICE - i;
@@ -44,4 +41,4 @@ BENCHMARK_DEFINE_F(BookSideFixture, BM_BookUpdate)(benchmark::State& state) {
       benchmark::Counter(state.iterations(), benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_REGISTER_F(BookSideFixture, BM_BookUpdate)->Iterations(500'000);
+BENCHMARK_REGISTER_F(BookSideFixture, BENCH_BookUpdate)->Iterations(500'000);

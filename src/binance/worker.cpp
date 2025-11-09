@@ -5,6 +5,7 @@
 #include <quickfix/Session.h>
 #include <quickfix/SessionSettings.h>
 #include <quickfix/ThreadedSocketInitiator.h>
+#include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 
 #include <memory>
 
@@ -12,6 +13,7 @@
 #include "auth.h"
 #include "config.h"
 #include "fix_app.h"
+#include "market_message_variant.h"
 #include "spdlog/spdlog.h"
 
 namespace binance {
@@ -55,12 +57,11 @@ void Worker::stop() {
   spdlog::info("stopped FIX initiator");
 }
 
-moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>&
-Worker::get_order_queue() const {
+moodycamel::ConcurrentQueue<MarketMessageVariant>& Worker::get_order_queue() const {
   return app_->order_queue_;
 }
 
-moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>&
+moodycamel::ConcurrentQueue<FIX44::MarketDataIncrementalRefresh>&
 Worker::get_trade_queue() const {
   return app_->trade_queue_;
 }

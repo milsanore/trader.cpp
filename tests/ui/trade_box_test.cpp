@@ -25,7 +25,7 @@ class DummyScreen : public ui::IScreen {
 class TradeBoxTest : public ::testing::Test {
  protected:
   DummyScreen screen_;
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> queue_;
+  moodycamel::ConcurrentQueue<FIX44::MarketDataIncrementalRefresh> queue_;
   std::unique_ptr<ui::TradeBox> trade_box_;
   binance::Config config_{"", "", "", std::vector<std::string>{}, 0, 0};
 
@@ -35,8 +35,8 @@ class TradeBoxTest : public ::testing::Test {
   }
 };
 
-std::shared_ptr<FIX44::MarketDataIncrementalRefresh> create_valid_trade_message() {
-  auto msg = std::make_shared<FIX44::MarketDataIncrementalRefresh>();
+FIX44::MarketDataIncrementalRefresh create_valid_trade_message() {
+  auto msg = FIX44::MarketDataIncrementalRefresh();
   FIX44::MarketDataIncrementalRefresh::NoMDEntries group;
 
   group.set(FIX::MDEntryType(FIX::MDEntryType_TRADE));
@@ -47,8 +47,8 @@ std::shared_ptr<FIX44::MarketDataIncrementalRefresh> create_valid_trade_message(
   group.setField(2446, "1");  // AggressorSide; 1 = Buy (Binance custom field, tag 2446)
   group.setField(60, "20231020-12:34:56.789");
 
-  msg->set(FIX::NoMDEntries(1));
-  msg->addGroup(group);
+  msg.set(FIX::NoMDEntries(1));
+  msg.addGroup(group);
   return msg;
 }
 

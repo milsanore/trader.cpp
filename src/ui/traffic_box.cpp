@@ -1,4 +1,4 @@
-#include "wallet_box.h"
+#include "traffic_box.h"
 
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -13,14 +13,14 @@ using ftxui::vbox;
 
 namespace ui {
 
-WalletBox::WalletBox() {
+TrafficBox::TrafficBox() {
   component_ = Renderer([](bool focused) {
     auto body = text(focused ? "Focused" : "Not Focused");
     return vbox(body) | border | (focused ? bold : dim);
   });
 }
 
-Component WalletBox::get_component() {
+Component TrafficBox::get_component() {
   return component_;
 }
 

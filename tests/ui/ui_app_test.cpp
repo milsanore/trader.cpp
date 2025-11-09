@@ -1,12 +1,14 @@
 #include "ui/app/ui_app.h"
 
 #include <gtest/gtest.h>
+#include <quickfix/fix44/MarketDataIncrementalRefresh.h>
 #include <quickfix/fix44/Message.h>
 
 #include <memory>
 #include <mutex>
 #include <string>
 
+#include "binance/market_message_variant.h"
 #include "concurrentqueue.h"
 #include "core/order_book.h"
 #include "fake_screen.h"
@@ -23,8 +25,8 @@ TEST(App, start) {
   std::unique_ptr<ui::ILogWatcher> log_reader = std::make_unique<ui::MockLogWatcher>();
   auto log_box = std::make_unique<ui::LogBox>(*screen.get(), std::move(log_reader));
 
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> order_queue{};
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>> trade_queue{};
+  moodycamel::ConcurrentQueue<binance::MarketMessageVariant> order_queue{};
+  moodycamel::ConcurrentQueue<FIX44::MarketDataIncrementalRefresh> trade_queue{};
 
   constexpr int MAX_DEPTH = 50;
   auto book_box = std::make_unique<ui::OrderBookBox>(*screen, order_queue, MAX_DEPTH);
@@ -53,8 +55,7 @@ TEST(App, start) {
   ask.set(FIX::MDEntrySize(11));
   message.addGroup(ask);
   // push
-  order_queue.enqueue(
-      std::make_shared<const FIX44::MarketDataSnapshotFullRefresh>(message));
+  order_queue.enqueue(binance::MarketMessageVariant{message});
 
   // TODO: how to assert this? how to evaluate the UI change based on the input message?
 }

@@ -10,7 +10,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstdint>
 #include <format>
 #include <memory>
 #include <string>
@@ -215,17 +214,17 @@ void FixApp::fromApp(const FIX::Message& msg,
 
 void FixApp::onMessage(const FIX44::MarketDataSnapshotFullRefresh& m,
                        [[maybe_unused]] const FIX::SessionID& sessionID) {
-  order_queue_.enqueue(std::make_shared<const FIX44::MarketDataSnapshotFullRefresh>(m));
+  order_queue_.enqueue(MarketMessageVariant{m});
 }
 void FixApp::onMessage(const FIX44::MarketDataIncrementalRefresh& m,
                        const FIX::SessionID& sessionID) {
   if (sessionID.getSessionQualifier() == PX_SESSION_QUALIFIER_) {
-    order_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
+    order_queue_.enqueue(MarketMessageVariant{m});
   } else if (sessionID.getSessionQualifier() == TX_SESSION_QUALIFIER_) {
-    trade_queue_.enqueue(std::make_shared<const FIX44::MarketDataIncrementalRefresh>(m));
+    trade_queue_.enqueue(m);
   } else {
     spdlog::error(
-        "ivalid session for market data incremental refresh, qualifier [{}], id [{}]",
+        "invalid session for market data incremental refresh, qualifier [{}], id [{}]",
         sessionID.getSessionQualifier(), sessionID.toString());
   }
 }

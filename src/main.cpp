@@ -1,8 +1,4 @@
-#include <csignal>
-#include <cstdlib>
 #include <exception>
-#include <iostream>
-#include <new>
 #include <string>
 
 #include "binance/config.h"
@@ -10,7 +6,6 @@
 #include "spdlog/spdlog.h"
 #include "ui/app/ui_app.h"
 #include "utils/crash.h"
-#include "utils/env.h"
 #include "utils/logging.h"
 #include "utils/process.h"
 #include "utils/threading.h"

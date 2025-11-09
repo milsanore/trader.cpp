@@ -1,13 +1,11 @@
 #pragma once
 
-#include <quickfix/fix44/Message.h>
-
-#include <cstdint>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <memory>
 #include <thread>
 
+#include "../binance/market_message_variant.h"
 #include "../core/order_book.h"
 #include "app/iscreen.h"
 #include "concurrentqueue.h"
@@ -19,7 +17,7 @@ class OrderBookBox {
   static inline constexpr std::string THREAD_NAME_ = "ui_orderbook";
   // Constructor: takes a label string
   OrderBookBox(IScreen& screen,
-               moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue,
+               moodycamel::ConcurrentQueue<binance::MarketMessageVariant>& queue,
                const uint16_t MAX_DEPTH,
                core::OrderBook ob = core::OrderBook{},
                std::function<void(std::stop_token)> task = {});
@@ -49,7 +47,7 @@ class OrderBookBox {
   std::jthread worker_;
   std::function<void(std::stop_token)> worker_task_;
   // queue of order messages from FIX thread
-  moodycamel::ConcurrentQueue<std::shared_ptr<const FIX44::Message>>& queue_;
+  moodycamel::ConcurrentQueue<binance::MarketMessageVariant>& queue_;
   /// @brief poll queue for any new FIX messages, update order book
   /// @param stoken
   void poll_queue(const std::stop_token& stoken);

@@ -2,8 +2,6 @@
 
 #include <fmt/core.h>
 
-#include <cmath>
-
 #include "../utils/env.h"
 
 namespace core {
