@@ -174,6 +174,9 @@ NB: this app uses `make` as a recipe book, but it's not essential:
     - QuickFIX alternative (Fix8)
       - otherwise => QuickFIX + SSL
   - kernel space vs user space
+  - intrinsics
+  - compiler auto-vectorization
+  - SIMD
   - sparse arrays & flat matrix
   - release compile flags
   - memory-mapped files

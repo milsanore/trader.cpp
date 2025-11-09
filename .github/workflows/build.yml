@@ -12,3 +12,4 @@ on:
 jobs:
   call-reusable:
     uses: ./.github/workflows/reusable_build.yml
+    secrets: inherit
