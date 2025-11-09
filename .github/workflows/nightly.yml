@@ -12,3 +12,4 @@ jobs:
     uses: ./.github/workflows/reusable_build.yml
     with:
       ref: ${{ 'master' }}
+    secrets: inherit
