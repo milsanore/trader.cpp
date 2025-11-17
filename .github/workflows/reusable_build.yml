@@ -16,7 +16,7 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/milsanore/tradercppbuild:v1.7
+      image: ghcr.io/milsanore/tradercppbuild:v1.8
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,6 +25,9 @@ jobs:
 
       - name: clang-format
         run: hooks/check_clang_format.sh
+
+      - name: shellcheck
+        run: hooks/check_shell.sh
 
       - name: Restore Conan cache
         uses: actions/cache@v4
@@ -48,7 +51,7 @@ jobs:
       - name: Test
         run: |
           set -e
-          ctest -j$(nproc) --preset=debug
+          ctest -j$(nproc) --preset=debug -LE BENCHMARK
           # `lcov` FOR CODECOV
           lcov --gcov-tool gcov \
             --capture \

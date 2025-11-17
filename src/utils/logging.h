@@ -12,6 +12,7 @@ struct Logging {
  public:
   static void configure() {
     // basic sink for general logging (file)
+    // TODO(mils): utils::Env::get_env_or_throw("LOG_PATH")
     const char* log_path = std::getenv("LOG_PATH");
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path, false);
     file_sink->set_level(spdlog::level::info);

@@ -11,7 +11,7 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/milsanore/tradercppbuild:v1.7
+      image: ghcr.io/milsanore/tradercppbuild:v1.8
       # set resource limits for some consistency
       options: --memory=7g --cpus=2
     steps:

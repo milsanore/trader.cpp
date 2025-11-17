@@ -1,5 +1,5 @@
 #############################################
-# milss/tradercppbuild:v1.7
+# milss/tradercppbuild:v1.8
 # Build container for tradercpp
 # Published to dockerhub in order to accelerate github actions
 # Uses:
@@ -56,12 +56,6 @@ RUN apt update && apt install -y --no-install-recommends \
 
 
 # Install LLVM 18 (clang-format and clang-tidy)
-RUN apt update && apt install -y --no-install-recommends \
-    gnupg \
-    lsb-release \
-    software-properties-common \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
 
 RUN wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 
@@ -115,5 +109,6 @@ RUN apt update && apt install -y --no-install-recommends \
     make \
     ninja-build \
     perl \
+    shellcheck \
     unzip \
     && rm -rf /var/lib/apt/lists/*

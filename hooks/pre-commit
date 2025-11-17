@@ -13,14 +13,16 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Run subscripts
 
-echo "Running strict pre-commit checks (clang-tidy, clang-format, build-debug)..."
+echo "Running strict pre-commit checks (clang-format, shellcheck, clang-tidy, build-debug)..."
+
+bash "$DIR/check_clang_format.sh"
+
+bash "$DIR/check_shell.sh"
 
 # TODO(mils): does this also need to be converted to:
 # `git diff -U0 origin/master...HEAD -- '*.cpp'`
 git diff -U0 master...HEAD -- '*.cpp' | \
   clang-tidy-diff-18.py -p1 -path "$DIR/../build/Debug"
-
-bash "$DIR/check_clang_format.sh"
 
 make build-debug
 

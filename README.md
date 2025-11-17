@@ -152,9 +152,9 @@ NB: this app uses `make` as a recipe book, but it's not essential:
   - ✅ cache line alignment
   - ✅ tcmalloc (Full) / gperftools
   - CPU
-    - ✅ process priority
-    - ✅ FIX-thread "realtime"
-    - ✅ FIX-thread CPU affinity
+    - ✅ isolated CPU cores
+    - ✅ thread-CPU affinity
+    - ✅ thread "realtime" priority
     - Disable hyperthreading
   - OS
     - ✅ vacate OS services
@@ -173,6 +173,7 @@ NB: this app uses `make` as a recipe book, but it's not essential:
     - ✅ debug quickfix to confirm if it's running in it's own thread
     - QuickFIX alternative (Fix8)
       - otherwise => QuickFIX + SSL
+  - hugepages
   - kernel space vs user space
   - intrinsics
   - compiler auto-vectorization

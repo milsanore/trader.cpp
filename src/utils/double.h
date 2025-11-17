@@ -27,7 +27,7 @@ struct Double {
   /// - uses only stack memory and no extra allocations beyond the returned std::string
   /// @param val
   /// @return
-  static std::string pretty(double val) {
+  static inline std::string pretty(double val) {
     char buffer[64]{};
     // Convert double to string with max 15 significant digits
     auto [ptr, ec] = std::to_chars(buffer, buffer + sizeof(buffer), val,
@@ -67,7 +67,7 @@ struct Double {
     return s;
   }
 
-  static std::string trim(double val) {
+  static inline std::string trim(double val) {
     // 64 bytes is usually more than enough for a double
     char buffer[64];
     auto [ptr, ec] =
