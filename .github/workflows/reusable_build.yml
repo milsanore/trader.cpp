@@ -84,3 +84,7 @@ jobs:
             -Dsonar.sources=src
             -Dsonar.tests=tests
         continue-on-error: true
+
+      - name: Prune Conan cache
+        run: |
+          conan cache clean --build

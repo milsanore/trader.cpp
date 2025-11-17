@@ -41,3 +41,7 @@ jobs:
         with:
           files: build/Release/tradercpp
           token: ${{ secrets.PAT_RELEASE_20261020 }}
+
+      - name: Prune Conan cache
+        run: |
+          conan cache clean --build
