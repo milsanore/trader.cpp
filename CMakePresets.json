@@ -29,7 +29,18 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Release/generators/conan_toolchain.cmake",
-        "CMAKE_CXX_FLAGS": "-Wall -Wextra -Werror -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO"
+        "CMAKE_CXX_FLAGS": "-Wall -Wextra -Werror -O3 -flto -march=native -ffast-math -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO"
+      }
+    },
+    {
+      "name": "superfast",
+      "description": "-Ofast removes some IEEE compliance rules, -fomit-frame-pointer hurts profiling, -fno-exceptions and -fno-rtti need more consideration, -funsafe-math-optimizations speaks for itself",
+      "inherits": "release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Release/generators/conan_toolchain.cmake",
+        "CMAKE_CXX_FLAGS": "-Wall -Wextra -Werror -Ofast -flto -march=native -ffast-math -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO"
       }
     }
   ],
@@ -42,6 +53,11 @@
     {
       "name": "release",
       "configurePreset": "release",
+      "jobs": 0
+    },
+    {
+      "name": "superfast",
+      "configurePreset": "superfast",
       "jobs": 0
     }
   ],
@@ -56,6 +72,13 @@
     {
       "name": "release",
       "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "superfast",
+      "configurePreset": "superfast",
       "output": {
         "outputOnFailure": true
       }

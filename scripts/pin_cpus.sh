@@ -87,6 +87,11 @@ if [[ ! -d "$GROUP_PATH" ]]; then
     echo "created cpuset directory. path [$GROUP_PATH]"
 fi
 
+if [[ $CGROUP_VERSION -eq 2 ]]; then
+    echo "+cpuset" > "$BASE_CGROUP/cgroup.subtree_control" 2>/dev/null || true
+    echo "+cpuset" > "$GROUP_PATH/cgroup.subtree_control"
+fi
+
 # write CPUs
 CPU_FILE="$GROUP_PATH/cpuset.cpus"
 echo "$CPU_SET_RANGE" > "$CPU_FILE"
